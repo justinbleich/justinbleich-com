@@ -29,8 +29,7 @@ const roles = [
     marker: "Previously",
     company: "Sprinklr",
     href: "https://www.sprinklr.com",
-    summary:
-      "Designed universal search to unify all product verticals and entity types, allowing global orgs to manage their social accounts seamlessly",
+    summary: "Designed universal search and a new self-serve dashboard experience",
   },
 ];
 
