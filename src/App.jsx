@@ -1,5 +1,4 @@
 import {
-  BaseballCapIcon,
   EnvelopeSimpleIcon,
   LinkedinLogoIcon,
   PauseIcon,
@@ -37,11 +36,6 @@ const roles = [
 
 const socials = [
   {
-    label: "Farcaster",
-    href: "https://farcaster.xyz/jtb",
-    Icon: BaseballCapIcon,
-  },
-  {
     label: "LinkedIn",
     href: "https://linkedin.com/in/justinbleich",
     Icon: LinkedinLogoIcon,
@@ -74,7 +68,6 @@ export default function App() {
               <p className="work-summary">{role.summary}</p>
             </article>
           ))}
-
         </div>
       </section>
 

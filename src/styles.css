@@ -203,9 +203,9 @@ h1 {
 }
 
 .music-link:hover {
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--hover) 42%, transparent);
-  background: color-mix(in srgb, var(--text) 5%, transparent);
-  color: var(--hover);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 16%, transparent);
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+  color: color-mix(in srgb, var(--text) 86%, var(--muted));
   transform: translateY(-2px);
 }
 
@@ -217,7 +217,7 @@ h1 {
 }
 
 .music-link:hover .player-icons {
-  color: var(--hover);
+  color: color-mix(in srgb, var(--text) 68%, var(--muted));
 }
 
 @keyframes rise-in {
