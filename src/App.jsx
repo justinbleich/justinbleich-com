@@ -9,6 +9,12 @@ import {
 const roles = [
   {
     marker: "Current",
+    company: "OnePay",
+    href: "https://www.onepay.com",
+    summary: "Leading OnePay Crypto design",
+  },
+  {
+    marker: "2024-2026",
     company: "OKX",
     href: "https://www.okx.com",
     summary: "Building global payments experiences to bridge consumers and web3",
