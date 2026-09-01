@@ -1,3 +1,11 @@
+import {
+  BaseballCapIcon,
+  EnvelopeSimpleIcon,
+  LinkedinLogoIcon,
+  PauseIcon,
+  PlayIcon,
+} from "@phosphor-icons/react";
+
 const roles = [
   {
     marker: "Current",
@@ -25,17 +33,17 @@ const socials = [
   {
     label: "Farcaster",
     href: "https://farcaster.xyz/jtb",
-    shortLabel: "Fc",
+    Icon: BaseballCapIcon,
   },
   {
     label: "LinkedIn",
     href: "https://linkedin.com/in/justinbleich",
-    shortLabel: "in",
+    Icon: LinkedinLogoIcon,
   },
   {
     label: "Email",
     href: "mailto:justin.bleich@gmail.com",
-    shortLabel: "@",
+    Icon: EnvelopeSimpleIcon,
   },
 ];
 
@@ -86,7 +94,7 @@ export default function App() {
               aria-label={social.label}
               title={social.label}
             >
-              {social.shortLabel}
+              <social.Icon size={24} weight="regular" aria-hidden="true" />
             </a>
           ))}
         </nav>
@@ -98,7 +106,10 @@ export default function App() {
           rel="noreferrer"
           aria-label="Listen to Braga Circuit by Le..."
         >
-          <span className="play-mark" aria-hidden="true" />
+          <span className="player-icons" aria-hidden="true">
+            <PlayIcon size={22} weight="regular" />
+            <PauseIcon size={22} weight="regular" />
+          </span>
           <span>Braga Circuit - Le...</span>
         </a>
       </footer>
