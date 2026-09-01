@@ -59,7 +59,7 @@ export default function App() {
       <section className="intro" aria-labelledby="page-title">
         <div className="identity">
           <h1 id="page-title">Justin Bleich</h1>
-          <p>Senior Product Designer</p>
+          <p>Design Lead</p>
         </div>
 
         <div className="work-list" aria-label="Selected work history">
