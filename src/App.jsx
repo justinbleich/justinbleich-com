@@ -17,7 +17,7 @@ const roles = [
     marker: "2024-2026",
     company: "OKX",
     href: "https://www.okx.com",
-    summary: "Building global payments experiences to bridge consumers and web3",
+    summary: "Built global payments experiences to bridge consumers and web3",
   },
   {
     marker: "2021-2024",
@@ -75,16 +75,6 @@ export default function App() {
             </article>
           ))}
 
-          <p className="other-work">
-            Other:{" "}
-            <a href="https://app.frax.finance" target="_blank" rel="noreferrer">
-              FRAX
-            </a>
-            ,{" "}
-            <a href="https://paste.so" target="_blank" rel="noreferrer">
-              Paste
-            </a>
-          </p>
         </div>
       </section>
 
