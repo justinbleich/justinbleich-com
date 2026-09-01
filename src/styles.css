@@ -26,7 +26,7 @@ html {
 
 body {
   min-width: 320px;
-  min-height: 100vh;
+  min-height: 100svh;
   margin: 0;
   background: var(--background);
   color: var(--text);
@@ -203,7 +203,7 @@ h1 {
   display: inline-flex;
   flex-shrink: 1;
   min-width: 0;
-  min-height: 48px;
+  height: 48px;
   align-items: center;
   gap: 10px;
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 10%, transparent);
@@ -211,7 +211,7 @@ h1 {
   padding: 11px 19px 11px 17px;
   color: var(--text);
   font-size: 15px;
-  line-height: 1;
+  line-height: 20px;
   text-decoration: none;
   white-space: nowrap;
   transition:
@@ -230,9 +230,18 @@ h1 {
 
 .player-icons {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 1px;
   color: var(--muted);
+}
+
+.music-link > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .music-link:hover .player-icons {
@@ -273,14 +282,11 @@ h1 {
     max-width: 100%;
   }
 
-  .music-link > span:last-child {
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
 }
 
 @media (max-width: 560px) {
   .site-shell {
+    height: 100svh;
     padding: 36px 24px 32px;
     justify-content: space-between;
   }
@@ -295,12 +301,12 @@ h1 {
   }
 
   .music-link {
-    min-height: 48px;
+    height: 48px;
     padding: 11px 19px 11px 17px;
   }
 }
 
-@media (max-width: 430px) {
+@media (max-width: 360px) {
   .footer {
     align-items: flex-start;
     flex-direction: column;
