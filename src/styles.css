@@ -34,21 +34,36 @@ body {
 }
 
 a {
+  position: relative;
   color: inherit;
-  text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, currentColor 48%, transparent);
-  text-underline-offset: 0.18em;
+  text-decoration: none;
   transition:
     color 140ms var(--ease-out),
-    text-decoration-color 140ms var(--ease-out),
     background-color 140ms var(--ease-out),
     box-shadow 140ms var(--ease-out),
     transform 140ms var(--ease-out);
 }
 
+a:not(.social-link, .music-link)::after {
+  position: absolute;
+  right: 0;
+  bottom: 0.02em;
+  left: 0;
+  height: 1px;
+  background: currentColor;
+  content: "";
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 160ms var(--ease-out);
+}
+
 a:hover {
   color: var(--hover);
-  text-decoration-color: currentColor;
+}
+
+a:not(.social-link, .music-link):hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
 }
 
 a:focus-visible {
