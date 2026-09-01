@@ -282,6 +282,7 @@ h1 {
 @media (max-width: 560px) {
   .site-shell {
     padding: 36px 24px 32px;
+    justify-content: space-between;
   }
 
   .social-links {
