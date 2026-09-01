@@ -49,6 +49,33 @@ const socials = [
 export default function App() {
   return (
     <main className="site-shell" aria-label="Justin Bleich portfolio">
+      <div className="floating-friend" aria-hidden="true">
+        <svg
+          className="friend-svg"
+          viewBox="0 0 96 112"
+          role="img"
+          focusable="false"
+        >
+          <ellipse className="friend-shadow" cx="48" cy="104" rx="19" ry="5" />
+
+          <g className="friend-body">
+            <path
+              className="friend-shape"
+              d="M12 48 27 17 57 8 83 24 88 55 72 83 42 94 18 76Z"
+            />
+            <path className="friend-facet friend-facet-top" d="M28 18 47 34 57 8" />
+            <path className="friend-facet friend-facet-side" d="M73 27 59 52 88 55" />
+            <path className="friend-edge friend-edge-left" d="M25 24 14 48 20 72" />
+            <path className="friend-edge friend-edge-right" d="M63 16 80 30 83 53" />
+            <g className="friend-face">
+              <path className="friend-eye friend-eye-left" d="M34 43 43 40 47 48 38 51Z" />
+              <path className="friend-eye friend-eye-right" d="M57 38 66 41 63 50 54 47Z" />
+              <path className="friend-mouth" d="M42 64 59 59 56 68" />
+            </g>
+          </g>
+        </svg>
+      </div>
+
       <section className="intro" aria-labelledby="page-title">
         <div className="identity">
           <h1 id="page-title">Justin Bleich</h1>
