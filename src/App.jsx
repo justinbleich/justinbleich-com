@@ -49,32 +49,30 @@ const socials = [
 export default function App() {
   return (
     <main className="site-shell" aria-label="Justin Bleich portfolio">
-      <div className="floating-friend" aria-hidden="true">
+      <a className="world-link" href="/worlds" aria-label="Play the game worlds">
         <svg
-          className="friend-svg"
-          viewBox="0 0 96 112"
-          role="img"
+          className="pixel-guy"
+          viewBox="0 0 10 14"
+          shapeRendering="crispEdges"
+          aria-hidden="true"
           focusable="false"
         >
-          <ellipse className="friend-shadow" cx="48" cy="104" rx="19" ry="5" />
-
-          <g className="friend-body">
-            <path
-              className="friend-shape"
-              d="M12 48 27 17 57 8 83 24 88 55 72 83 42 94 18 76Z"
-            />
-            <path className="friend-facet friend-facet-top" d="M28 18 47 34 57 8" />
-            <path className="friend-facet friend-facet-side" d="M73 27 59 52 88 55" />
-            <path className="friend-edge friend-edge-left" d="M25 24 14 48 20 72" />
-            <path className="friend-edge friend-edge-right" d="M63 16 80 30 83 53" />
-            <g className="friend-face">
-              <path className="friend-eye friend-eye-left" d="M34 43 43 40 47 48 38 51Z" />
-              <path className="friend-eye friend-eye-right" d="M57 38 66 41 63 50 54 47Z" />
-              <path className="friend-mouth" d="M42 64 59 59 56 68" />
-            </g>
+          <rect className="px-hair" x="1" y="0" width="8" height="2" />
+          <rect className="px-ink" x="1" y="2" width="8" height="4" />
+          <rect className="px-eye" x="3" y="3" width="1" height="2" />
+          <rect className="px-body" x="1" y="6" width="8" height="5" />
+          <rect className="px-ink" x="1" y="7" width="2" height="2" />
+          <g className="px-ink px-step-a">
+            <rect x="2" y="11" width="2" height="3" />
+            <rect x="6" y="11" width="2" height="2" />
+          </g>
+          <g className="px-ink px-step-b">
+            <rect x="2" y="11" width="2" height="2" />
+            <rect x="6" y="11" width="2" height="3" />
           </g>
         </svg>
-      </div>
+        <span className="world-link-label">Play</span>
+      </a>
 
       <section className="intro" aria-labelledby="page-title">
         <div className="identity">

@@ -1,0 +1,1221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>html, body { margin: 0; } img { max-width: 100%; } [hidden] { display: none !important; }</style>
+<title>Bleich Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a clinical test-facility page. The first-person view is the hero, with lab signage typography around it, then the plain list and contact. Single light lab palette by choice. */
+:root {
+  --bg: #eceef1;
+  --surface: #ffffff;
+  --fg: #16181d;
+  --muted: #5d6370;
+  --line: #c9cdd4;
+  --rule: rgba(22, 24, 29, 0.12);
+  --portal-a: #8d6bff;
+  --portal-b: #c6f04a;
+  --ok: #2fb07f;
+  --stop: #ff5a4e;
+
+  /* world palette */
+  --l-concrete: #3a3d44;
+  --l-concrete-dark: #2e3036;
+  --l-panel: #eef0f2;
+  --l-panel-seam: #c6cad1;
+  --l-floor: #2b2e34;
+  --l-floor-line: #3c4048;
+  --l-ceiling: #30333a;
+  --l-light: #eaf4ff;
+  --l-metal: #8a909b;
+  --l-sky: #15171b;
+  --l-cube: #d9dde3;
+  --l-cube-band: #2b2a33;
+
+  --f-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --gutter: 1rem;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--f-body);
+  font-size: 1rem;
+  line-height: 1.55;
+  padding-inline: var(--gutter);
+  padding-block: 1.25rem 3rem;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration-color: var(--portal-a); text-underline-offset: 0.2em; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--portal-a); outline-offset: 3px; }
+::selection { background: var(--portal-b); color: var(--fg); }
+
+.page { max-width: 70rem; margin-inline: auto; }
+.mono { font-family: var(--f-mono); font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.bar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 1.5rem; color: var(--muted); }
+
+.top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 1rem 2rem;
+  padding-block: clamp(1.5rem, 5vw, 2.75rem) 1.25rem;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 1.25rem;
+}
+.eyebrow { margin: 0 0 0.6rem; color: var(--muted); }
+h1 {
+  margin: 0;
+  font-family: var(--f-display);
+  font-weight: 800;
+  font-stretch: 112%;
+  font-size: clamp(2.3rem, 7.5vw, 5rem);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.sub { margin: 0.75rem 0 0; color: var(--muted); font-size: clamp(1.0625rem, 2vw, 1.1875rem); max-width: 38rem; }
+.sub b { color: var(--fg); font-weight: 600; }
+.legend { display: grid; gap: 0.4rem; justify-items: start; }
+.legend span { display: inline-flex; align-items: center; gap: 0.5rem; }
+.legend i { width: 0.9rem; height: 0.9rem; border-radius: 50%; display: inline-block; }
+@media (max-width: 40rem) { .top { grid-template-columns: minmax(0, 1fr); } }
+
+/* View */
+.frame { position: relative; overflow: hidden; border-radius: 4px; background: var(--l-sky); }
+canvas { display: block; width: 100%; height: 560px; outline: none; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+.hud { position: absolute; inset: 0; pointer-events: none; color: #f4f6f8; }
+.chamber { position: absolute; top: 0.9rem; left: 1rem; display: grid; gap: 0.1rem; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+.chamber b { font-family: var(--f-display); font-weight: 800; font-stretch: 112%; font-size: clamp(1.4rem, 3.4vw, 2.2rem); line-height: 1; }
+.cross { position: absolute; left: 50%; top: 50%; width: 34px; height: 34px; transform: translate(-50%, -50%); }
+.cross svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.hint {
+  position: absolute; left: 50%; bottom: 1rem; transform: translateX(-50%);
+  width: max-content; max-width: calc(100% - 2rem);
+  padding: 0.45rem 0.85rem;
+  background: rgba(22, 24, 29, 0.72);
+  border-radius: 999px;
+  font-size: 0.9375rem; text-align: center;
+}
+.flash { position: absolute; inset: 0; background: #ffffff; opacity: 0; }
+
+.role {
+  position: absolute; top: 0.9rem; right: 0.9rem;
+  width: min(20rem, calc(100% - 1.8rem));
+  padding: 0.95rem 1.05rem 1.05rem;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--fg);
+  border-radius: 4px;
+  border-top: 4px solid var(--portal-a);
+  pointer-events: auto;
+  animation: drop 0.35s ease both;
+}
+@keyframes drop { from { transform: translateY(-10px); opacity: 0; } to { transform: none; opacity: 1; } }
+.role p { margin: 0; }
+.role-eyebrow { color: var(--muted); }
+.role-title { font-family: var(--f-display); font-weight: 800; font-stretch: 105%; font-size: 1.3rem; line-height: 1.15; margin-top: 0.25rem !important; }
+.role-desc { color: #3a3f4a; font-size: 0.95rem; margin-top: 0.3rem !important; text-wrap: pretty; }
+
+.overlay { position: absolute; inset: 0; display: grid; place-items: center; padding: 1rem; background: rgba(21, 23, 27, 0.55); pointer-events: auto; }
+.panel {
+  width: min(100%, 32rem); max-height: calc(100% - 1rem); overflow: auto;
+  padding: 1.35rem 1.4rem 1.4rem;
+  background: var(--surface); color: var(--fg);
+  border-radius: 4px; display: grid; gap: 0.65rem;
+}
+.panel p { margin: 0; }
+.panel-title { font-family: var(--f-display); font-weight: 800; font-stretch: 112%; font-size: clamp(1.5rem, 4vw, 2.2rem); line-height: 1; }
+.panel-desc { color: var(--muted); }
+.controls-list { margin: 0.2rem 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.35rem 0.9rem; font-size: 0.9375rem; }
+.controls-list dt, .controls-list dd { margin: 0; }
+.controls-list dt { font-family: var(--f-mono); font-size: 0.75rem; color: var(--muted); padding-top: 0.15rem; }
+.panel-actions { display: flex; flex-wrap: wrap; gap: 0.55rem; margin-top: 0.4rem; }
+.btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.6rem 1rem; border: 1.5px solid var(--fg); border-radius: 2px;
+  background: transparent; cursor: pointer; text-decoration: none;
+  font-family: var(--f-mono); font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.btn:hover { background: var(--fg); color: var(--surface); }
+.btn.go { background: var(--fg); color: var(--surface); }
+.btn.go:hover { background: var(--portal-a); border-color: var(--portal-a); }
+.toggle { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9375rem; color: var(--muted); cursor: pointer; }
+
+.touch { display: none; position: absolute; inset: auto 0 0 0; padding: 0.9rem; justify-content: space-between; align-items: flex-end; pointer-events: none; }
+.stick { pointer-events: auto; position: relative; width: 7rem; height: 7rem; border-radius: 50%; background: rgba(22,24,29,0.4); border: 2px solid rgba(244,246,248,0.5); touch-action: none; }
+.knob { position: absolute; left: 50%; top: 50%; width: 3rem; height: 3rem; margin: -1.5rem 0 0 -1.5rem; border-radius: 50%; background: #f4f6f8; opacity: 0.9; }
+.tbtns { display: grid; grid-template-columns: repeat(2, 3.6rem); gap: 0.55rem; pointer-events: auto; }
+.tbtns button { width: 3.6rem; height: 3.6rem; border-radius: 50%; border: 2px solid rgba(244,246,248,0.75); background: rgba(22,24,29,0.45); color: #f4f6f8; font-family: var(--f-mono); font-size: 0.7rem; touch-action: none; user-select: none; -webkit-user-select: none; }
+.tbtns .pa { background: var(--portal-a); border-color: var(--portal-a); }
+.tbtns .pb { background: var(--portal-b); border-color: var(--portal-b); color: var(--fg); }
+.tbtns button[data-on="true"] { transform: scale(0.94); filter: brightness(1.2); }
+@media (hover: none) and (pointer: coarse) { .touch { display: flex; } .keys { display: none !important; } .hint { bottom: 9.5rem; } }
+
+.fail { position: absolute; inset: 0; display: grid; place-items: center; padding: 1.5rem; text-align: center; color: #c9cdd4; }
+
+.below { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.75rem 1.5rem; padding-block: 1rem; }
+.keys { margin: 0; color: var(--muted); display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; align-items: center; }
+.keys span { display: inline-flex; gap: 0.3rem; align-items: center; }
+kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border: 1px solid var(--line); border-bottom-width: 3px; border-radius: 3px; font-family: var(--f-mono); font-size: 0.75rem; text-align: center; color: var(--fg); background: var(--surface); }
+.worlds { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+.exp { margin-top: clamp(2.5rem, 7vw, 4.5rem); }
+.label { margin: 0 0 0.75rem; font-weight: 400; color: var(--muted); }
+.list { margin: 0; padding: 0; list-style: none; border-top: 2px solid var(--fg); }
+.row { display: grid; grid-template-columns: 3.4rem minmax(0, 1fr) auto; gap: 0.25rem 1rem; align-items: center; padding-block: 1.2rem; border-bottom: 1px solid var(--rule); }
+.test { font-family: var(--f-display); font-weight: 800; font-stretch: 112%; font-size: 1.6rem; line-height: 1; color: var(--line); }
+.row[data-on="true"] .test { color: var(--fg); }
+.row-main { min-width: 0; display: grid; gap: 0.15rem; }
+.row-title { margin: 0; font-size: clamp(1.125rem, 2.4vw, 1.375rem); line-height: 1.3; font-weight: 500; }
+.row-desc { margin: 0; color: var(--muted); text-wrap: pretty; }
+.state { color: var(--muted); white-space: nowrap; }
+.row[data-on="true"] .state { color: var(--ok); }
+.also { margin: 1rem 0 0; color: var(--muted); }
+
+.contact { margin-top: clamp(2.5rem, 7vw, 4.5rem); padding-top: 1.25rem; border-top: 2px solid var(--fg); display: grid; gap: 1rem; }
+.contact h2 { margin: 0; font-weight: 400; color: var(--muted); }
+.email { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; min-width: 0; }
+.email-text { font-family: var(--f-display); font-weight: 700; font-stretch: 105%; font-size: clamp(1.25rem, 4vw, 2rem); overflow-wrap: anywhere; user-select: all; }
+.links { display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; margin: 0; padding: 0; list-style: none; font-size: clamp(1.125rem, 3vw, 1.4rem); }
+.foot { margin-top: clamp(3rem, 8vw, 5rem); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 1.5rem; color: var(--muted); }
+
+@media (max-width: 30rem) { .row { grid-template-columns: 2.6rem minmax(0, 1fr); } .row .state { grid-column: 2; } }
+@media (min-width: 52rem) { :root { --gutter: 2rem; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="bar mono">
+    <span><a href="/">Justin Bleich</a> / <a href="/worlds">Worlds</a></span>
+    <span>World 5 of 5</span>
+  </header>
+
+  <section class="top" aria-label="Introduction">
+    <div>
+      <p class="eyebrow mono">World 5 · Test facility</p>
+      <h1>Justin Bleich</h1>
+      <p class="sub">Senior Product Designer. <b>Four test chambers, one role each.</b> Link two portals on the white panels to get through.</p>
+    </div>
+    <div class="legend mono" aria-hidden="true">
+      <span><i style="background: var(--portal-a)"></i>Portal A · left click</span>
+      <span><i style="background: var(--portal-b)"></i>Portal B · right click</span>
+      <span><i style="background: var(--l-panel); border: 1px solid var(--line)"></i>Portals stick to white panels</span>
+    </div>
+  </section>
+
+  <main>
+    <section aria-label="Portal test facility">
+      <div class="frame" id="frame">
+        <canvas id="c" tabindex="0" aria-label="A first-person test facility. Place two linked portals on white panels to cross each chamber. Each chamber reveals one role. The same roles are listed in plain text below."></canvas>
+        <div class="hud" id="hud">
+          <div class="chamber"><span class="mono" id="ch-label">Test chamber</span><b id="ch-num">01 / 04</b></div>
+          <div class="cross" aria-hidden="true">
+            <svg viewBox="-17 -17 34 34">
+              <circle r="1.6" fill="#f4f6f8"></circle>
+              <path id="xa" d="M -6 -11 A 12.5 12.5 0 0 0 -6 11" fill="none" stroke-width="3" stroke-linecap="round"></path>
+              <path id="xb" d="M 6 -11 A 12.5 12.5 0 0 1 6 11" fill="none" stroke-width="3" stroke-linecap="round"></path>
+            </svg>
+          </div>
+          <div class="hint" id="hint">Place portal A on a white panel.</div>
+          <div class="role" id="role" hidden>
+            <p class="role-eyebrow mono" id="role-eyebrow"></p>
+            <p class="role-title" id="role-title"></p>
+            <p class="role-desc" id="role-desc"></p>
+          </div>
+          <div class="flash" id="flash"></div>
+        </div>
+        <div class="touch" id="touch">
+          <div class="stick" id="stick" aria-label="Move"><div class="knob" id="knob"></div></div>
+          <div class="tbtns">
+            <button type="button" class="pa" data-k="a" aria-label="Place portal A">A</button>
+            <button type="button" class="pb" data-k="b" aria-label="Place portal B">B</button>
+            <button type="button" data-k="use" aria-label="Pick up or drop">USE</button>
+            <button type="button" data-k="jump" aria-label="Jump">JUMP</button>
+          </div>
+        </div>
+        <div class="overlay" id="start">
+          <div class="panel">
+            <p class="eyebrow mono" style="margin:0">World 5 · Bleich Lab</p>
+            <p class="panel-title">Enter the facility</p>
+            <p class="panel-desc">Four chambers. Each one opens onto the next stop in my career. Portals only stick to white panels, and you can see and walk through them.</p>
+            <dl class="controls-list">
+              <dt>Move</dt><dd>W A S D, Space to jump</dd>
+              <dt>Look</dt><dd>Mouse (click to lock), or drag</dd>
+              <dt>Portals</dt><dd>Left click for A, right click for B (or 1 and 2)</dd>
+              <dt>Use</dt><dd>E to pick up and drop the cube</dd>
+            </dl>
+            <label class="toggle"><input type="checkbox" id="comfort"> Comfort mode (no head bob, slower turning)</label>
+            <div class="panel-actions"><button class="btn go" id="start-btn" type="button">Start test</button></div>
+          </div>
+        </div>
+        <div class="overlay" id="finale" hidden>
+          <div class="panel">
+            <p class="eyebrow mono" style="margin:0" id="fin-eyebrow">All tests passed</p>
+            <p class="panel-title">You reached the present.</p>
+            <p class="panel-desc" id="fin-desc"></p>
+            <div class="panel-actions">
+              <a class="btn go" href="/worlds/world-1">Loop to World 1 ↺</a>
+              <a class="btn" href="https://linkedin.com/in/justinbleich" target="_blank" rel="noopener">LinkedIn ↗</a>
+              <button class="btn" id="fin-close" type="button">Keep exploring</button>
+            </div>
+          </div>
+        </div>
+        <div class="fail" id="fail" hidden><p>This world needs WebGL, which this browser has turned off. Every role is listed below.</p></div>
+      </div>
+
+      <div class="below">
+        <p class="keys mono">
+          <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move</span>
+          <span><kbd>Space</kbd> Jump</span>
+          <span><kbd>1</kbd><kbd>2</kbd> Portals</span>
+          <span><kbd>E</kbd> Use</span>
+          <span><kbd>Esc</kbd> Release mouse</span>
+        </p>
+        <nav class="worlds" aria-label="Other worlds">
+          <a class="btn" href="/worlds/world-4">← World 4</a>
+          <a class="btn" href="/worlds/world-1">World 1 ↺</a>
+        </nav>
+      </div>
+    </section>
+
+    <section class="exp" aria-labelledby="exp-label">
+      <h2 class="label mono" id="exp-label">Experience</h2>
+      <ol class="list">
+        <li class="row" data-id="onepay"><span class="test">04</span><div class="row-main"><p class="row-title">Current → OnePay</p><p class="row-desc">Leading OnePay Crypto design</p></div><span class="state mono">Untested</span></li>
+        <li class="row" data-id="okx"><span class="test">03</span><div class="row-main"><p class="row-title">2024–2026 → <a href="https://www.okx.com" target="_blank" rel="noopener">OKX</a></p><p class="row-desc">Built global payments experiences to bridge consumers and web3</p></div><span class="state mono">Untested</span></li>
+        <li class="row" data-id="nftx"><span class="test">02</span><div class="row-main"><p class="row-title">2021–2024 → <a href="https://v2.nftx.io" target="_blank" rel="noopener">NFTX</a></p><p class="row-desc">The first NFT liquidity protocol in web3, creating tradable pools for collections</p></div><span class="state mono">Untested</span></li>
+        <li class="row" data-id="sprinklr"><span class="test">01</span><div class="row-main"><p class="row-title">Previously → <a href="https://www.sprinklr.com" target="_blank" rel="noopener">Sprinklr</a></p><p class="row-desc">Designed universal search and a new self-serve dashboard experience</p></div><span class="state mono">Untested</span></li>
+      </ol>
+      <p class="also">Also → <a href="https://app.frax.finance" target="_blank" rel="noopener">FRAX</a>, <a href="https://paste.so" target="_blank" rel="noopener">Paste</a></p>
+    </section>
+
+    <section class="contact" aria-labelledby="contact-label">
+      <h2 class="mono" id="contact-label">Contact</h2>
+      <div class="email">
+        <span class="email-text" id="email-text">justin.bleich@gmail.com</span>
+        <button class="btn" id="copy-btn" type="button">Copy</button>
+      </div>
+      <ul class="links">
+        <li><a href="https://linkedin.com/in/justinbleich" target="_blank" rel="noopener">LinkedIn</a></li>
+        <li><a href="https://farcaster.xyz/jtb" target="_blank" rel="noopener">Farcaster</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="foot mono">
+    <span>© 2026 Justin Bleich</span>
+    <span>San Francisco, CA</span>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- copy email ---------- */
+  (function () {
+    var btn = document.getElementById('copy-btn'), txt = document.getElementById('email-text'), tm;
+    function flash(m) { btn.textContent = m; clearTimeout(tm); tm = setTimeout(function () { btn.textContent = 'Copy'; }, 1600); }
+    function sel() { try { var r = document.createRange(); r.selectNodeContents(txt); var s = getSelection(); s.removeAllRanges(); s.addRange(r); } catch (e) {} }
+    btn.addEventListener('click', function () {
+      var v = txt.textContent.trim();
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(function () { flash('Copied'); }, function () { sel(); flash('Selected'); });
+      else { sel(); flash('Selected'); }
+    });
+  })();
+
+  var frame = document.getElementById('frame'), canvas = document.getElementById('c');
+  function fail() { document.getElementById('fail').hidden = false; document.getElementById('start').hidden = true; document.getElementById('hud').hidden = true; }
+  if (!window.THREE) { fail(); return; }
+  var renderer;
+  try { renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, powerPreference: 'high-performance' }); } catch (e) { fail(); return; }
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.18;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.autoUpdate = false;
+
+  var reduce = false;
+  try { reduce = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+  var coarse = false;
+  try { coarse = matchMedia('(hover: none) and (pointer: coarse)').matches; } catch (e) {}
+  var css = getComputedStyle(document.documentElement);
+  function tok(n) { return css.getPropertyValue(n).trim(); }
+  var C = {};
+  ['concrete', 'concrete-dark', 'panel', 'panel-seam', 'floor', 'floor-line', 'ceiling', 'light', 'metal', 'sky', 'cube', 'cube-band'].forEach(function (n) { C[n] = tok('--l-' + n); });
+  C.a = tok('--portal-a'); C.b = tok('--portal-b'); C.ok = tok('--ok'); C.stop = tok('--stop'); C.fg = tok('--fg');
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+
+  var ROLES = {
+    sprinklr: { n: '01', name: 'Sprinklr', period: 'Previously', desc: 'Designed universal search and a new self-serve dashboard experience.', url: 'https://www.sprinklr.com' },
+    nftx: { n: '02', name: 'NFTX', period: '2021–2024', desc: 'The first NFT liquidity protocol in web3, creating tradable pools for collections.', url: 'https://v2.nftx.io' },
+    okx: { n: '03', name: 'OKX', period: '2024–2026', desc: 'Built global payments experiences to bridge consumers and web3.', url: 'https://www.okx.com' },
+    onepay: { n: '04', name: 'OnePay', period: 'Current', desc: 'Leading OnePay Crypto design.' }
+  };
+
+  /* ---------- scene ---------- */
+  var scene = new THREE.Scene();
+  scene.background = new THREE.Color(C.sky);
+  scene.fog = new THREE.Fog(C.sky, 34, 80);
+  var camera = new THREE.PerspectiveCamera(72, 16 / 9, 0.04, 200);
+  camera.rotation.order = 'YXZ';
+  scene.add(new THREE.HemisphereLight(0xe2ecf8, 0x3a3e46, 0.8));
+  var sun = new THREE.DirectionalLight(0xffffff, 1.15);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.camera.left = -18; sun.shadow.camera.right = 18; sun.shadow.camera.top = 18; sun.shadow.camera.bottom = -18;
+  sun.shadow.camera.near = 1; sun.shadow.camera.far = 60;
+  sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.02;
+  scene.add(sun); scene.add(sun.target);
+
+  /* ---------- textures ---------- */
+  var maxAniso = renderer.capabilities.getMaxAnisotropy ? renderer.capabilities.getMaxAnisotropy() : 1;
+  function canvasTex(size, draw) {
+    var c = document.createElement('canvas'); c.width = c.height = size;
+    draw(c.getContext('2d'), size);
+    var t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.encoding = THREE.sRGBEncoding;
+    t.anisotropy = Math.min(8, maxAniso);
+    return t;
+  }
+  function noise(g, s, n, a) { for (var i = 0; i < n; i++) { g.fillStyle = 'rgba(' + (Math.random() < 0.5 ? '0,0,0,' : '255,255,255,') + (Math.random() * a) + ')'; g.fillRect(Math.random() * s, Math.random() * s, 1 + Math.random() * 2, 1 + Math.random() * 2); } }
+  var concreteTex = canvasTex(256, function (g, s) {
+    g.fillStyle = C.concrete; g.fillRect(0, 0, s, s); noise(g, s, 3000, 0.08);
+    g.fillStyle = C['concrete-dark']; g.fillRect(0, 0, s, 2); g.fillRect(0, 0, 2, s);
+    g.fillStyle = 'rgba(0,0,0,0.25)'; [[40, 60], [200, 40], [120, 180], [210, 210], [50, 200]].forEach(function (p) { g.beginPath(); g.arc(p[0], p[1], 3, 0, 7); g.fill(); });
+  });
+  var panelTex = canvasTex(256, function (g, s) {
+    g.fillStyle = C.panel; g.fillRect(0, 0, s, s); noise(g, s, 1200, 0.03);
+    g.fillStyle = C['panel-seam']; g.fillRect(0, 0, s, 3); g.fillRect(0, 0, 3, s);
+  });
+  var floorTex = canvasTex(256, function (g, s) {
+    g.fillStyle = C.floor; g.fillRect(0, 0, s, s); noise(g, s, 2400, 0.06);
+    g.fillStyle = C['floor-line']; g.fillRect(0, 0, s, 3); g.fillRect(0, 0, 3, s); g.fillRect(0, s / 2, s, 1); g.fillRect(s / 2, 0, 1, s);
+  });
+  var ceilTex = canvasTex(128, function (g, s) { g.fillStyle = C.ceiling; g.fillRect(0, 0, s, s); noise(g, s, 400, 0.05); g.fillStyle = 'rgba(255,255,255,0.05)'; g.fillRect(0, 0, s, 2); g.fillRect(0, 0, 2, s); });
+
+  var MAT = {
+    concrete: new THREE.MeshStandardMaterial({ map: concreteTex, roughness: 0.9, metalness: 0.02 }),
+    panel: new THREE.MeshStandardMaterial({ map: panelTex, roughness: 0.55, metalness: 0.0 }),
+    floor: new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.7, metalness: 0.08 }),
+    ceiling: new THREE.MeshStandardMaterial({ map: ceilTex, roughness: 0.95 }),
+    metal: new THREE.MeshStandardMaterial({ color: C.metal, roughness: 0.35, metalness: 0.85 }),
+    light: new THREE.MeshStandardMaterial({ color: C.light, emissive: C.light, emissiveIntensity: 1.4, roughness: 1 }),
+    door: new THREE.MeshStandardMaterial({ color: '#5b616c', roughness: 0.4, metalness: 0.7 })
+  };
+
+  /* box geometry with world-space UVs (1 texture tile = 2 m, panels = 1 m) */
+  function worldBox(x0, y0, z0, x1, y1, z1, tile) {
+    var w = x1 - x0, h = y1 - y0, d = z1 - z0;
+    var g = new THREE.BoxGeometry(w, h, d);
+    var pos = g.attributes.position, uv = g.attributes.uv;
+    var cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, cz = (z0 + z1) / 2;
+    for (var f = 0; f < 6; f++) for (var v = 0; v < 4; v++) {
+      var i = f * 4 + v, X = pos.getX(i) + cx, Y = pos.getY(i) + cy, Z = pos.getZ(i) + cz;
+      var u, vv;
+      if (f < 2) { u = Z; vv = Y; } else if (f < 4) { u = X; vv = Z; } else { u = X; vv = Y; }
+      uv.setXY(i, u / tile, vv / tile);
+    }
+    return g;
+  }
+
+  /* ---------- world ---------- */
+  var BOXES = [];
+  function addBox(x0, y0, z0, x1, y1, z1, mat, opt) {
+    opt = opt || {};
+    var b = { x0: Math.min(x0, x1), y0: Math.min(y0, y1), z0: Math.min(z0, z1), x1: Math.max(x0, x1), y1: Math.max(y0, y1), z1: Math.max(z0, z1), solid: opt.solid !== false, shoot: opt.shoot !== false, on: true };
+    if (mat) {
+      var m = new THREE.Mesh(worldBox(b.x0, b.y0, b.z0, b.x1, b.y1, b.z1, opt.tile || 2), mat);
+      m.position.set((b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2, (b.z0 + b.z1) / 2);
+      m.receiveShadow = true; m.castShadow = !!opt.cast;
+      scene.add(m); b.mesh = m;
+    }
+    BOXES.push(b);
+    return b;
+  }
+  var T = 0.4;
+  function wallZ(z0, z1, x0, x1, y0, y1, open) {
+    if (!open) { addBox(x0, y0, z0, x1, y1, z1, MAT.concrete); return; }
+    var xa = open[0], xb = open[1], ya = open[2], yb = open[3];
+    if (xa > x0) addBox(x0, y0, z0, xa, y1, z1, MAT.concrete);
+    if (xb < x1) addBox(xb, y0, z0, x1, y1, z1, MAT.concrete);
+    if (yb < y1) addBox(xa, yb, z0, xb, y1, z1, MAT.concrete);
+    if (ya > y0) addBox(xa, y0, z0, xb, ya, z1, MAT.concrete);
+  }
+  function room(x0, x1, zN, zF, y0, y1, opt) {
+    opt = opt || {};
+    var wb = opt.wallBottom !== undefined ? opt.wallBottom : y0;
+    if (!opt.noFloor) addBox(x0, y0 - 0.4, zF, x1, y0, zN, MAT.floor);
+    addBox(x0, y1, zF, x1, y1 + 0.4, zN, MAT.ceiling);
+    addBox(x0 - T, wb, zF - T, x0, y1, zN + T, MAT.concrete);
+    addBox(x1, wb, zF - T, x1 + T, y1, zN + T, MAT.concrete);
+    wallZ(zN, zN + T, x0, x1, wb, y1, opt.nearOpen);
+    wallZ(zF - T, zF, x0, x1, wb, y1, opt.farOpen);
+    /* ceiling light strips */
+    for (var z = zN - 3; z > zF + 1.5; z -= 5) addBox(-1.4 + (x0 + x1) / 2, y1 - 0.06, z - 0.25, 1.4 + (x0 + x1) / 2, y1, z + 0.25, MAT.light, { solid: false, shoot: false });
+    var pl = new THREE.PointLight(0xdfeaff, 0.65, 26, 1.6);
+    pl.position.set((x0 + x1) / 2, y1 - 1, (zN + zF) / 2);
+    scene.add(pl);
+  }
+  function corridor(x0, x1, zN, zF, y0, y1, steps) {
+    if (!steps) addBox(x0, y0 - 0.4, zF, x1, y0, zN, MAT.floor);
+    addBox(x0, y1, zF, x1, y1 + 0.4, zN, MAT.ceiling);
+    addBox(x0 - T, y0 - 0.4, zF, x0, y1, zN, MAT.concrete);
+    addBox(x1, y0 - 0.4, zF, x1 + T, y1, zN, MAT.concrete);
+    addBox(-0.5 + (x0 + x1) / 2, y1 - 0.06, (zN + zF) / 2 - 0.8, 0.5 + (x0 + x1) / 2, y1, (zN + zF) / 2 + 0.8, MAT.light, { solid: false, shoot: false });
+  }
+
+  /* Chamber 1 (z 0 → -14): a glass wall divides the room */
+  room(-6, 6, 0, -14, 0, 6, { farOpen: [-1.5, 1.5, 0, 3] });
+  corridor(-1.5, 1.5, -14, -18, 0, 3.5);
+  /* Chamber 2 (z -18 → -34): ledge at y 4 */
+  room(-6, 6, -18, -34, 0, 9, { nearOpen: [-1.5, 1.5, 0, 3], farOpen: [1.5, 4.5, 4, 7] });
+  addBox(-6, 0, -34, 6, 4, -28, MAT.concrete, { cast: true });
+  /* stair corridor down to chamber 3 */
+  corridor(1.5, 4.5, -34, -40, 0, 7, true);
+  for (var si = 0; si < 14; si++) {
+    var sz0 = -34 - si * (6 / 14), sz1 = sz0 - 6 / 14, top = 4 - (si + 1) * (4 / 14);
+    addBox(1.5, -0.4, sz1, 4.5, top, sz0, MAT.floor);
+  }
+  /* Chamber 3 (z -40 → -56): cube shelf + button */
+  room(-6, 6, -40, -56, 0, 6, { nearOpen: [1.5, 4.5, 0, 3], farOpen: [-1.5, 1.5, 0, 3] });
+  addBox(-6, 0, -46, -3, 3, -42, MAT.concrete, { cast: true });
+  corridor(-1.5, 1.5, -56, -60, 0, 3.5);
+  /* Chamber 4 (z -60 → -80): the gap */
+  room(-6, 6, -60, -80, 0, 6, { nearOpen: [-1.5, 1.5, 0, 3], noFloor: true, wallBottom: -7 });
+  addBox(-6, -0.4, -66, 6, 0, -60, MAT.floor);
+  addBox(-6, -0.4, -80, 6, 0, -74, MAT.floor);
+  addBox(-6, -7.4, -74, 6, -7, -66, MAT.floor);
+  addBox(-6, -7, -66.2, 6, 0, -66, MAT.concrete); /* pit lip faces */
+  addBox(-6, -7, -74, 6, 0, -73.8, MAT.concrete);
+
+  /* glass wall in chamber 1: solid for the body, but portal shots pass through it */
+  addBox(-6, 0, -10.05, 6, 6, -9.95, null, { shoot: false });
+  (function () {
+    var glass = new THREE.MeshStandardMaterial({ color: '#cfe6f2', roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide });
+    var pane = new THREE.Mesh(new THREE.PlaneGeometry(12, 6), glass);
+    pane.position.set(0, 3, -10); pane.renderOrder = 2; scene.add(pane);
+    /* faint top-edge sheen so the glass reads as a surface */
+    var sheen = new THREE.Mesh(new THREE.PlaneGeometry(12, 0.5), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.08, depthWrite: false, side: THREE.DoubleSide }));
+    sheen.position.set(0, 5.55, -9.99); sheen.renderOrder = 3; scene.add(sheen);
+    /* slim frame: mullions every 3 m, base and head tracks */
+    [-6, -3, 0, 3, 6].forEach(function (x) { var m = new THREE.Mesh(new THREE.BoxGeometry(0.08, 6, 0.14), MAT.metal); m.position.set(x, 3, -10); m.castShadow = true; scene.add(m); });
+    [[0.05, 0.1], [5.95, 0.1]].forEach(function (r) { var t = new THREE.Mesh(new THREE.BoxGeometry(12, r[1], 0.18), MAT.metal); t.position.set(0, r[0], -10); scene.add(t); });
+  })();
+
+  /* ---------- portal panels ---------- */
+  var PANELS = [];
+  function panel(axis, c, nSign, u0, u1, y0, y1) {
+    var p = { axis: axis, c: c, s: nSign, u0: Math.min(u0, u1), u1: Math.max(u0, u1), y0: y0, y1: y1 };
+    var th = 0.03, m;
+    if (axis === 'x') {
+      var x0 = nSign > 0 ? c : c - th, x1 = nSign > 0 ? c + th : c;
+      m = new THREE.Mesh(worldBox(x0, y0, p.u0, x1, y1, p.u1, 1), MAT.panel);
+      m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (p.u0 + p.u1) / 2);
+      p.face = c + nSign * th;
+    } else {
+      var z0 = nSign > 0 ? c : c - th, z1 = nSign > 0 ? c + th : c;
+      m = new THREE.Mesh(worldBox(p.u0, y0, z0, p.u1, y1, z1, 1), MAT.panel);
+      m.position.set((p.u0 + p.u1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
+      p.face = c + nSign * th;
+    }
+    m.receiveShadow = true; scene.add(m);
+    PANELS.push(p);
+  }
+  panel('x', -6, 1, -3, -7.5, 0.05, 4.2);        /* ch1 near left */
+  panel('x', -6, 1, -10.6, -13.6, 0.05, 4.2);    /* ch1 behind the glass */
+  panel('x', 6, -1, -19.5, -25.5, 0.05, 4.2);    /* ch2 floor level */
+  panel('z', -34, 1, -5.2, -0.8, 4.05, 8.2);     /* ch2 above ledge */
+  panel('x', 6, -1, -43.5, -49.5, 0.05, 4.2);    /* ch3 floor level */
+  panel('x', -6, 1, -42.2, -45.8, 3.05, 5.9);    /* ch3 above shelf */
+  panel('x', -6, 1, -60.6, -65.6, 0.05, 4.2);    /* ch4 near side */
+  panel('x', 6, -1, -74.4, -79.4, 0.05, 4.2);    /* ch4 far side */
+
+  /* ---------- signage ---------- */
+  var signTexs = [];
+  function sign(x, y, z, ry, num, role) {
+    var c = document.createElement('canvas'); c.width = 512; c.height = 640;
+    var t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = Math.min(8, maxAniso);
+    function draw() {
+      var g = c.getContext('2d'); var r = ROLES[role];
+      g.fillStyle = '#f4f6f8'; g.fillRect(0, 0, 512, 640);
+      g.fillStyle = '#16181d';
+      g.font = '800 250px Archivo, "Arial Black", sans-serif'; g.textBaseline = 'top'; g.fillText(num, 36, 30);
+      g.fillRect(36, 300, 440, 6);
+      g.font = '500 30px "IBM Plex Mono", monospace'; g.fillText('TEST ' + num + ' / 04', 36, 330);
+      g.font = '800 64px Archivo, "Arial Black", sans-serif'; g.fillText(r.name.toUpperCase(), 36, 380);
+      g.font = '500 30px "IBM Plex Mono", monospace'; g.fillStyle = '#5d6370'; g.fillText(r.period.toUpperCase(), 36, 460);
+      /* pictograms */
+      g.strokeStyle = C.a; g.lineWidth = 10; g.beginPath(); g.ellipse(80, 570, 22, 36, 0, 0, 7); g.stroke();
+      g.strokeStyle = C.b; g.beginPath(); g.ellipse(160, 570, 22, 36, 0, 0, 7); g.stroke();
+      g.fillStyle = '#16181d'; g.fillRect(220, 560, 50, 8); g.beginPath(); g.moveTo(270, 552); g.lineTo(290, 564); g.lineTo(270, 576); g.fill();
+      g.fillRect(310, 540, 48, 48);
+      t.needsUpdate = true;
+    }
+    draw(); signTexs.push(draw);
+    var m = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 2.0), new THREE.MeshStandardMaterial({ map: t, roughness: 0.6, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.18 }));
+    m.position.set(x, y, z); m.rotation.y = ry; scene.add(m);
+  }
+  sign(5.97, 2.6, -2.2, -Math.PI / 2, '01', 'sprinklr');
+  sign(-5.97, 2.6, -19.6, Math.PI / 2, '02', 'nftx');
+  sign(-5.97, 2.6, -48.5, Math.PI / 2, '03', 'okx');
+  sign(5.97, 2.6, -61.6, -Math.PI / 2, '04', 'onepay');
+  /* final screen */
+  (function () {
+    var c = document.createElement('canvas'); c.width = 1024; c.height = 512;
+    var t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding;
+    function draw() {
+      var g = c.getContext('2d');
+      g.fillStyle = '#0f1d18'; g.fillRect(0, 0, 1024, 512);
+      g.fillStyle = C.ok; g.font = '500 34px "IBM Plex Mono", monospace'; g.fillText('ALL TESTS PASSED · CURRENT', 60, 90);
+      g.fillStyle = '#f4f6f8'; g.font = '800 150px Archivo, "Arial Black", sans-serif'; g.fillText('ONEPAY', 52, 270);
+      g.font = '400 40px "IBM Plex Sans", sans-serif'; g.fillStyle = '#c9e9dc'; g.fillText('Leading OnePay Crypto design.', 60, 360);
+      g.fillStyle = C.ok; g.fillRect(60, 410, 900, 6);
+      t.needsUpdate = true;
+    }
+    draw(); signTexs.push(draw);
+    var m = new THREE.Mesh(new THREE.PlaneGeometry(6, 3), new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.9, roughness: 0.3 }));
+    m.position.set(0, 3.2, -79.97); scene.add(m);
+  })();
+
+  /* ---------- doors + reset fields ---------- */
+  var DOORS = [];
+  function door(x0, x1, y0, y1, zc) {
+    var b = addBox(x0, y0, zc - 0.12, x1, y1, zc + 0.12, MAT.door, { cast: true });
+    var lamp = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0 + 0.2, 0.1, 0.05), new THREE.MeshStandardMaterial({ color: C.stop, emissive: C.stop, emissiveIntensity: 1.6 }));
+    lamp.position.set((x0 + x1) / 2, y1 + 0.18, zc + 0.27);
+    scene.add(lamp);
+    var d = { b: b, y0: y0, h: y1 - y0, open: false, t: 0, lamp: lamp };
+    DOORS.push(d); return d;
+  }
+  var D1 = door(-1.5, 1.5, 0, 3, -14.2);
+  var D2 = door(1.5, 4.5, 4, 7, -34.2);
+  var D3 = door(-1.5, 1.5, 0, 3, -56.2);
+  var FIELDS = [-16, -37.2, -58].map(function (z, i) {
+    var x0 = i === 1 ? 1.5 : -1.5, x1 = i === 1 ? 4.5 : 1.5;
+    var yb = i === 1 ? 2 : 0, h = i === 1 ? 5 : 3.5;
+    var m = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0, h), new THREE.MeshBasicMaterial({ color: 0x9fd8ff, transparent: true, opacity: 0.12, depthWrite: false, side: THREE.DoubleSide }));
+    m.position.set((x0 + x1) / 2, yb + h / 2, z); scene.add(m);
+    return { z: z, m: m };
+  });
+
+  /* ---------- cube + button ---------- */
+  var cubeMesh = (function () {
+    var g = new THREE.Group();
+    var body = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.62, 0.62), new THREE.MeshStandardMaterial({ color: C.cube, roughness: 0.45, metalness: 0.3 }));
+    body.castShadow = true; body.receiveShadow = true; g.add(body);
+    var bandMat = new THREE.MeshStandardMaterial({ color: C['cube-band'], roughness: 0.5, metalness: 0.4 });
+    [[0.64, 0.16, 0.64], [0.16, 0.64, 0.64], [0.64, 0.64, 0.16]].forEach(function (s) { var b = new THREE.Mesh(new THREE.BoxGeometry(s[0], s[1], s[2]), bandMat); g.add(b); });
+    var core = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 12), new THREE.MeshStandardMaterial({ color: C.b, emissive: C.b, emissiveIntensity: 1.2 }));
+    [[0.33, 0, 0], [-0.33, 0, 0], [0, 0, 0.33], [0, 0, -0.33], [0, 0.33, 0], [0, -0.33, 0]].forEach(function (p) { var cc = core.clone(); cc.position.set(p[0], p[1], p[2]); cc.scale.setScalar(0.55); g.add(cc); });
+    scene.add(g);
+    return g;
+  })();
+  var CUBE_HOME = [-4.5, 3, -44];
+  var cube = { x: CUBE_HOME[0], y: CUBE_HOME[1], z: CUBE_HOME[2], vx: 0, vy: 0, vz: 0, held: false, s: 0.31 };
+  var BUTTON = { x: 3, z: -50, r: 0.75, pressed: false, t: 0 };
+  var btnBase = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.1, 0.12, 32), MAT.metal); btnBase.position.set(BUTTON.x, 0.06, BUTTON.z); btnBase.receiveShadow = true; scene.add(btnBase);
+  var btnRingMat = new THREE.MeshStandardMaterial({ color: C.stop, emissive: C.stop, emissiveIntensity: 1.4 });
+  var btnRing = new THREE.Mesh(new THREE.TorusGeometry(0.86, 0.04, 8, 40), btnRingMat); btnRing.rotation.x = Math.PI / 2; btnRing.position.set(BUTTON.x, 0.13, BUTTON.z); scene.add(btnRing);
+  var btnPlate = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.75, 0.12, 32), new THREE.MeshStandardMaterial({ color: '#d0d4da', roughness: 0.4, metalness: 0.5 })); btnPlate.position.set(BUTTON.x, 0.16, BUTTON.z); btnPlate.receiveShadow = true; scene.add(btnPlate);
+  /* cube dropper pipe above the shelf */
+  var pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 2.4, 20, 1, true), new THREE.MeshStandardMaterial({ color: '#cfd3da', roughness: 0.3, metalness: 0.2, transparent: true, opacity: 0.35, side: THREE.DoubleSide }));
+  pipe.position.set(CUBE_HOME[0], 4.8, CUBE_HOME[2]); scene.add(pipe);
+
+  /* ---------- portals ---------- */
+  var PORTAL_HW = 0.62, PORTAL_HH = 1.08;
+  var portalVS = 'varying vec2 vUv; void main(){ vUv = uv; vec4 mv = modelViewMatrix * vec4(position,1.0); gl_Position = projectionMatrix * mv; }';
+  var portalFS = [
+    'uniform sampler2D map; uniform vec2 res; uniform vec3 color; uniform float time; uniform float linked; uniform float open;',
+    'varying vec2 vUv;',
+    'void main(){',
+    '  vec2 p = vUv * 2.0 - 1.0; float r = length(p);',
+    '  float edge = 1.0 + 0.01 * sin(atan(p.y, p.x) * 6.0 + time * 3.0);',
+    '  if (r > edge) discard;',
+    '  vec3 col;',
+    '  if (linked > 0.5) { col = texture2D(map, gl_FragCoord.xy / res).rgb; }',
+    '  else { float a = atan(p.y, p.x); float sw = 0.5 + 0.5 * sin(a * 3.0 + r * 9.0 - time * 3.0); col = mix(color * 0.12, color * 0.55, sw * (1.0 - r * 0.6)); }',
+    '  float rim = smoothstep(0.86, 0.99, r / edge);',
+    '  col = mix(col, color * 1.25 + 0.15, rim);',
+    '  gl_FragColor = vec4(col, 1.0);',
+    '}'
+  ].join('\n');
+  function makePortal(id, color) {
+    var rt = new THREE.WebGLRenderTarget(4, 4, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter });
+    rt.texture.encoding = THREE.sRGBEncoding;
+    var mat = new THREE.ShaderMaterial({
+      uniforms: { map: { value: rt.texture }, res: { value: new THREE.Vector2(1, 1) }, color: { value: new THREE.Color(color) }, time: { value: 0 }, linked: { value: 0 }, open: { value: 1 } },
+      vertexShader: portalVS, fragmentShader: portalFS
+    });
+    var group = new THREE.Group();
+    var surface = new THREE.Mesh(new THREE.PlaneGeometry(PORTAL_HW * 2, PORTAL_HH * 2), mat);
+    group.add(surface);
+    group.visible = false;
+    scene.add(group);
+    var light = new THREE.PointLight(new THREE.Color(color), 0.0, 5, 2);
+    light.position.set(0, -50, 0); scene.add(light); /* always in the scene so showing a portal never recompiles shaders */
+    return { id: id, color: color, rt: rt, mat: mat, group: group, surface: surface, light: light, placed: false, panel: null, inv: new THREE.Matrix4(), ry: 0, n: new THREE.Vector3(), pos: new THREE.Vector3(), wallBoxes: [], prevZ: 1, grow: 0 };
+  }
+  var PA = makePortal('a', C.a), PB = makePortal('b', C.b);
+  function other(p) { return p === PA ? PB : PA; }
+  var portalsPlaced = 0;
+
+  function clearPortals() {
+    [PA, PB].forEach(function (p) { p.placed = false; p.group.visible = false; p.panel = null; p.light.intensity = 0; p.light.position.set(0, -50, 0); });
+    syncCross();
+  }
+
+  /* ---------- raycasting ---------- */
+  function rayBox(ox, oy, oz, dx, dy, dz, b) {
+    var tmin = -Infinity, tmax = Infinity, nAxis = -1, nSign = 0;
+    var o = [ox, oy, oz], d = [dx, dy, dz], mn = [b.x0, b.y0, b.z0], mx = [b.x1, b.y1, b.z1];
+    for (var a = 0; a < 3; a++) {
+      if (Math.abs(d[a]) < 1e-9) { if (o[a] < mn[a] || o[a] > mx[a]) return null; continue; }
+      var t1 = (mn[a] - o[a]) / d[a], t2 = (mx[a] - o[a]) / d[a], s = -1;
+      if (t1 > t2) { var tt = t1; t1 = t2; t2 = tt; s = 1; }
+      if (t1 > tmin) { tmin = t1; nAxis = a; nSign = s; }
+      if (t2 < tmax) tmax = t2;
+      if (tmin > tmax) return null;
+    }
+    if (tmax < 0 || tmin < 0) return null;
+    return { t: tmin, axis: nAxis, s: nSign };
+  }
+  function castRay(o, d, maxT, forShot) {
+    var best = null;
+    for (var i = 0; i < BOXES.length; i++) {
+      var b = BOXES[i];
+      if (!b.on || !b.solid) continue;
+      if (forShot && !b.shoot) continue;
+      var h = rayBox(o.x, o.y, o.z, d.x, d.y, d.z, b);
+      if (h && h.t < maxT && (!best || h.t < best.t)) { best = h; best.b = b; }
+    }
+    return best;
+  }
+
+  var tmpV = new THREE.Vector3(), tmpV2 = new THREE.Vector3(), tmpM = new THREE.Matrix4(), tmpM2 = new THREE.Matrix4();
+  var R180 = new THREE.Matrix4().makeRotationY(Math.PI);
+
+  function shoot(p) {
+    eye(); var o = EYE_O.clone(), d = EYE_D.clone();
+    var h = castRay(o, d, 80, true);
+    flashCross(p);
+    if (!h) { hintNow('Nothing to hit there.'); return; }
+    var hit = o.clone().addScaledVector(d, h.t);
+    var axisName = h.axis === 0 ? 'x' : h.axis === 2 ? 'z' : 'y';
+    var pan = null;
+    for (var i = 0; i < PANELS.length; i++) {
+      var q = PANELS[i];
+      if (q.axis !== axisName || q.s !== h.s) continue;
+      var coord = axisName === 'x' ? hit.x : hit.z, u = axisName === 'x' ? hit.z : hit.x;
+      if (Math.abs(coord - q.face) > 0.08) continue;
+      if (u < q.u0 - 0.05 || u > q.u1 + 0.05 || hit.y < q.y0 - 0.05 || hit.y > q.y1 + 0.05) continue;
+      pan = q; break;
+    }
+    if (!pan) { sparkAt(hit, h); hintNow('Portals only stick to white panels.'); return; }
+    if (pan.u1 - pan.u0 < PORTAL_HW * 2 || pan.y1 - pan.y0 < PORTAL_HH * 2) { hintNow('That panel is too small.'); return; }
+    var uu = clamp(axisName === 'x' ? hit.z : hit.x, pan.u0 + PORTAL_HW + 0.02, pan.u1 - PORTAL_HW - 0.02);
+    var yy = clamp(hit.y, pan.y0 + PORTAL_HH + 0.02, pan.y1 - PORTAL_HH - 0.02);
+    /* snap to the panel's bottom edge when close, so portals meet the floor and can be walked into */
+    if (yy - PORTAL_HH < pan.y0 + 1.2) yy = pan.y0 + PORTAL_HH + 0.02;
+    var op = other(p);
+    if (op.placed && op.panel === pan) {
+      var ou = axisName === 'x' ? op.pos.z : op.pos.x;
+      if (Math.abs(ou - uu) < PORTAL_HW * 2 + 0.05 && Math.abs(op.pos.y - yy) < PORTAL_HH * 2) {
+        /* slide away from the other portal if there is room */
+        var tryU = ou + (uu >= ou ? 1 : -1) * (PORTAL_HW * 2 + 0.06);
+        if (tryU >= pan.u0 + PORTAL_HW && tryU <= pan.u1 - PORTAL_HW) uu = tryU; else { hintNow('No room next to the other portal.'); return; }
+      }
+    }
+    placePortal(p, pan, uu, yy);
+  }
+  function placePortal(p, pan, uu, yy) {
+    var nx = pan.axis === 'x' ? pan.s : 0, nz = pan.axis === 'z' ? pan.s : 0;
+    p.n.set(nx, 0, nz);
+    if (pan.axis === 'x') p.pos.set(pan.face + nx * 0.006, yy, uu); else p.pos.set(uu, yy, pan.face + nz * 0.006);
+    p.ry = Math.atan2(nx, nz);
+    p.group.position.copy(p.pos); p.group.rotation.set(0, p.ry, 0);
+    p.group.updateMatrixWorld(true);
+    p.inv.copy(p.group.matrixWorld).invert();
+    p.panel = pan; p.placed = true; p.group.visible = true; p.grow = 0;
+    p.light.position.copy(p.pos).addScaledVector(p.n, 0.6);
+    p.bottom = yy - PORTAL_HH; p.top = yy + PORTAL_HH;
+    /* wall boxes directly behind this portal */
+    p.wallBoxes = [];
+    var bx = p.pos.x - nx * 0.25, bz = p.pos.z - nz * 0.25;
+    BOXES.forEach(function (b) {
+        var inPlane = pan.axis === 'x' ? (bx >= b.x0 - 0.01 && bx <= b.x1 + 0.01) : (bz >= b.z0 - 0.01 && bz <= b.z1 + 0.01);
+      if (!inPlane) return;
+      var uMin = (pan.axis === 'x' ? uu : uu) - PORTAL_HW, uMax = uu + PORTAL_HW;
+      var b0 = pan.axis === 'x' ? b.z0 : b.x0, b1 = pan.axis === 'x' ? b.z1 : b.x1;
+      if (b1 < uMin || b0 > uMax) return;
+      if (b.y1 < p.bottom || b.y0 > p.top) return;
+      p.wallBoxes.push(b);
+    });
+    p.prevZ = 1;
+    portalsPlaced++;
+    syncCross();
+    if (PA.placed && PB.placed) hintNow('Portals linked. Walk through.');
+  }
+
+  /* sparks for missed shots */
+  var sparks = [];
+  function sparkAt(hit, h) {
+    var nrm = [0, 0, 0]; nrm[h.axis] = h.s;
+    for (var i = 0; i < 8; i++) {
+      var m = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.04), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+      m.position.copy(hit);
+      m.userData = { v: new THREE.Vector3(nrm[0] * 2 + (Math.random() - 0.5) * 3, nrm[1] * 2 + Math.random() * 2, nrm[2] * 2 + (Math.random() - 0.5) * 3), life: 0.35 };
+      scene.add(m); sparks.push(m);
+    }
+  }
+
+  /* ---------- player ---------- */
+  var P = { x: 0, y: 0, z: -2.5, vx: 0, vy: 0, vz: 0, on: true, yaw: 0, pitch: 0, R: 0.3, H: 1.75, EYE: 1.62, bob: 0 };
+  var G = 20, JUMP = 6.4, SPEED = 4.8, STEP = 0.36;
+  function portalPass(p) {
+    if (!(PA.placed && PB.placed)) return false;
+    tmpV.set(P.x, P.y + 0.9, P.z).applyMatrix4(p.inv);
+    return Math.abs(tmpV.x) < PORTAL_HW - 0.06 && P.y >= p.bottom - 0.5 && P.y + P.H <= p.top + 0.45 && tmpV.z < 0.9 && tmpV.z > -0.9;
+  }
+  function resolveWalls(body, R, H) {
+    var skip = [];
+    if (body === P) { [PA, PB].forEach(function (p) { if (portalPass(p)) skip = skip.concat(p.wallBoxes); }); }
+    for (var pass = 0; pass < 2; pass++) {
+      for (var i = 0; i < BOXES.length; i++) {
+        var b = BOXES[i];
+        if (!b.on || !b.solid || skip.indexOf(b) >= 0) continue;
+        if (b.y1 <= body.y + STEP || b.y0 >= body.y + H) continue;
+        var cx = clamp(body.x, b.x0, b.x1), cz = clamp(body.z, b.z0, b.z1);
+        var dx = body.x - cx, dz = body.z - cz, d2 = dx * dx + dz * dz;
+        if (d2 >= R * R) continue;
+        if (d2 > 1e-9) {
+          var d = Math.sqrt(d2), nx = dx / d, nz = dz / d, push = R - d;
+          body.x += nx * push; body.z += nz * push;
+          var vn = body.vx * nx + body.vz * nz; if (vn < 0) { body.vx -= vn * nx; body.vz -= vn * nz; }
+        } else {
+          var l = body.x - b.x0, r = b.x1 - body.x, f = body.z - b.z0, k = b.z1 - body.z, m = Math.min(l, r, f, k);
+          if (m === l) body.x = b.x0 - R; else if (m === r) body.x = b.x1 + R; else if (m === f) body.z = b.z0 - R; else body.z = b.z1 + R;
+        }
+      }
+    }
+  }
+  function floorAt(x, z, maxY, R) {
+    var best = -60;
+    for (var i = 0; i < BOXES.length; i++) {
+      var b = BOXES[i];
+      if (!b.on || !b.solid) continue;
+      if (x >= b.x0 - R && x <= b.x1 + R && z >= b.z0 - R && z <= b.z1 + R && b.y1 <= maxY + 0.001 && b.y1 > best) best = b.y1;
+    }
+    return best;
+  }
+  function ceilAt(x, z, minY) {
+    var best = 1e9;
+    for (var i = 0; i < BOXES.length; i++) {
+      var b = BOXES[i];
+      if (!b.on || !b.solid) continue;
+      if (x >= b.x0 && x <= b.x1 && z >= b.z0 && z <= b.z1 && b.y0 >= minY - 0.001 && b.y0 < best) best = b.y0;
+    }
+    return best;
+  }
+
+  /* the player's eye and view direction, independent of when the last frame was drawn */
+  var EYE_O = new THREE.Vector3(), EYE_D = new THREE.Vector3();
+  function eye() {
+    EYE_O.set(P.x, P.y + P.EYE, P.z);
+    var cp = Math.cos(P.pitch);
+    EYE_D.set(-Math.sin(P.yaw) * cp, Math.sin(P.pitch), -Math.cos(P.yaw) * cp);
+  }
+  function teleport(src, dst) {
+    tmpM.copy(dst.group.matrixWorld).multiply(R180).multiply(src.inv);
+    tmpV.set(P.x, P.y, P.z).applyMatrix4(tmpM);
+    var dAng = dst.ry + Math.PI - src.ry;
+    var c = Math.cos(dAng), s = Math.sin(dAng);
+    var vx = P.vx * c + P.vz * s, vz = -P.vx * s + P.vz * c;
+    P.x = tmpV.x + dst.n.x * 0.06; P.y = tmpV.y; P.z = tmpV.z + dst.n.z * 0.06;
+    P.vx = vx; P.vz = vz;
+    P.yaw += dAng;
+    dst.prevZ = 1; src.prevZ = 1;
+    /* exit portal sits high on a wall: keep the player inside the opening */
+    if (P.y < dst.bottom) P.y = dst.bottom;
+    P.on = false;
+  }
+  function checkTeleport() {
+    if (!(PA.placed && PB.placed)) return;
+    var pairs = [[PA, PB], [PB, PA]];
+    for (var i = 0; i < 2; i++) {
+      var src = pairs[i][0], dst = pairs[i][1];
+      tmpV.set(P.x, P.y + 0.9, P.z).applyMatrix4(src.inv);
+      var inside = Math.abs(tmpV.x) < PORTAL_HW - 0.04 && P.y >= src.bottom - 0.5 && P.y + P.H <= src.top + 0.45;
+      if (inside && src.prevZ > 0 && tmpV.z <= 0) { teleport(src, dst); return; }
+      src.prevZ = tmpV.z;
+    }
+  }
+
+  /* ---------- chambers ---------- */
+  var CH = [
+    { role: 'sprinklr', spawn: [0, 0, -2.5, 0], hint: 'The exit is behind the glass. Portal shots pass straight through it.', done: false },
+    { role: 'nftx', spawn: [0, 0, -20, 0], hint: 'The exit is on the ledge. Look up at the wall above it.', done: false },
+    { role: 'okx', spawn: [3, 0, -41.5, 0], hint: 'The door needs weight on the button. The cube is up on the shelf.', done: false },
+    { role: 'onepay', spawn: [0, 0, -61.5, 0], hint: 'Too far to jump. Link the panels on either side of the gap.', done: false }
+  ];
+  var chamber = 0, completed = 0, started = false, startTime = 0, finaleShown = false;
+  function chamberOf(z) { return z > -16 ? 0 : z > -37.2 ? 1 : z > -58 ? 2 : 3; }
+  var roleEl = document.getElementById('role'), roleE = document.getElementById('role-eyebrow'), roleT = document.getElementById('role-title'), roleD = document.getElementById('role-desc');
+  var roleTimer = 0;
+  function complete(i) {
+    var c = CH[i];
+    if (c.done) return;
+    c.done = true; completed++;
+    var r = ROLES[c.role];
+    roleEl.style.borderTopColor = i % 2 ? C.b : C.a;
+    roleE.textContent = 'Test ' + r.n + ' passed · ' + r.period;
+    roleT.textContent = r.period + ' → ' + r.name;
+    roleD.innerHTML = r.desc + (r.url ? ' <a href="' + r.url + '" target="_blank" rel="noopener">Visit ↗</a>' : '');
+    roleEl.hidden = false; roleEl.style.animation = 'none'; void roleEl.offsetWidth; roleEl.style.animation = '';
+    roleTimer = 7;
+    var row = document.querySelector('.row[data-id="' + c.role + '"]');
+    if (row) { row.setAttribute('data-on', 'true'); row.querySelector('.state').textContent = 'Passed'; }
+    if (i === 3) setTimeout(showFinale, 1600);
+  }
+  function showFinale() {
+    if (finaleShown) return; finaleShown = true;
+    var secs = Math.round((performance.now() - startTime) / 1000);
+    document.getElementById('fin-desc').innerHTML = 'Four tests, ' + portalsPlaced + ' portals, ' + Math.floor(secs / 60) + ' min ' + (secs % 60) + ' s. That is the whole career so far. Say hi at <a href="mailto:justin.bleich@gmail.com">justin.bleich@gmail.com</a>.';
+    document.getElementById('finale').hidden = false;
+    unlock();
+  }
+  document.getElementById('fin-close').addEventListener('click', function () { document.getElementById('finale').hidden = true; try { canvas.focus({ preventScroll: true }); } catch (e) {} });
+
+  var hintEl = document.getElementById('hint'), hintTimer = 0;
+  function hintNow(msg) { hintEl.textContent = msg; hintTimer = 2.6; }
+  function baseHint() {
+    var c = CH[chamber];
+    if (c.done) return chamber === 3 ? 'Every test passed.' : 'Test passed. Head through the door.';
+    if (chamber === 2 && cube.held) return 'Bring the cube back through a portal and drop it on the button (E).';
+    if (!PA.placed) return chamber === 0 ? 'Place portal A on a white panel (left click or 1).' : c.hint;
+    if (!PB.placed) return chamber === 0 ? 'Now place portal B on the panel behind the glass (right click or 2).' : c.hint;
+    return c.hint;
+  }
+
+  function respawn() {
+    var s = CH[chamber].spawn;
+    P.x = s[0]; P.y = s[1]; P.z = s[2]; P.yaw = s[3]; P.pitch = 0; P.vx = P.vy = P.vz = 0;
+    if (cube.held && chamber !== 2) cube.held = false;
+    flash(0.5);
+  }
+  var flashEl = document.getElementById('flash'), flashT = 0;
+  function flash(t) { if (reduce) return; flashT = t; }
+
+  /* ---------- crosshair ---------- */
+  var xa = document.getElementById('xa'), xb = document.getElementById('xb');
+  function syncCross() {
+    xa.setAttribute('stroke', C.a); xb.setAttribute('stroke', C.b);
+    xa.setAttribute('stroke-opacity', PA.placed ? '1' : '0.35');
+    xb.setAttribute('stroke-opacity', PB.placed ? '1' : '0.35');
+  }
+  function flashCross(p) { var el = p === PA ? xa : xb; el.setAttribute('stroke-width', '4.5'); setTimeout(function () { el.setAttribute('stroke-width', '3'); }, 120); }
+
+  /* ---------- input ---------- */
+  var keys = { f: 0, b: 0, l: 0, r: 0 };
+  var jumpQueued = false;
+  var stick = { x: 0, y: 0 };
+  var comfort = false;
+  var KM = { KeyW: 'f', ArrowUp: 'f', KeyS: 'b', ArrowDown: 'b', KeyA: 'l', ArrowLeft: 'l', KeyD: 'r', ArrowRight: 'r' };
+  function locked() { return document.pointerLockElement === canvas; }
+  function inView() { var r = frame.getBoundingClientRect(); return r.bottom > 60 && r.top < innerHeight - 60; }
+  function look(dx, dy) {
+    var sens = comfort ? 0.0016 : 0.0023;
+    P.yaw -= dx * sens; P.pitch = clamp(P.pitch - dy * sens, -1.45, 1.45);
+  }
+  window.addEventListener('keydown', function (e) {
+    var t = e.target;
+    var typing = t && t !== canvas && t !== document.body && /^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/.test(t.tagName);
+    if (typing || !started) return;
+    if (!locked() && t !== canvas && !inView()) return;
+    var k = KM[e.code];
+    if (k) { keys[k] = 1; e.preventDefault(); return; }
+    if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) jumpQueued = true; }
+    else if (e.code === 'Digit1' || e.code === 'KeyQ') { e.preventDefault(); shoot(PA); }
+    else if (e.code === 'Digit2') { e.preventDefault(); shoot(PB); }
+    else if (e.code === 'KeyE' || e.code === 'KeyF') { e.preventDefault(); use(); }
+  });
+  window.addEventListener('keyup', function (e) { var k = KM[e.code]; if (k) keys[k] = 0; });
+  window.addEventListener('blur', function () { keys.f = keys.b = keys.l = keys.r = 0; });
+
+  var drag = null;
+  canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  canvas.addEventListener('pointerdown', function (e) {
+    if (!started) return;
+    try { canvas.focus({ preventScroll: true }); } catch (err) {}
+    if (locked()) { if (e.button === 0) shoot(PA); else if (e.button === 2) shoot(PB); return; }
+    drag = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: 0, button: e.button, touch: e.pointerType === 'touch' };
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  canvas.addEventListener('pointermove', function (e) {
+    if (locked()) return;
+    if (!drag || drag.id !== e.pointerId) return;
+    var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    drag.moved += Math.abs(dx) + Math.abs(dy);
+    look(dx * (drag.touch ? 1.6 : 1), dy * (drag.touch ? 1.6 : 1));
+    drag.x = e.clientX; drag.y = e.clientY;
+  });
+  canvas.addEventListener('pointerup', function (e) {
+    if (!drag || drag.id !== e.pointerId) return;
+    var d = drag; drag = null;
+    if (d.moved < 6 && !d.touch) {
+      if (d.button === 2) shoot(PB);
+      else { shoot(PA); tryLock(); }
+    }
+  });
+  canvas.addEventListener('pointercancel', function () { drag = null; });
+  document.addEventListener('mousemove', function (e) { if (locked()) look(e.movementX || 0, e.movementY || 0); });
+  function tryLock() { if (coarse || locked()) return; try { var r = canvas.requestPointerLock && canvas.requestPointerLock(); if (r && r.catch) r.catch(function () {}); } catch (e) {} }
+  function unlock() { try { if (locked()) document.exitPointerLock(); } catch (e) {} }
+
+  /* touch stick + buttons */
+  var stickEl = document.getElementById('stick'), knob = document.getElementById('knob'), stickId = null;
+  function stickMove(e) {
+    var r = stickEl.getBoundingClientRect(), max = r.width * 0.36;
+    var dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+    var d = Math.sqrt(dx * dx + dy * dy); if (d > max) { dx *= max / d; dy *= max / d; }
+    knob.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+    stick.x = dx / max; stick.y = -dy / max;
+  }
+  stickEl.addEventListener('pointerdown', function (e) { e.preventDefault(); stickId = e.pointerId; try { stickEl.setPointerCapture(e.pointerId); } catch (err) {} stickMove(e); });
+  stickEl.addEventListener('pointermove', function (e) { if (e.pointerId === stickId) stickMove(e); });
+  function stickEnd(e) { if (e.pointerId !== stickId) return; stickId = null; stick.x = stick.y = 0; knob.style.transform = ''; }
+  stickEl.addEventListener('pointerup', stickEnd); stickEl.addEventListener('pointercancel', stickEnd);
+  Array.prototype.forEach.call(document.querySelectorAll('.tbtns button'), function (btn) {
+    var k = btn.getAttribute('data-k');
+    btn.addEventListener('pointerdown', function (e) {
+      e.preventDefault(); btn.setAttribute('data-on', 'true');
+      if (!started) return;
+      if (k === 'a') shoot(PA); else if (k === 'b') shoot(PB); else if (k === 'use') use(); else if (k === 'jump') jumpQueued = true;
+    });
+    function up() { btn.removeAttribute('data-on'); }
+    btn.addEventListener('pointerup', up); btn.addEventListener('pointercancel', up);
+    btn.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  });
+
+  document.getElementById('comfort').addEventListener('change', function (e) { comfort = e.target.checked; });
+  if (reduce) { comfort = true; document.getElementById('comfort').checked = true; }
+  document.getElementById('start-btn').addEventListener('click', function () {
+    document.getElementById('start').hidden = true;
+    started = true; startTime = performance.now();
+    try { canvas.focus({ preventScroll: true }); } catch (e) {}
+    tryLock();
+  });
+
+  /* ---------- cube ---------- */
+  function use() {
+    if (cube.held) { cube.held = false; cube.vx = P.vx * 0.25; cube.vz = P.vz * 0.25; cube.vy = 0; hintNow('Dropped.'); return; }
+    eye(); var o = EYE_O, d = EYE_D;
+    var h = rayBox(o.x, o.y, o.z, d.x, d.y, d.z, { x0: cube.x - 0.4, y0: cube.y - 0.4, z0: cube.z - 0.4, x1: cube.x + 0.4, y1: cube.y + 0.4, z1: cube.z + 0.4 });
+    var wall = castRay(o, d, 3, false);
+    if (h && h.t < 2.8 && (!wall || wall.t > h.t)) { cube.held = true; hintNow('Got it. Press E again to drop.'); }
+    else hintNow('Nothing to pick up here.');
+  }
+  function updateCube(dt) {
+    if (cube.held) {
+      eye(); var d = EYE_D, o = EYE_O;
+      var reach = 1.35;
+      var w = castRay(o, d, reach + 0.4, false);
+      if (w) reach = Math.max(0.5, w.t - 0.42);
+      cube.x = o.x + d.x * reach; cube.y = Math.max(o.y + d.y * reach - 0.2, P.y + 0.32); cube.z = o.z + d.z * reach;
+      cube.vx = cube.vy = cube.vz = 0;
+      return;
+    }
+    var prevY = cube.y;
+    cube.vy -= G * dt;
+    cube.x += cube.vx * dt; cube.z += cube.vz * dt;
+    cube.vx *= 1 - Math.min(1, dt * 3); cube.vz *= 1 - Math.min(1, dt * 3);
+    var body = { x: cube.x, y: cube.y - cube.s, z: cube.z, vx: cube.vx, vz: cube.vz };
+    resolveWalls(body, 0.3, 0.62);
+    cube.x = body.x; cube.z = body.z; cube.vx = body.vx; cube.vz = body.vz;
+    cube.y += cube.vy * dt;
+    var fl = floorAt(cube.x, cube.z, prevY - cube.s + STEP, 0.15);
+    if (cube.y - cube.s <= fl) { cube.y = fl + cube.s; cube.vy = 0; }
+    if (cube.y < -5) { cube.x = CUBE_HOME[0]; cube.y = CUBE_HOME[1] + 1.5; cube.z = CUBE_HOME[2]; cube.vy = 0; hintNow('A fresh cube dropped onto the shelf.'); }
+  }
+
+  /* ---------- update ---------- */
+  var time = 0;
+  function step(dt) {
+    time += dt;
+    if (!started) return;
+    var ix = keys.r - keys.l + stick.x, iy = keys.f - keys.b + stick.y;
+    var mag = Math.sqrt(ix * ix + iy * iy); if (mag > 1) { ix /= mag; iy /= mag; }
+    var fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw), rx = Math.cos(P.yaw), rz = -Math.sin(P.yaw);
+    var wx = (fx * iy + rx * ix) * SPEED, wz = (fz * iy + rz * ix) * SPEED;
+    var acc = (P.on ? 38 : 10) * dt;
+    P.vx += clamp(wx - P.vx, -acc, acc); P.vz += clamp(wz - P.vz, -acc, acc);
+    if (jumpQueued && P.on) { P.vy = JUMP; P.on = false; }
+    jumpQueued = false;
+    P.vy -= G * dt; if (P.vy < -30) P.vy = -30;
+    P.x += P.vx * dt; P.z += P.vz * dt;
+    resolveWalls(P, P.R, P.H);
+    checkTeleport();
+    var prevY = P.y, wasOn = P.on;
+    P.y += P.vy * dt;
+    var fl = floorAt(P.x, P.z, prevY + STEP, 0.12);
+    if (P.y <= fl) { P.y = fl; if (P.vy < 0) P.vy = 0; P.on = true; }
+    else if (wasOn && P.vy <= 0 && prevY - fl <= 0.4) { P.y = fl; P.vy = 0; P.on = true; }
+    else P.on = false;
+    var cl = ceilAt(P.x, P.z, prevY + P.H - 0.05);
+    if (P.y + P.H > cl && P.vy > 0) { P.y = cl - P.H; P.vy = 0; }
+    if (P.y < -4) respawn();
+    if (P.on && Math.abs(P.vx) + Math.abs(P.vz) > 1) P.bob += dt * 9;
+
+    /* reset fields */
+    var nc = chamberOf(P.z);
+    if (nc !== chamber) {
+      if (nc > chamber) { clearPortals(); hintNow('Reset field. Portals cleared.'); if (cube.held && nc !== 2) cube.held = false; }
+      chamber = nc;
+    }
+
+    /* chamber completion */
+    if (!CH[0].done && P.z < -10.4) complete(0);
+    if (!CH[1].done && P.y > 3.5 && P.z < -28.6 && P.z > -34) complete(1);
+    var cubeOn = !cube.held && Math.hypot(cube.x - BUTTON.x, cube.z - BUTTON.z) < BUTTON.r + 0.3 && cube.y < 0.9;
+    var playerOn = P.on && P.y < 0.4 && Math.hypot(P.x - BUTTON.x, P.z - BUTTON.z) < BUTTON.r;
+    if (cubeOn || playerOn) BUTTON.t = 0.6; else BUTTON.t = Math.max(0, BUTTON.t - dt);
+    BUTTON.pressed = BUTTON.t > 0;
+    if (cubeOn && !CH[2].done) complete(2);
+    if (playerOn && !cubeOn && !CH[2].done && hintTimer <= 0) hintNow('The door opens while you stand here. The cube can hold it for you.');
+    if (!CH[3].done && P.z < -74.3 && P.y > -0.5) complete(3);
+
+    D1.open = CH[0].done; D2.open = CH[1].done;
+    var inD3 = P.z < -55.6 && P.z > -56.8 && Math.abs(P.x) < 1.6;
+    D3.open = BUTTON.pressed || (D3.t > 0.3 && inD3);
+    DOORS.forEach(function (d) {
+      d.t = clamp(d.t + (d.open ? dt : -dt) / 0.8, 0, 1);
+      d.b.on = d.t < 0.85;
+      d.b.mesh.position.y = d.y0 + d.h / 2 + d.t * (d.h - 0.05);
+      d.lamp.material.color.set(d.open ? C.ok : C.stop); d.lamp.material.emissive.set(d.open ? C.ok : C.stop);
+    });
+    btnPlate.position.y = BUTTON.pressed ? 0.1 : 0.16;
+    btnRingMat.color.set(BUTTON.pressed ? C.ok : C.stop); btnRingMat.emissive.set(BUTTON.pressed ? C.ok : C.stop);
+
+    updateCube(dt);
+    for (var i = sparks.length - 1; i >= 0; i--) {
+      var s = sparks[i]; s.userData.life -= dt; s.userData.v.y -= 9 * dt; s.position.addScaledVector(s.userData.v, dt);
+      if (s.userData.life <= 0) { scene.remove(s); sparks.splice(i, 1); }
+    }
+    if (roleTimer > 0) { roleTimer -= dt; if (roleTimer <= 0) roleEl.hidden = true; }
+    if (hintTimer > 0) hintTimer -= dt;
+    if (flashT > 0) flashT -= dt;
+  }
+
+  /* ---------- render ---------- */
+  var vcam = new THREE.PerspectiveCamera();
+  var clipPlane = new THREE.Plane();
+  var frustum = new THREE.Frustum(), projView = new THREE.Matrix4();
+  var dbSize = new THREE.Vector2();
+  var pixelRatio = Math.min(window.devicePixelRatio || 1, 1.75), maxRatio = pixelRatio, RT_SCALE = 0.7;
+  function sizeRTs() {
+    renderer.getDrawingBufferSize(dbSize);
+    [PA, PB].forEach(function (p) { p.rt.setSize(Math.max(2, Math.round(dbSize.x * RT_SCALE)), Math.max(2, Math.round(dbSize.y * RT_SCALE))); p.mat.uniforms.res.value.copy(dbSize); });
+  }
+  function renderPortal(src, dst) {
+    tmpM.copy(dst.group.matrixWorld).multiply(R180).multiply(src.inv).multiply(camera.matrixWorld);
+    tmpM.decompose(vcam.position, vcam.quaternion, vcam.scale);
+    vcam.projectionMatrix.copy(camera.projectionMatrix);
+    vcam.projectionMatrixInverse.copy(camera.projectionMatrixInverse);
+    clipPlane.setFromNormalAndCoplanarPoint(dst.n, tmpV2.copy(dst.pos).addScaledVector(dst.n, -0.02));
+    renderer.clippingPlanes = [clipPlane];
+    renderer.setRenderTarget(src.rt);
+    renderer.render(scene, vcam);
+  }
+  function render() {
+    var eyeBob = (!comfort && P.on) ? Math.sin(P.bob) * 0.035 : 0;
+    camera.position.set(P.x, P.y + P.EYE + eyeBob, P.z);
+    camera.rotation.set(P.pitch, P.yaw, 0);
+    camera.updateMatrixWorld();
+    sun.position.set(P.x + 7, 16, P.z + 9); sun.target.position.set(P.x, 0, P.z - 4); sun.target.updateMatrixWorld();
+    cubeMesh.position.set(cube.x, cube.y, cube.z);
+    cubeMesh.rotation.y = cube.held ? P.yaw : cubeMesh.rotation.y;
+    [PA, PB].forEach(function (p) {
+      p.mat.uniforms.time.value = time;
+      if (p.placed) { p.grow = Math.min(1, p.grow + 0.08); p.group.scale.set(p.grow, p.grow, 1); p.light.intensity = 0.9 * p.grow; }
+    });
+    renderer.shadowMap.needsUpdate = true;
+    var linked = PA.placed && PB.placed;
+    if (linked) {
+      projView.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+      frustum.setFromProjectionMatrix(projView);
+      PA.mat.uniforms.linked.value = 0; PB.mat.uniforms.linked.value = 0;
+      [[PA, PB], [PB, PA]].forEach(function (pair) {
+        var src = pair[0];
+        if (!frustum.intersectsObject(src.surface)) return;
+        tmpV.copy(camera.position).sub(src.pos);
+        if (tmpV.dot(src.n) < -0.05) return;
+        renderPortal(src, pair[1]);
+      });
+      renderer.clippingPlanes = [];
+      renderer.setRenderTarget(null);
+    }
+    PA.mat.uniforms.linked.value = linked ? 1 : 0; PB.mat.uniforms.linked.value = linked ? 1 : 0;
+    renderer.render(scene, camera);
+    flashEl.style.opacity = flashT > 0 ? String(flashT * 1.2) : '0';
+    if (hintTimer <= 0) { var bh = baseHint(); if (hintEl.textContent !== bh) hintEl.textContent = bh; }
+    document.getElementById('ch-num').textContent = ROLES[CH[chamber].role].n + ' / 04';
+  }
+
+  function resize() {
+    var w = frame.clientWidth || 360;
+    var h = Math.round(clamp(w * 0.58, 380, 640));
+    canvas.style.height = h + 'px';
+    renderer.setPixelRatio(pixelRatio);
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+    sizeRTs();
+  }
+
+  /* adaptive resolution */
+  var frameAvg = 1 / 60, adaptT = 0;
+  function adapt(dt) {
+    frameAvg += (dt - frameAvg) * 0.05;
+    adaptT += dt;
+    if (adaptT < 1.5) return;
+    if (frameAvg > 1 / 42 && pixelRatio > 0.6) { pixelRatio = Math.max(0.6, pixelRatio - 0.15); adaptT = 0; resize(); }
+    else if (frameAvg < 1 / 58 && pixelRatio < maxRatio) { pixelRatio = Math.min(maxRatio, pixelRatio + 0.1); adaptT = 0; resize(); }
+  }
+
+  var STEP_DT = 1 / 120, acc = 0, last = performance.now();
+  function loop(now) {
+    var dt = Math.min((now - last) / 1000, 0.05); last = now;
+    acc += dt;
+    while (acc >= STEP_DT) { step(STEP_DT); acc -= STEP_DT; }
+    render();
+    if (started) adapt(dt);
+    requestAnimationFrame(loop);
+  }
+
+  P.yaw = 0;
+  resize();
+  syncCross();
+  render();
+  if (window.ResizeObserver) new ResizeObserver(resize).observe(frame); else addEventListener('resize', resize);
+  if (document.fonts && document.fonts.load) {
+    Promise.all([document.fonts.load('800 64px Archivo'), document.fonts.load('500 30px "IBM Plex Mono"'), document.fonts.load('400 40px "IBM Plex Sans"')]).then(function () { signTexs.forEach(function (d) { d(); }); }, function () {});
+  }
+  requestAnimationFrame(function (t) { last = t; requestAnimationFrame(loop); });
+
+})();
+</script>
+</body>
+</html>

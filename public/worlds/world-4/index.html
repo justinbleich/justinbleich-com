@@ -1,0 +1,983 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>html, body { margin: 0; } img { max-width: 100%; } [hidden] { display: none !important; }</style>
+<title>Bleich GP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Russo+One&family=Barlow:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the race is the hero, framed like a broadcast screen with HUD corners. Checkered rule, then the plain list and contact. Single dark asphalt palette by choice. */
+:root {
+  --bg: #131419;
+  --surface: #1d1f27;
+  --fg: #f5f3ee;
+  --muted: #9a9cab;
+  --dim: #343746;
+  --orange: #ff6a2f;
+  --yellow: #ffd23f;
+  --rule: rgba(245, 243, 238, 0.12);
+
+  /* world palette */
+  --k-sky-top: #4fa8ff;
+  --k-sky-bot: #d6efff;
+  --k-grass: #5cb94a;
+  --k-grass-dark: #4ca33c;
+  --k-road: #4b4e59;
+  --k-line: #f5f3ee;
+  --k-curb-red: #e8453c;
+  --k-tree: #2f8f4a;
+  --k-trunk: #7a4a28;
+  --k-hill: #74c862;
+  --k-you: #ff6a2f;
+  --k-bit: #9a9aa0;
+  --k-64: #f2c14e;
+  --k-iso: #b29fc6;
+  --k-skin: #f4efe2;
+  --k-tire: #22232a;
+  --k-sprinklr: #f2c84b;
+  --k-nftx: #8d9bff;
+  --k-okx: #2b2a33;
+  --k-onepay: #3dbf8e;
+  --k-spark-1: #5fb4ff;
+
+  --f-display: "Russo One", "Arial Black", Impact, sans-serif;
+  --f-body: "Barlow", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --gutter: 1rem;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--f-body);
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  padding-inline: var(--gutter);
+  padding-block: 1.25rem 3rem;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration-color: var(--orange); text-underline-offset: 0.2em; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
+::selection { background: var(--orange); color: var(--bg); }
+
+.page { max-width: 68rem; margin-inline: auto; }
+.mono { font-family: var(--f-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.bar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 1.5rem; color: var(--muted); }
+
+.top { padding-block: clamp(1.5rem, 5vw, 2.75rem) 1.25rem; display: grid; gap: 0.5rem; }
+.eyebrow { margin: 0; color: var(--orange); }
+h1 {
+  margin: 0;
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: clamp(2.4rem, 8.5vw, 5.25rem);
+  line-height: 0.95;
+  font-style: italic;
+  transform: skewX(-8deg);
+  transform-origin: left bottom;
+  letter-spacing: 0.01em;
+  text-wrap: balance;
+}
+h1 span { color: var(--orange); }
+.sub { margin: 0.35rem 0 0; color: var(--muted); font-size: clamp(1.0625rem, 2vw, 1.25rem); max-width: 40rem; }
+.sub b { color: var(--fg); font-weight: 600; }
+.checker {
+  height: 10px;
+  background: repeating-conic-gradient(var(--fg) 0 25%, var(--bg) 0 50%) 0 0 / 10px 10px;
+  opacity: 0.9;
+}
+
+/* Race frame */
+.frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  background: linear-gradient(180deg, var(--k-sky-top), var(--k-sky-bot) 62%);
+}
+canvas { display: block; width: 100%; height: 520px; outline: none; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+
+.hud { position: absolute; inset: 0; pointer-events: none; font-family: var(--f-display); color: var(--fg); }
+.hud-tl { position: absolute; top: 0.8rem; left: 0.9rem; display: grid; gap: 0.15rem; text-shadow: 0 2px 0 rgba(0,0,0,0.45); }
+.pos { font-size: clamp(2rem, 6vw, 3.4rem); line-height: 1; font-style: italic; }
+.pos small { font-size: 0.45em; }
+.lap, .clock { font-size: clamp(0.95rem, 2.2vw, 1.25rem); line-height: 1.15; }
+.clock { font-variant-numeric: tabular-nums; }
+.standings { margin: 0.45rem 0 0; padding: 0; list-style: none; display: grid; gap: 0.15rem; font-family: var(--f-mono); font-size: 0.75rem; letter-spacing: 0.06em; text-shadow: none; }
+.standings li { display: flex; align-items: center; gap: 0.4rem; padding: 0.12rem 0.45rem; background: rgba(19, 20, 25, 0.55); border-radius: 4px; width: max-content; }
+.standings li[data-you="true"] { background: var(--orange); color: var(--bg); }
+.standings i { width: 0.55rem; height: 0.55rem; border-radius: 50%; display: inline-block; }
+.hud-tr { position: absolute; top: 0.8rem; right: 0.9rem; }
+.minimap { width: 140px; height: 140px; display: block; background: rgba(19, 20, 25, 0.45); border-radius: 10px; }
+.hud-br { position: absolute; right: 0.9rem; bottom: 0.8rem; text-align: right; text-shadow: 0 2px 0 rgba(0,0,0,0.45); }
+.speed { font-size: clamp(1.8rem, 5vw, 2.8rem); line-height: 1; font-style: italic; font-variant-numeric: tabular-nums; }
+.speed small { font-family: var(--f-mono); font-size: 0.75rem; font-style: normal; margin-left: 0.3rem; }
+.boostbar { margin-top: 0.35rem; width: 8rem; height: 6px; margin-left: auto; background: rgba(19,20,25,0.5); border-radius: 3px; overflow: hidden; }
+.boostbar i { display: block; height: 100%; width: 0%; background: var(--k-spark-1); transition: background-color 0.2s ease; }
+.count {
+  position: absolute; left: 50%; top: 38%; transform: translate(-50%, -50%) skewX(-8deg);
+  font-size: clamp(3rem, 12vw, 7rem); font-style: italic; color: var(--yellow);
+  text-shadow: 0 5px 0 rgba(0,0,0,0.4);
+}
+.toast-role {
+  position: absolute; right: 0.9rem; top: 50%; transform: translateY(-50%);
+  width: min(18rem, calc(100% - 1.8rem));
+  padding: 0.8rem 0.95rem 0.9rem;
+  background: rgba(19, 20, 25, 0.86);
+  border-left: 5px solid var(--orange);
+  border-radius: 6px;
+  font-family: var(--f-body);
+  pointer-events: auto;
+  animation: slide 0.35s ease both;
+}
+@keyframes slide { from { transform: translate(20px, -50%); opacity: 0; } to { transform: translateY(-50%); opacity: 1; } }
+.toast-role p { margin: 0; }
+.tr-eyebrow { color: var(--muted); }
+.tr-title { font-family: var(--f-display); font-size: 1.2rem; line-height: 1.2; margin-top: 0.15rem !important; }
+.tr-desc { color: #d3d2cf; font-size: 0.95rem; line-height: 1.4; margin-top: 0.3rem !important; }
+.tr-desc a { color: var(--fg); }
+
+.overlay {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  padding: 1rem;
+  background: rgba(19, 20, 25, 0.35);
+  pointer-events: auto;
+}
+.panel {
+  width: min(100%, 30rem);
+  max-height: calc(100% - 1rem);
+  overflow: auto;
+  padding: 1.25rem 1.35rem 1.35rem;
+  background: var(--surface);
+  border-radius: 10px;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+  display: grid; gap: 0.6rem;
+  font-family: var(--f-body);
+}
+.panel p { margin: 0; }
+.panel-title { font-family: var(--f-display); font-size: clamp(1.4rem, 4vw, 2rem); line-height: 1.1; font-style: italic; }
+.panel-desc { color: var(--muted); }
+.results { margin: 0.2rem 0 0; padding: 0; list-style: none; display: grid; gap: 0.3rem; font-variant-numeric: tabular-nums; }
+.results li { display: grid; grid-template-columns: 2rem 0.7rem minmax(0, 1fr) auto; align-items: center; gap: 0.6rem; padding: 0.35rem 0.55rem; border-radius: 6px; background: rgba(245,243,238,0.05); }
+.results li[data-you="true"] { background: rgba(255,106,47,0.18); }
+.results i { width: 0.7rem; height: 0.7rem; border-radius: 50%; display: inline-block; }
+.results b { font-family: var(--f-display); font-weight: 400; }
+.panel-actions { display: flex; flex-wrap: wrap; gap: 0.55rem; margin-top: 0.35rem; }
+.btn {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.6rem 1rem;
+  border: 1.5px solid var(--dim); border-radius: 999px;
+  background: transparent; cursor: pointer; text-decoration: none;
+  font-family: var(--f-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.btn:hover { border-color: var(--fg); }
+.btn.go { background: var(--orange); border-color: var(--orange); color: var(--bg); }
+.btn.go:hover { background: var(--yellow); border-color: var(--yellow); }
+
+.pad { display: none; position: absolute; inset: auto 0 0 0; padding: 0.8rem; justify-content: space-between; align-items: flex-end; pointer-events: none; }
+.pad-group { display: flex; gap: 0.6rem; }
+.pad button {
+  pointer-events: auto;
+  width: 4.2rem; height: 4.2rem; border-radius: 50%;
+  border: 2px solid rgba(245,243,238,0.7);
+  background: rgba(19,20,25,0.45);
+  font-family: var(--f-display); font-size: 0.85rem;
+  touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.pad button[data-on="true"] { background: var(--orange); border-color: var(--orange); color: var(--bg); }
+.pad .big { font-size: 1.4rem; }
+
+.fail { position: absolute; inset: 0; display: grid; place-items: center; padding: 1.5rem; text-align: center; color: var(--bg); }
+
+.below { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.75rem 1.5rem; padding-block: 1rem; }
+.keys { margin: 0; color: var(--muted); display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; align-items: center; }
+.keys span { display: inline-flex; gap: 0.3rem; align-items: center; }
+kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border: 1px solid var(--dim); border-bottom-width: 3px; border-radius: 4px; font-family: var(--f-mono); font-size: 0.75rem; text-align: center; color: var(--fg); }
+.worlds { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+@media (hover: none) and (pointer: coarse) {
+  .pad { display: flex; }
+  .keys { display: none !important; }
+  .hud-br { bottom: 6rem; }
+}
+@media (max-width: 34rem) {
+  .minimap { width: 96px; height: 96px; }
+  .standings { display: none; }
+  .toast-role { top: auto; bottom: 0.8rem; transform: none; animation: none; }
+  .hud-br { display: none; }
+}
+
+.exp { margin-top: clamp(2.5rem, 7vw, 4.5rem); }
+.label { margin: 0 0 0.75rem; font-weight: 400; color: var(--muted); }
+.list { margin: 0; padding: 0; list-style: none; border-top: 2px solid var(--fg); }
+.row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0.25rem 1rem; align-items: center; padding-block: 1.2rem; border-bottom: 1px solid var(--rule); }
+.gate { font-family: var(--f-display); font-size: 0.85rem; width: 2.2rem; height: 2.2rem; border-radius: 6px; display: grid; place-items: center; color: var(--bg); }
+.row-main { min-width: 0; display: grid; gap: 0.15rem; }
+.row-title { margin: 0; font-size: clamp(1.125rem, 2.4vw, 1.4rem); line-height: 1.3; font-weight: 500; }
+.row-desc { margin: 0; color: var(--muted); text-wrap: pretty; }
+.state { color: var(--muted); white-space: nowrap; }
+.row[data-on="true"] .state { color: var(--orange); }
+.also { margin: 1rem 0 0; color: var(--muted); }
+
+.contact { margin-top: clamp(2.5rem, 7vw, 4.5rem); padding-top: 1.25rem; border-top: 2px solid var(--fg); display: grid; gap: 1rem; }
+.contact h2 { margin: 0; font-weight: 400; color: var(--muted); }
+.email { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; min-width: 0; }
+.email-text { font-family: var(--f-display); font-size: clamp(1.2rem, 4vw, 1.9rem); overflow-wrap: anywhere; user-select: all; }
+.links { display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; margin: 0; padding: 0; list-style: none; font-size: clamp(1.125rem, 3vw, 1.4rem); }
+.foot { margin-top: clamp(3rem, 8vw, 5rem); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 1.5rem; color: var(--muted); }
+
+@media (max-width: 30rem) { .row { grid-template-columns: auto minmax(0, 1fr); } .row .state { grid-column: 2; } }
+@media (min-width: 52rem) { :root { --gutter: 2rem; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="bar mono">
+    <span><a href="/">Justin Bleich</a> / <a href="/worlds">Worlds</a></span>
+    <span>World 4 of 5</span>
+  </header>
+
+  <section class="top" aria-label="Introduction">
+    <p class="eyebrow mono">World 4 · Bleich Grand Prix</p>
+    <h1>Justin <span>Bleich</span></h1>
+    <p class="sub">Senior Product Designer. <b>Two laps, four gates.</b> Each gate is a stop in my career.</p>
+  </section>
+  <div class="checker" aria-hidden="true"></div>
+
+  <main>
+    <section aria-label="Kart race" style="margin-top: 1.25rem;">
+      <div class="frame" id="frame">
+        <canvas id="c" tabindex="0" aria-label="A kart race around a looping track with four gates, one for each role. Use the arrow keys or the on-screen pad to drive. The same roles are listed in plain text below."></canvas>
+        <div class="hud" id="hud">
+          <div class="hud-tl">
+            <div class="pos" id="pos">1<small>ST</small></div>
+            <div class="lap" id="lap">LAP 1/2</div>
+            <div class="clock" id="clock">0:00.00</div>
+            <ol class="standings" id="standings"></ol>
+          </div>
+          <div class="hud-tr"><canvas class="minimap" id="minimap" width="280" height="280" aria-hidden="true"></canvas></div>
+          <div class="hud-br">
+            <div class="speed"><span id="speed">0</span><small>KM/H</small></div>
+            <div class="boostbar" aria-hidden="true"><i id="charge"></i></div>
+          </div>
+          <div class="count" id="count" hidden></div>
+          <div class="toast-role" id="toast" hidden>
+            <p class="tr-eyebrow mono" id="toast-eyebrow"></p>
+            <p class="tr-title" id="toast-title"></p>
+            <p class="tr-desc" id="toast-desc"></p>
+          </div>
+        </div>
+        <div class="pad" id="pad">
+          <div class="pad-group">
+            <button type="button" class="big" data-k="left" aria-label="Steer left">◀</button>
+            <button type="button" class="big" data-k="right" aria-label="Steer right">▶</button>
+          </div>
+          <div class="pad-group">
+            <button type="button" data-k="down" aria-label="Brake">BRAKE</button>
+            <button type="button" data-k="drift" aria-label="Drift">DRIFT</button>
+          </div>
+        </div>
+        <div class="overlay" id="start">
+          <div class="panel">
+            <p class="eyebrow mono">World 4 · 2 laps · 3 rivals</p>
+            <p class="panel-title">Bleich Grand Prix</p>
+            <p class="panel-desc">Drive through the four gates to see each role. Hold drift through corners to charge a boost. Your rivals are the heroes of Worlds 1, 2 and 3.</p>
+            <div class="panel-actions"><button class="btn go" id="start-btn" type="button">Start race</button></div>
+          </div>
+        </div>
+        <div class="overlay" id="results" hidden>
+          <div class="panel">
+            <p class="eyebrow mono" id="res-eyebrow">Race complete</p>
+            <p class="panel-title" id="res-title"></p>
+            <p class="panel-desc" id="res-desc"></p>
+            <ol class="results" id="res-list"></ol>
+            <div class="panel-actions">
+              <button class="btn go" id="again-btn" type="button">Race again</button>
+              <a class="btn" href="/worlds/world-5">Enter World 5 →</a>
+            </div>
+          </div>
+        </div>
+        <div class="fail" id="fail" hidden><p>This world needs WebGL, which this browser has turned off. Every role is listed below.</p></div>
+      </div>
+
+      <div class="below">
+        <p class="keys mono">
+          <span><kbd>↑</kbd> Gas</span>
+          <span><kbd>←</kbd><kbd>→</kbd> Steer</span>
+          <span><kbd>↓</kbd> Brake</span>
+          <span><kbd>Space</kbd> Drift</span>
+        </p>
+        <nav class="worlds" aria-label="Other worlds">
+          <a class="btn" href="/worlds/world-3">← World 3</a>
+          <a class="btn" href="/worlds/world-5">World 5 →</a>
+        </nav>
+      </div>
+    </section>
+
+    <section class="exp" aria-labelledby="exp-label">
+      <h2 class="label mono" id="exp-label">Experience</h2>
+      <ol class="list">
+        <li class="row" data-id="onepay"><span class="gate" style="background: var(--k-onepay)">G4</span><div class="row-main"><p class="row-title">Current → OnePay</p><p class="row-desc">Leading OnePay Crypto design</p></div><span class="state mono">Gate ahead</span></li>
+        <li class="row" data-id="okx"><span class="gate" style="background: var(--k-okx); color: var(--fg)">G3</span><div class="row-main"><p class="row-title">2024–2026 → <a href="https://www.okx.com" target="_blank" rel="noopener">OKX</a></p><p class="row-desc">Built global payments experiences to bridge consumers and web3</p></div><span class="state mono">Gate ahead</span></li>
+        <li class="row" data-id="nftx"><span class="gate" style="background: var(--k-nftx)">G2</span><div class="row-main"><p class="row-title">2021–2024 → <a href="https://v2.nftx.io" target="_blank" rel="noopener">NFTX</a></p><p class="row-desc">The first NFT liquidity protocol in web3, creating tradable pools for collections</p></div><span class="state mono">Gate ahead</span></li>
+        <li class="row" data-id="sprinklr"><span class="gate" style="background: var(--k-sprinklr)">G1</span><div class="row-main"><p class="row-title">Previously → <a href="https://www.sprinklr.com" target="_blank" rel="noopener">Sprinklr</a></p><p class="row-desc">Designed universal search and a new self-serve dashboard experience</p></div><span class="state mono">Gate ahead</span></li>
+      </ol>
+      <p class="also">Also → <a href="https://app.frax.finance" target="_blank" rel="noopener">FRAX</a>, <a href="https://paste.so" target="_blank" rel="noopener">Paste</a></p>
+    </section>
+
+    <section class="contact" aria-labelledby="contact-label">
+      <h2 class="mono" id="contact-label">Contact</h2>
+      <div class="email">
+        <span class="email-text" id="email-text">justin.bleich@gmail.com</span>
+        <button class="btn" id="copy-btn" type="button">Copy</button>
+      </div>
+      <ul class="links">
+        <li><a href="https://linkedin.com/in/justinbleich" target="_blank" rel="noopener">LinkedIn</a></li>
+        <li><a href="https://farcaster.xyz/jtb" target="_blank" rel="noopener">Farcaster</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="foot mono">
+    <span>© 2026 Justin Bleich</span>
+    <span>San Francisco, CA</span>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- copy email ---------- */
+  (function () {
+    var btn = document.getElementById('copy-btn'), txt = document.getElementById('email-text'), tm;
+    function flash(m) { btn.textContent = m; clearTimeout(tm); tm = setTimeout(function () { btn.textContent = 'Copy'; }, 1600); }
+    function sel() { try { var r = document.createRange(); r.selectNodeContents(txt); var s = getSelection(); s.removeAllRanges(); s.addRange(r); } catch (e) {} }
+    btn.addEventListener('click', function () {
+      var v = txt.textContent.trim();
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(function () { flash('Copied'); }, function () { sel(); flash('Selected'); });
+      else { sel(); flash('Selected'); }
+    });
+  })();
+
+  var frame = document.getElementById('frame'), canvas = document.getElementById('c');
+  function fail() { document.getElementById('fail').hidden = false; document.getElementById('start').hidden = true; document.getElementById('hud').hidden = true; }
+  if (!window.THREE) { fail(); return; }
+  var renderer;
+  try { renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true }); } catch (e) { fail(); return; }
+  renderer.setClearColor(0x000000, 0);
+
+  var reduce = false;
+  try { reduce = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+  var coarse = false;
+  try { coarse = matchMedia('(hover: none) and (pointer: coarse)').matches; } catch (e) {}
+  var css = getComputedStyle(document.documentElement);
+  function tok(n) { return css.getPropertyValue(n).trim(); }
+  var C = {};
+  ['sky-bot', 'grass', 'grass-dark', 'road', 'line', 'curb-red', 'tree', 'trunk', 'hill', 'you', 'bit', '64', 'iso', 'skin', 'tire', 'sprinklr', 'nftx', 'okx', 'onepay', 'spark-1'].forEach(function (n) { C[n] = tok('--k-' + n); });
+  C.orange = tok('--orange'); C.yellow = tok('--yellow'); C.fg = tok('--fg'); C.bg = tok('--bg');
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function wrapAng(a) { return ((a + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI; }
+
+  var ROLES = {
+    sprinklr: { gate: 1, name: 'Sprinklr', period: 'Previously', desc: 'Designed universal search and a new self-serve dashboard experience.', url: 'https://www.sprinklr.com' },
+    nftx: { gate: 2, name: 'NFTX', period: '2021–2024', desc: 'The first NFT liquidity protocol in web3, creating tradable pools for collections.', url: 'https://v2.nftx.io' },
+    okx: { gate: 3, name: 'OKX', period: '2024–2026', desc: 'Built global payments experiences to bridge consumers and web3.', url: 'https://www.okx.com' },
+    onepay: { gate: 4, name: 'OnePay', period: 'Current', desc: 'Leading OnePay Crypto design. The present day, one gate before the finish.' }
+  };
+
+  /* ---------- scene ---------- */
+  var scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(C['sky-bot'], 120, 380);
+  var camera = new THREE.PerspectiveCamera(62, 16 / 9, 0.1, 700);
+  scene.add(new THREE.HemisphereLight(0xe4f3ff, 0x4f8a3d, 0.8));
+  var sun = new THREE.DirectionalLight(0xffffff, 0.75);
+  sun.position.set(80, 140, 40);
+  scene.add(sun);
+  function lam(c) { return new THREE.MeshLambertMaterial({ color: c }); }
+  function phong(c) { return new THREE.MeshPhongMaterial({ color: c, shininess: 70, specular: 0x555555 }); }
+  function canvasTex(w, h, draw, rx, ry) {
+    var c = document.createElement('canvas'); c.width = w; c.height = h;
+    draw(c.getContext('2d'), w, h);
+    var t = new THREE.CanvasTexture(c);
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy ? Math.min(8, renderer.capabilities.getMaxAnisotropy()) : 1;
+    if (rx) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); }
+    t.userData = { canvas: c, draw: draw };
+    return t;
+  }
+
+  /* ---------- track ---------- */
+  var CTRL = [[0, 0], [70, -15], [140, 0], [175, 50], [165, 115], [120, 150], [70, 135], [40, 95], [0, 85], [-40, 110], [-85, 150], [-140, 135], [-165, 80], [-150, 25], [-100, -10], [-50, -15]];
+  var curve = new THREE.CatmullRomCurve3(CTRL.map(function (p) { return new THREE.Vector3(p[0], 0, p[1]); }), true, 'centripetal');
+  var N = 800, W = 13;
+  var sp = curve.getSpacedPoints(N); sp.pop();
+  var PX = new Float32Array(N), PZ = new Float32Array(N), TX = new Float32Array(N), TZ = new Float32Array(N);
+  for (var i = 0; i < N; i++) { PX[i] = sp[i].x; PZ[i] = sp[i].z; }
+  for (i = 0; i < N; i++) {
+    var a = (i - 1 + N) % N, b = (i + 1) % N;
+    var dx = PX[b] - PX[a], dz = PZ[b] - PZ[a], dl = Math.sqrt(dx * dx + dz * dz);
+    TX[i] = dx / dl; TZ[i] = dz / dl;
+  }
+  var LEN = curve.getLength(), SEG = LEN / N;
+  /* right-hand normal (screen right when driving forward): (-tz, tx) */
+  function rx(i) { return -TZ[i]; }
+  function rz(i) { return TX[i]; }
+  var minX = 1e9, maxX = -1e9, minZ = 1e9, maxZ = -1e9;
+  for (i = 0; i < N; i++) { minX = Math.min(minX, PX[i]); maxX = Math.max(maxX, PX[i]); minZ = Math.min(minZ, PZ[i]); maxZ = Math.max(maxZ, PZ[i]); }
+  var CXW = (minX + maxX) / 2, CZW = (minZ + maxZ) / 2;
+
+  function stripGeo(inner, outer, y, vScale) {
+    var pos = [], uv = [], idx = [];
+    for (var j = 0; j <= N; j++) {
+      var k = j % N;
+      pos.push(PX[k] + rx(k) * inner, y, PZ[k] + rz(k) * inner, PX[k] + rx(k) * outer, y, PZ[k] + rz(k) * outer);
+      var v = j * SEG / vScale;
+      uv.push(0, v, 1, v);
+      if (j < N) { var o = j * 2; idx.push(o, o + 2, o + 1, o + 1, o + 2, o + 3); }
+    }
+    var g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    g.setIndex(idx);
+    g.computeVertexNormals();
+    return g;
+  }
+  var roadTex = canvasTex(128, 128, function (g, w, h) {
+    g.fillStyle = C.road; g.fillRect(0, 0, w, h);
+    for (var n = 0; n < 500; n++) { g.fillStyle = Math.random() < 0.5 ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.06)'; g.fillRect(Math.random() * w, Math.random() * h, 2, 2); }
+    g.fillStyle = C.line; g.fillRect(6, 0, 3, h); g.fillRect(w - 9, 0, 3, h);
+    g.fillRect(w / 2 - 1.5, 0, 3, h * 0.5);
+  });
+  roadTex.wrapT = THREE.RepeatWrapping;
+  var road = new THREE.Mesh(stripGeo(W / 2, -W / 2, 0.04, 10), lam(0xffffff));
+  road.material.map = roadTex;
+  scene.add(road);
+  var curbTex = canvasTex(16, 32, function (g, w, h) { g.fillStyle = C['curb-red']; g.fillRect(0, 0, w, h / 2); g.fillStyle = C.line; g.fillRect(0, h / 2, w, h / 2); });
+  curbTex.wrapT = THREE.RepeatWrapping;
+  var curbMat = new THREE.MeshLambertMaterial({ map: curbTex });
+  scene.add(new THREE.Mesh(stripGeo(W / 2 + 1.3, W / 2, 0.05, 3), curbMat));
+  scene.add(new THREE.Mesh(stripGeo(-W / 2, -W / 2 - 1.3, 0.05, 3), curbMat));
+
+  var grassTex = canvasTex(128, 128, function (g, w, h) {
+    g.fillStyle = C.grass; g.fillRect(0, 0, w, h);
+    g.fillStyle = C['grass-dark']; g.fillRect(0, 0, w / 2, h / 2); g.fillRect(w / 2, h / 2, w / 2, h / 2);
+    for (var n = 0; n < 300; n++) { g.fillStyle = 'rgba(0,0,0,0.05)'; g.fillRect(Math.random() * w, Math.random() * h, 2, 2); }
+  }, 60, 60);
+  var ground = new THREE.Mesh(new THREE.PlaneGeometry(1400, 1400), new THREE.MeshLambertMaterial({ map: grassTex }));
+  ground.rotation.x = -Math.PI / 2; ground.position.set(CXW, 0, CZW);
+  scene.add(ground);
+
+  function distToTrack(x, z) {
+    var best = 1e9;
+    for (var j = 0; j < N; j += 4) { var ddx = x - PX[j], ddz = z - PZ[j], d = ddx * ddx + ddz * ddz; if (d < best) best = d; }
+    return Math.sqrt(best);
+  }
+
+  /* scenery: trees (instanced), hills, clouds */
+  var seed = 11; function rnd() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }
+  var trees = [];
+  for (var tries = 0; tries < 900 && trees.length < 150; tries++) {
+    var x = minX - 60 + rnd() * (maxX - minX + 120), z = minZ - 60 + rnd() * (maxZ - minZ + 120);
+    if (distToTrack(x, z) < W / 2 + 12) continue;
+    trees.push([x, z, 0.8 + rnd() * 0.8]);
+  }
+  var cone = new THREE.InstancedMesh(new THREE.ConeGeometry(2.4, 6.5, 7), lam(C.tree), trees.length);
+  var trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.35, 0.5, 1.8, 6), lam(C.trunk), trees.length);
+  var dummy = new THREE.Object3D();
+  trees.forEach(function (t, j) {
+    dummy.position.set(t[0], 1.8 * t[2] + 3.2 * t[2], t[1]); dummy.scale.setScalar(t[2]); dummy.rotation.y = t[2] * 7; dummy.updateMatrix(); cone.setMatrixAt(j, dummy.matrix);
+    dummy.position.set(t[0], 0.9 * t[2], t[1]); dummy.updateMatrix(); trunk.setMatrixAt(j, dummy.matrix);
+  });
+  scene.add(cone); scene.add(trunk);
+  var hillMat = lam(C.hill);
+  for (i = 0; i < 10; i++) {
+    var ang = i / 10 * Math.PI * 2, rr = 300 + rnd() * 60;
+    var hill = new THREE.Mesh(new THREE.SphereGeometry(60 + rnd() * 40, 18, 10), hillMat);
+    hill.scale.y = 0.38 + rnd() * 0.2;
+    hill.position.set(CXW + Math.cos(ang) * rr, -6, CZW + Math.sin(ang) * rr);
+    scene.add(hill);
+  }
+  var cloudMat = new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0x99aabb, emissiveIntensity: 0.3 });
+  for (i = 0; i < 9; i++) {
+    var cg = new THREE.Group();
+    for (var q = 0; q < 3; q++) { var s = new THREE.Mesh(new THREE.SphereGeometry(8 + rnd() * 6, 10, 8), cloudMat); s.position.set(q * 9 - 9, rnd() * 3, rnd() * 4); s.scale.y = 0.6; cg.add(s); }
+    var ca = rnd() * Math.PI * 2, cr = 180 + rnd() * 160;
+    cg.position.set(CXW + Math.cos(ca) * cr, 70 + rnd() * 40, CZW + Math.sin(ca) * cr);
+    scene.add(cg);
+  }
+
+  /* ---------- gates, start line, boost pads ---------- */
+  function heading(i) { return Math.atan2(TX[i], TZ[i]); }
+  var GATES = [{ id: 'sprinklr', f: 0.14 }, { id: 'nftx', f: 0.38 }, { id: 'okx', f: 0.62 }, { id: 'onepay', f: 0.84 }];
+  var bannerTexs = [];
+  function arch(idx, color, text1, text2, dark) {
+    var g = new THREE.Group();
+    g.position.set(PX[idx], 0, PZ[idx]);
+    g.rotation.y = heading(idx) + Math.PI;
+    var span = W + 4.4;
+    var pm = phong(color);
+    [-1, 1].forEach(function (sd) { var p = new THREE.Mesh(new THREE.BoxGeometry(1.1, 8.5, 1.1), pm); p.position.set(sd * span / 2, 4.25, 0); g.add(p); });
+    var bt = canvasTex(512, 96, function (c, w, h) {
+      c.fillStyle = color; c.fillRect(0, 0, w, h);
+      c.fillStyle = dark ? '#f5f3ee' : '#131419';
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.font = 'italic 46px "Russo One", Impact, sans-serif'; c.fillText(text1, w / 2, 40);
+      c.font = '20px "DM Mono", monospace'; c.fillText(text2, w / 2, 78);
+    });
+    bannerTexs.push(bt);
+    var banner = new THREE.Mesh(new THREE.PlaneGeometry(span + 1.1, 2.6), new THREE.MeshBasicMaterial({ map: bt, side: THREE.DoubleSide }));
+    banner.position.set(0, 7.6, 0);
+    g.add(banner);
+    scene.add(g);
+  }
+  GATES.forEach(function (gt) {
+    gt.idx = Math.round(gt.f * N);
+    var r = ROLES[gt.id];
+    arch(gt.idx, C[gt.id], 'GATE ' + r.gate + ' · ' + r.name.toUpperCase(), r.period.toUpperCase(), gt.id === 'okx');
+  });
+  var startTex = canvasTex(64, 16, function (c, w, h) { for (var yy = 0; yy < 2; yy++) for (var xx = 0; xx < 8; xx++) { c.fillStyle = (xx + yy) % 2 ? '#131419' : '#f5f3ee'; c.fillRect(xx * 8, yy * 8, 8, 8); } });
+  var startLine = new THREE.Mesh(new THREE.PlaneGeometry(W, 2.2), new THREE.MeshLambertMaterial({ map: startTex }));
+  startLine.rotation.x = -Math.PI / 2;
+  var sl = new THREE.Group(); sl.position.set(PX[0], 0.06, PZ[0]); sl.rotation.y = heading(0); sl.add(startLine); scene.add(sl);
+  arch(0, '#131419', 'BLEICH GRAND PRIX', 'START · FINISH', true);
+
+  var padTex = canvasTex(64, 96, function (c, w, h) {
+    c.fillStyle = C.orange; c.fillRect(0, 0, w, h);
+    c.fillStyle = C.yellow;
+    for (var k = 0; k < 3; k++) { var y0 = 10 + k * 28; c.beginPath(); c.moveTo(8, y0 + 20); c.lineTo(32, y0); c.lineTo(56, y0 + 20); c.lineTo(56, y0 + 30); c.lineTo(32, y0 + 10); c.lineTo(8, y0 + 30); c.closePath(); c.fill(); }
+  });
+  var PADS = [{ f: 0.26, lat: 0 }, { f: 0.5, lat: -3 }, { f: 0.73, lat: 3 }, { f: 0.94, lat: 0 }];
+  PADS.forEach(function (p) {
+    p.idx = Math.round(p.f * N);
+    var g = new THREE.Group();
+    g.position.set(PX[p.idx] + rx(p.idx) * p.lat, 0.07, PZ[p.idx] + rz(p.idx) * p.lat);
+    g.rotation.y = heading(p.idx);
+    var m = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 4.6), new THREE.MeshBasicMaterial({ map: padTex }));
+    m.rotation.x = -Math.PI / 2; m.rotation.z = Math.PI;
+    g.add(m); scene.add(g);
+  });
+
+  /* grandstand + sign near start */
+  (function () {
+    var i0 = 10, side = -1, off = W / 2 + 9;
+    var g = new THREE.Group();
+    g.position.set(PX[i0] + rx(i0) * off * side, 0, PZ[i0] + rz(i0) * off * side);
+    g.rotation.y = heading(i0);
+    for (var s2 = 0; s2 < 4; s2++) {
+      var step = new THREE.Mesh(new THREE.BoxGeometry(3, 1, 26), lam(s2 % 2 ? '#d9d4ca' : '#c9c3b8'));
+      step.position.set(s2 * 2.2, 0.5 + s2, 0); /* local +x points away from the track on this side */
+      g.add(step);
+      for (var f = 0; f < 10; f++) {
+        var fan = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.9, 0.6), lam([C.orange, C.yellow, C.nftx, C.onepay, C.fg][(f + s2) % 5]));
+        fan.position.set(step.position.x, 1.45 + s2, -11 + f * 2.4);
+        g.add(fan);
+      }
+    }
+    scene.add(g);
+  })();
+
+  /* ---------- karts ---------- */
+  function makeKart(color, capColor) {
+    var g = new THREE.Group(), body = new THREE.Group(); g.add(body);
+    var paint = phong(color), dark = lam(C.tire);
+    var chassis = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.45, 2.5), paint); chassis.position.y = 0.55; body.add(chassis);
+    var nose = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.35, 0.7), paint); nose.position.set(0, 0.5, 1.45); body.add(nose);
+    var bumper = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.22, 0.25), dark); bumper.position.set(0, 0.42, 1.85); body.add(bumper);
+    var seat = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.7, 0.25), dark); seat.position.set(0, 1.05, -0.75); body.add(seat);
+    var spoiler = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.08, 0.45), paint); spoiler.position.set(0, 1.35, -1.25); body.add(spoiler);
+    [-0.6, 0.6].forEach(function (sx) { var post = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.5, 0.08), dark); post.position.set(sx, 1.1, -1.25); body.add(post); });
+    var torso = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.6, 0.42), lam('#6c6c72')); torso.position.set(0, 1.12, -0.35); body.add(torso);
+    var head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 14, 10), lam(C.skin)); head.position.set(0, 1.68, -0.3); body.add(head);
+    var cap = new THREE.Mesh(new THREE.SphereGeometry(0.31, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), phong(capColor)); cap.position.set(0, 1.72, -0.3); body.add(cap);
+    var brim = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.05, 0.25), phong(capColor)); brim.position.set(0, 1.74, -0.02); body.add(brim);
+    var wheelGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.4, 14); wheelGeo.rotateZ(Math.PI / 2);
+    var wheels = [];
+    [[-0.95, 0.85], [0.95, 0.85], [-0.95, -0.85], [0.95, -0.85]].forEach(function (w) {
+      var wg = new THREE.Group(); wg.position.set(w[0], 0.42, w[1]);
+      var wm = new THREE.Mesh(wheelGeo, dark); wg.add(wm);
+      var hub = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.18, 0.18), lam('#9a9cab')); wg.add(hub);
+      body.add(wg); wheels.push(wg);
+    });
+    var flame = new THREE.Mesh(new THREE.ConeGeometry(0.28, 1.2, 8), new THREE.MeshBasicMaterial({ color: C.orange, transparent: true, opacity: 0.85 }));
+    flame.rotation.x = -Math.PI / 2; flame.position.set(0, 0.6, -1.85); flame.visible = false; body.add(flame);
+    var shadow = new THREE.Mesh(new THREE.CircleGeometry(1.5, 16), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.25, depthWrite: false }));
+    shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.08; shadow.scale.set(0.75, 1.1, 1); g.add(shadow);
+    scene.add(g);
+    return { g: g, body: body, wheels: wheels, flame: flame };
+  }
+
+  var KARTS = [
+    { name: 'YOU', color: C.you, cap: '#3c3c44', you: true },
+    { name: '1-BIT', color: C.bit, cap: '#4a4a50', aiMax: 0.92, lane: -3 },
+    { name: '64', color: C['64'], cap: '#c9373a', aiMax: 0.95, lane: 2.5 },
+    { name: 'ISO', color: C.iso, cap: '#e2735c', aiMax: 0.97, lane: 0 }
+  ];
+  KARTS.forEach(function (k) { k.m = makeKart(k.color, k.cap); });
+
+  var MAXS = 27, ACC = 17, TURN = 1.9, LAPS = 2;
+
+  function nearest(k, full) {
+    var best = 1e18, bi = k.idx || 0, from = full ? 0 : -30, to = full ? N : 30;
+    for (var o = from; o < to; o++) {
+      var j = full ? o : (k.idx + o + N) % N;
+      var ddx = k.x - PX[j], ddz = k.z - PZ[j], d = ddx * ddx + ddz * ddz;
+      if (d < best) { best = d; bi = j; }
+    }
+    k.idx = bi;
+    k.lat = (k.x - PX[bi]) * rx(bi) + (k.z - PZ[bi]) * rz(bi);
+  }
+  function grid() {
+    var spots = [[N - 14, 2.8], [N - 14, -2.8], [N - 26, 2.8], [N - 26, -2.8]];
+    var order = [3, 0, 1, 2]; /* you start 2nd row-ish: on pole is ISO */
+    KARTS.forEach(function (k, j) {
+      var s3 = spots[order[j]];
+      k.x = PX[s3[0]] + rx(s3[0]) * s3[1]; k.z = PZ[s3[0]] + rz(s3[0]) * s3[1];
+      k.yaw = heading(s3[0]); k.speed = 0; k.idx = s3[0]; k.prevIdx = s3[0];
+      k.lap = 0; k.half = true; k.finished = false; k.finishT = 0; k.drifting = false; k.charge = 0; k.boost = 0; k.hop = 0; k.dDir = 0; k.bump = 0; k.lapStart = 0; k.best = 0;
+      k.vyaw = k.yaw;
+      nearest(k, true);
+    });
+  }
+
+  /* ---------- state ---------- */
+  var state = 'grid', countT = 0, raceT = 0, revealed = {}, toastT = 0, resultsShown = false, rocketWindow = false;
+  var input = { up: false, down: false, left: false, right: false, drift: false };
+  var you = KARTS[0];
+  var camYaw = 0;
+  var sparks = [];
+  var sparkGeo = new THREE.BoxGeometry(0.16, 0.16, 0.16);
+  var sparkMats = [new THREE.MeshBasicMaterial({ color: C['spark-1'] }), new THREE.MeshBasicMaterial({ color: C.orange })];
+
+  function progress(k) { var id = k.idx; if (k.lap === 0 && id > N / 2) id -= N; return k.lap * N + id; }
+
+  function drive(k, gas, brake, steer, driftHeld, dt) {
+    var off = Math.abs(k.lat) > W / 2 + 0.8;
+    var maxS = MAXS * (k.aiMax || 1) * (k.rubber || 1);
+    if (off) maxS = Math.min(maxS, 13);
+    if (k.boost > 0) maxS += 11;
+    if (gas) { if (k.speed < maxS) k.speed += ACC * dt * (1 - Math.max(0, k.speed) / (maxS + 6)) * 1.6; else k.speed -= (k.speed - maxS) * 2.5 * dt; }
+    if (brake) k.speed -= (k.speed > 0 ? 32 : 10) * dt;
+    if (!gas && !brake) k.speed -= Math.sign(k.speed) * Math.min(Math.abs(k.speed), 7 * dt);
+    if (k.boost > 0) { k.speed += 34 * dt; k.boost -= dt; }
+    if (off && k.speed > maxS) k.speed -= 22 * dt;
+    k.speed = clamp(k.speed, -9, maxS + 1);
+
+    var sf = clamp(Math.abs(k.speed) / 9, 0, 1) * (k.speed < 0 ? -1 : 1);
+    if (driftHeld && !k.drifting && Math.abs(steer) > 0.3 && k.speed > 12 && k.hop <= 0) { k.drifting = true; k.dDir = Math.sign(steer); k.charge = 0; k.hop = 0.28; }
+    if (k.drifting) {
+      if (!driftHeld || k.speed < 8) {
+        if (k.charge > 1.5) k.boost = Math.max(k.boost, 1.15); else if (k.charge > 0.65) k.boost = Math.max(k.boost, 0.6);
+        k.drifting = false; k.charge = 0;
+      } else {
+        k.charge += dt * (Math.abs(steer) > 0.2 && Math.sign(steer) === k.dDir ? 1.35 : 0.8);
+        k.yaw -= (k.dDir * 0.72 + steer * 0.5) * TURN * dt;
+      }
+    } else {
+      k.yaw -= steer * TURN * sf * dt;
+    }
+    var fx = Math.sin(k.yaw), fz = Math.cos(k.yaw);
+    k.x += fx * k.speed * dt; k.z += fz * k.speed * dt;
+    if (k.drifting) { var rxk = -Math.cos(k.yaw), rzk = Math.sin(k.yaw); k.x -= k.dDir * rxk * k.speed * 0.16 * dt; k.z -= k.dDir * rzk * k.speed * 0.16 * dt; }
+    if (k.hop > 0) k.hop -= dt;
+  }
+
+  function trackRules(k) {
+    k.prevIdx = k.idx;
+    nearest(k, false);
+    var lim = W / 2 + 9;
+    if (Math.abs(k.lat) > lim) {
+      var push = (Math.abs(k.lat) - lim) * Math.sign(k.lat);
+      k.x -= rx(k.idx) * push; k.z -= rz(k.idx) * push;
+      if (k.bump <= 0) { k.speed *= 0.55; k.bump = 0.4; }
+      k.lat = Math.sign(k.lat) * lim;
+    }
+    if (k.bump > 0) k.bump -= 1 / 120;
+    if (k.idx > N * 0.4 && k.idx < N * 0.6) k.half = true;
+    if (k.prevIdx > N * 0.85 && k.idx < N * 0.15) {
+      if (k.half) {
+        if (k.lap >= 1) { var lt = raceT - k.lapStart; if (!k.best || lt < k.best) k.best = lt; }
+        k.lap++; k.half = false; k.lapStart = raceT;
+        if (k.lap > LAPS && !k.finished) { k.finished = true; k.finishT = raceT; if (k.you) onYouFinish(); }
+      }
+    } else if (k.prevIdx < N * 0.15 && k.idx > N * 0.85) {
+      /* reversed over the line */
+      if (k.lap > 0) { k.lap--; k.half = true; }
+    }
+    PADS.forEach(function (p) {
+      var di = Math.abs(k.idx - p.idx);
+      if (di < 4 && Math.abs(k.lat - p.lat) < 2.1 && k.boost < 0.5) k.boost = 0.9;
+    });
+    if (k.you && state === 'race') {
+      GATES.forEach(function (gt) {
+        if (k.prevIdx < gt.idx && k.idx >= gt.idx && k.idx - k.prevIdx < 40) reveal(gt.id);
+      });
+    }
+  }
+
+  function aiControl(k, dt) {
+    var look = (k.idx + 14 + Math.floor(Math.max(0, k.speed) * 0.55)) % N;
+    var lane = k.lane || 0;
+    var txp = PX[look] + rx(look) * lane, tzp = PZ[look] + rz(look) * lane;
+    var des = Math.atan2(txp - k.x, tzp - k.z);
+    var diff = wrapAng(des - k.yaw);
+    var steer = clamp(-diff * 2.6, -1, 1);
+    var j2 = (k.idx + 34) % N;
+    var curv = 1 - (TX[k.idx] * TX[j2] + TZ[k.idx] * TZ[j2]);
+    var target = MAXS * (k.aiMax || 1) * (k.rubber || 1) * clamp(1 - curv * 1.7, 0.55, 1);
+    if (k.boost > 0) target += 8;
+    drive(k, k.speed < target, k.speed > target + 5, steer, false, dt);
+  }
+
+  function collide() {
+    for (var a1 = 0; a1 < KARTS.length; a1++) for (var b1 = a1 + 1; b1 < KARTS.length; b1++) {
+      var A = KARTS[a1], B = KARTS[b1];
+      var ddx = B.x - A.x, ddz = B.z - A.z, d = Math.sqrt(ddx * ddx + ddz * ddz);
+      if (d > 0.001 && d < 2.3) {
+        var push = (2.3 - d) / 2, nx = ddx / d, nz = ddz / d;
+        A.x -= nx * push; A.z -= nz * push; B.x += nx * push; B.z += nz * push;
+        A.speed *= 0.985; B.speed *= 0.985;
+      }
+    }
+  }
+
+  function standings() {
+    return KARTS.slice().sort(function (p, q) {
+      if (p.finished && q.finished) return p.finishT - q.finishT;
+      if (p.finished) return -1; if (q.finished) return 1;
+      return progress(q) - progress(p);
+    });
+  }
+
+  /* ---------- UI ---------- */
+  var posEl = document.getElementById('pos'), lapEl = document.getElementById('lap'), clockEl = document.getElementById('clock'), speedEl = document.getElementById('speed'), chargeEl = document.getElementById('charge');
+  var standEl = document.getElementById('standings'), countEl = document.getElementById('count');
+  var toastEl = document.getElementById('toast'), toastE = document.getElementById('toast-eyebrow'), toastTi = document.getElementById('toast-title'), toastD = document.getElementById('toast-desc');
+  var startEl = document.getElementById('start'), resultsEl = document.getElementById('results');
+  function ord(n) { return n === 1 ? 'ST' : n === 2 ? 'ND' : n === 3 ? 'RD' : 'TH'; }
+  function fmt(t) { var m = Math.floor(t / 60), s = t - m * 60; return m + ':' + (s < 10 ? '0' : '') + s.toFixed(2); }
+  var lastStand = '';
+  function hud() {
+    var st = standings(), place = st.indexOf(you) + 1;
+    posEl.innerHTML = place + '<small>' + ord(place) + '</small>';
+    lapEl.textContent = 'LAP ' + clamp(you.lap, 1, LAPS) + '/' + LAPS;
+    clockEl.textContent = fmt(state === 'race' || state === 'done' ? (you.finished ? you.finishT : raceT) : 0);
+    speedEl.textContent = Math.max(0, Math.round(you.speed * 3.6));
+    var ch = you.drifting ? clamp(you.charge / 1.5, 0, 1) : 0;
+    chargeEl.style.width = (ch * 100) + '%';
+    chargeEl.style.background = you.charge > 1.5 ? C.orange : C['spark-1'];
+    var key = st.map(function (k) { return k.name; }).join(',');
+    if (key !== lastStand) {
+      lastStand = key;
+      standEl.innerHTML = st.map(function (k, j) { return '<li data-you="' + (k.you ? 'true' : 'false') + '"><span>' + (j + 1) + '</span><i style="background:' + k.color + '"></i>' + k.name + '</li>'; }).join('');
+    }
+  }
+  function reveal(id) {
+    if (revealed[id]) return;
+    revealed[id] = true;
+    var r = ROLES[id];
+    toastEl.style.borderLeftColor = C[id] === C.okx ? C.fg : C[id];
+    toastE.textContent = 'Gate ' + r.gate + ' of 4 · ' + r.period;
+    toastTi.textContent = r.period + ' → ' + r.name;
+    toastD.innerHTML = r.desc + (r.url ? ' <a href="' + r.url + '" target="_blank" rel="noopener">Visit ↗</a>' : '');
+    toastEl.hidden = false; toastEl.style.animation = 'none'; void toastEl.offsetWidth; toastEl.style.animation = '';
+    toastT = 5.5;
+    var row = document.querySelector('.row[data-id="' + id + '"]');
+    if (row) { row.setAttribute('data-on', 'true'); row.querySelector('.state').textContent = 'Passed'; }
+  }
+  function onYouFinish() {
+    state = 'done';
+    setTimeout(showResults, 1400);
+  }
+  function showResults() {
+    if (resultsShown) return; resultsShown = true;
+    var st = standings(), place = st.indexOf(you) + 1;
+    var best = 0;
+    try { best = parseFloat(localStorage.getItem('bleich-gp-best')) || 0; } catch (e) {}
+    var isBest = !best || you.finishT < best;
+    if (isBest) { try { localStorage.setItem('bleich-gp-best', String(you.finishT)); } catch (e) {} }
+    document.getElementById('res-eyebrow').textContent = 'Race complete · ' + Object.keys(revealed).length + '/4 gates';
+    document.getElementById('res-title').textContent = place + ord(place).toLowerCase() + ' place · ' + fmt(you.finishT);
+    document.getElementById('res-desc').innerHTML = (isBest ? 'New personal best on this device. ' : 'Your best here: ' + fmt(best) + '. ') + 'One world left: a portal test facility in World 5. Say hi at <a href="mailto:justin.bleich@gmail.com">justin.bleich@gmail.com</a>.';
+    document.getElementById('res-list').innerHTML = st.map(function (k, j) {
+      var t = k.finished ? fmt(k.finishT) : 'Racing';
+      return '<li data-you="' + (k.you ? 'true' : 'false') + '"><b>' + (j + 1) + ord(j + 1).toLowerCase() + '</b><i style="background:' + k.color + '"></i><span>' + (k.you ? 'You' : k.name) + '</span><span class="mono">' + t + '</span></li>';
+    }).join('');
+    resultsEl.hidden = false;
+    try { document.getElementById('again-btn').focus({ preventScroll: true }); } catch (e) {}
+  }
+  function startRace() {
+    grid();
+    startEl.hidden = true; resultsEl.hidden = true; resultsShown = false;
+    state = 'count'; countT = 3.0; raceT = 0; rocketWindow = false;
+    countEl.hidden = false; countEl.textContent = '3';
+    try { canvas.focus({ preventScroll: true }); } catch (e) {}
+  }
+  document.getElementById('start-btn').addEventListener('click', startRace);
+  document.getElementById('again-btn').addEventListener('click', startRace);
+
+  /* ---------- input ---------- */
+  var KEYS = { ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down', ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', Space: 'drift', ShiftLeft: 'drift', ShiftRight: 'drift' };
+  function inView() { var r = frame.getBoundingClientRect(); return r.bottom > 60 && r.top < innerHeight - 60; }
+  window.addEventListener('keydown', function (e) {
+    var k = KEYS[e.code];
+    var t = e.target;
+    var typing = t && t !== canvas && t !== document.body && /^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/.test(t.tagName);
+    if (e.code === 'Enter' && !typing && state === 'grid' && inView()) { e.preventDefault(); startRace(); return; }
+    if (!k || typing) return;
+    if (t !== canvas && !inView()) return;
+    e.preventDefault();
+    input[k] = true;
+    if (k === 'up' && state === 'count' && countT < 0.55) rocketWindow = true;
+  });
+  window.addEventListener('keyup', function (e) { var k = KEYS[e.code]; if (k) input[k] = false; });
+  window.addEventListener('blur', function () { for (var k in input) input[k] = false; });
+  Array.prototype.forEach.call(document.querySelectorAll('#pad button'), function (btn) {
+    var k = btn.getAttribute('data-k');
+    btn.addEventListener('pointerdown', function (e) { e.preventDefault(); try { btn.setPointerCapture(e.pointerId); } catch (err) {} btn.setAttribute('data-on', 'true'); input[k] = true; });
+    function up() { btn.removeAttribute('data-on'); input[k] = false; }
+    btn.addEventListener('pointerup', up); btn.addEventListener('pointercancel', up); btn.addEventListener('lostpointercapture', up);
+    btn.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  });
+
+  /* ---------- minimap ---------- */
+  var mm = document.getElementById('minimap'), mctx = mm.getContext('2d');
+  var mmScale = 0, mmOx = 0, mmOz = 0;
+  (function () {
+    var span = Math.max(maxX - minX, maxZ - minZ);
+    mmScale = (mm.width - 36) / span;
+    mmOx = mm.width / 2 - CXW * mmScale; mmOz = mm.height / 2 - CZW * mmScale;
+  })();
+  function mmP(x, z) { return [x * mmScale + mmOx, z * mmScale + mmOz]; }
+  function drawMinimap() {
+    mctx.clearRect(0, 0, mm.width, mm.height);
+    mctx.lineJoin = 'round'; mctx.lineCap = 'round';
+    mctx.beginPath();
+    for (var j = 0; j <= N; j += 4) { var p = mmP(PX[j % N], PZ[j % N]); if (j === 0) mctx.moveTo(p[0], p[1]); else mctx.lineTo(p[0], p[1]); }
+    mctx.closePath();
+    mctx.strokeStyle = 'rgba(245,243,238,0.9)'; mctx.lineWidth = 10; mctx.stroke();
+    mctx.strokeStyle = C.road; mctx.lineWidth = 6; mctx.stroke();
+    GATES.forEach(function (gt) { var p = mmP(PX[gt.idx], PZ[gt.idx]); mctx.fillStyle = C[gt.id]; mctx.beginPath(); mctx.arc(p[0], p[1], 7, 0, Math.PI * 2); mctx.fill(); mctx.strokeStyle = C.fg; mctx.lineWidth = 2; mctx.stroke(); });
+    var s0 = mmP(PX[0], PZ[0]); mctx.fillStyle = C.fg; mctx.fillRect(s0[0] - 6, s0[1] - 6, 12, 12);
+    KARTS.slice().reverse().forEach(function (k) {
+      var p = mmP(k.x, k.z);
+      mctx.fillStyle = k.color; mctx.beginPath(); mctx.arc(p[0], p[1], k.you ? 9 : 7, 0, Math.PI * 2); mctx.fill();
+      mctx.strokeStyle = k.you ? C.fg : C.bg; mctx.lineWidth = k.you ? 3 : 2; mctx.stroke();
+    });
+  }
+
+  /* ---------- loop ---------- */
+  var STEP = 1 / 120, acc = 0, last = performance.now(), fovCur = 62;
+  function update(dt) {
+    if (state === 'count') {
+      var before = countT;
+      countT -= dt;
+      var n = Math.ceil(countT);
+      if (countT > 0) countEl.textContent = n > 0 ? String(n) : 'GO!';
+      if (before > 0 && countT <= 0) {
+        state = 'race'; countEl.textContent = 'GO!';
+        if (rocketWindow && input.up) { you.boost = 0.7; you.speed = 10; }
+      }
+    }
+    if (state === 'race' || state === 'done') {
+      raceT += dt;
+      if (raceT > 0.8 && !countEl.hidden) countEl.hidden = true;
+      var pp = progress(you);
+      KARTS.forEach(function (k) {
+        if (k.you) return;
+        var gap = (progress(k) - pp) / N;
+        k.rubber = gap > 0.06 ? 0.92 : gap < -0.08 ? 1.07 : 1;
+      });
+      KARTS.forEach(function (k) {
+        if (k.you && !k.finished) {
+          var steer = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+          drive(k, input.up || coarse, input.down, steer, input.drift, dt);
+        } else aiControl(k, dt);
+        trackRules(k);
+      });
+      collide();
+    }
+    if (toastT > 0) { toastT -= dt; if (toastT <= 0) toastEl.hidden = true; }
+
+    /* sparks */
+    if (you.drifting && you.charge > 0.65 && !reduce && sparks.length < 60) {
+      for (var w2 = 0; w2 < 2; w2++) {
+        var sm = new THREE.Mesh(sparkGeo, sparkMats[you.charge > 1.5 ? 1 : 0]);
+        var side2 = w2 ? 0.95 : -0.95, back = -1.0;
+        var cy = Math.cos(you.yaw), sy = Math.sin(you.yaw);
+        sm.position.set(you.x + side2 * -cy + back * sy, 0.25, you.z + side2 * sy + back * cy);
+        sm.userData = { vx: (Math.random() - 0.5) * 4, vy: 2 + Math.random() * 3, vz: (Math.random() - 0.5) * 4, life: 0.3 };
+        scene.add(sm); sparks.push(sm);
+      }
+    }
+    for (var s4 = sparks.length - 1; s4 >= 0; s4--) {
+      var u = sparks[s4], d4 = u.userData;
+      d4.life -= dt; d4.vy -= 14 * dt;
+      u.position.x += d4.vx * dt; u.position.y += d4.vy * dt; u.position.z += d4.vz * dt;
+      if (d4.life <= 0) { scene.remove(u); sparks.splice(s4, 1); }
+    }
+  }
+  function pose(dt) {
+    KARTS.forEach(function (k) {
+      var vis = k.yaw + (k.drifting ? k.dDir * -0.38 : 0);
+      k.vyaw += wrapAng(vis - k.vyaw) * Math.min(1, dt * 12);
+      k.m.g.position.set(k.x, 0, k.z);
+      k.m.g.rotation.y = k.vyaw;
+      k.m.body.position.y = k.hop > 0 ? Math.sin((0.28 - k.hop) / 0.28 * Math.PI) * 0.45 : 0;
+      k.m.wheels.forEach(function (w, j) { w.children[0].rotation.x += k.speed * dt / 0.42; if (j < 2) w.rotation.y = clamp(((input.right ? -1 : 0) + (input.left ? 1 : 0)) * (k.you ? 0.35 : 0), -0.4, 0.4); });
+      k.m.flame.visible = k.boost > 0;
+      if (k.boost > 0) k.m.flame.scale.set(1, 0.8 + Math.random() * 0.6, 1);
+    });
+    var k0 = you;
+    camYaw += wrapAng(k0.yaw - camYaw) * Math.min(1, dt * 4.5);
+    var back2 = 7.4, upv = 3.1;
+    camera.position.set(k0.x - Math.sin(camYaw) * back2, upv, k0.z - Math.cos(camYaw) * back2);
+    camera.lookAt(k0.x + Math.sin(camYaw) * 6, 1.3, k0.z + Math.cos(camYaw) * 6);
+    var fovT = 62 + clamp(k0.speed / MAXS, 0, 1.3) * 7 + (k0.boost > 0 ? 7 : 0);
+    fovCur += (fovT - fovCur) * Math.min(1, dt * 4);
+    if (Math.abs(camera.fov - fovCur) > 0.05) { camera.fov = fovCur; camera.updateProjectionMatrix(); }
+  }
+  function loop(now) {
+    var dt = Math.min((now - last) / 1000, 0.05); last = now;
+    acc += dt;
+    while (acc >= STEP) { update(STEP); acc -= STEP; }
+    pose(dt);
+    renderer.render(scene, camera);
+    hud(); drawMinimap();
+    requestAnimationFrame(loop);
+  }
+  function resize() {
+    var w = frame.clientWidth || 360;
+    var h = Math.round(clamp(w * 0.56, 360, 600));
+    canvas.style.height = h + 'px';
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+
+  grid();
+  camYaw = you.yaw;
+  resize();
+  pose(0.016);
+  renderer.render(scene, camera);
+  hud(); drawMinimap();
+  if (window.ResizeObserver) new ResizeObserver(resize).observe(frame); else addEventListener('resize', resize);
+  if (document.fonts && document.fonts.load) {
+    Promise.all([document.fonts.load('italic 46px "Russo One"'), document.fonts.load('20px "DM Mono"')]).then(function () {
+      bannerTexs.forEach(function (t) { var c = t.userData.canvas; t.userData.draw(c.getContext('2d'), c.width, c.height); t.needsUpdate = true; });
+    }, function () {});
+  }
+  requestAnimationFrame(function (t) { last = t; requestAnimationFrame(loop); });
+
+})();
+</script>
+</body>
+</html>

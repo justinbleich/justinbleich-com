@@ -45,7 +45,7 @@ a {
     transform 140ms var(--ease-out);
 }
 
-a:not(.social-link, .music-link)::after {
+a:not(.social-link, .music-link, .world-link)::after {
   position: absolute;
   right: 0;
   bottom: 0.02em;
@@ -62,7 +62,7 @@ a:hover {
   color: var(--hover);
 }
 
-a:not(.social-link, .music-link):hover::after {
+a:not(.social-link, .music-link, .world-link):hover::after {
   transform: scaleX(1);
   transform-origin: left;
 }
@@ -86,90 +86,6 @@ a:focus-visible {
   flex-direction: column;
   justify-content: center;
   gap: 40px;
-}
-
-.floating-friend {
-  position: fixed;
-  top: clamp(136px, 17vh, 188px);
-  right: clamp(52px, 8vw, 116px);
-  z-index: 3;
-  width: clamp(72px, 8vw, 94px);
-  pointer-events: none;
-}
-
-.friend-svg {
-  display: block;
-  width: 100%;
-  overflow: visible;
-}
-
-.friend-body {
-  animation: friend-float 5.2s var(--ease-out) infinite;
-  transform-origin: 48px 56px;
-}
-
-.friend-shadow {
-  fill: color-mix(in srgb, var(--hover) 22%, transparent);
-  animation: friend-shadow 5.2s var(--ease-out) infinite;
-  transform-origin: 48px 104px;
-}
-
-.friend-shape {
-  fill: var(--hover);
-  stroke: var(--background);
-  stroke-width: 6;
-  animation: friend-shard 6.4s var(--ease-out) infinite;
-  transform-origin: 50px 52px;
-}
-
-.friend-facet {
-  fill: color-mix(in srgb, var(--background) 22%, var(--hover));
-  opacity: 0.58;
-  animation: friend-facet 6.4s var(--ease-out) infinite;
-}
-
-.friend-facet-side {
-  animation-delay: -2.4s;
-}
-
-.friend-edge {
-  fill: none;
-  stroke: var(--text);
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 2;
-  animation: friend-edge 6.4s var(--ease-out) infinite;
-}
-
-.friend-edge-right {
-  animation-delay: -2.1s;
-}
-
-.friend-face {
-  animation: friend-face 6.4s var(--ease-out) infinite;
-  transform-origin: 50px 54px;
-}
-
-.friend-eye,
-.friend-mouth {
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.friend-eye {
-  fill: var(--text);
-  stroke: none;
-  animation: friend-blink 6.4s var(--ease-out) infinite;
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
-.friend-mouth {
-  fill: none;
-  stroke: var(--text);
-  stroke-width: 4;
-  animation: friend-mouth 6.4s var(--ease-out) infinite;
-  transform-origin: 50px 62px;
 }
 
 .intro {
@@ -337,6 +253,102 @@ h1 {
   color: color-mix(in srgb, var(--text) 68%, var(--muted));
 }
 
+.world-link {
+  position: fixed;
+  top: clamp(20px, 4vh, 36px);
+  right: clamp(20px, 4vw, 44px);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  flex-direction: row-reverse;
+  gap: 10px;
+  padding: 8px;
+}
+
+.pixel-guy {
+  display: block;
+  width: 30px;
+  height: 42px;
+  image-rendering: pixelated;
+}
+
+.px-hair {
+  fill: #4a4a50;
+}
+
+.px-ink {
+  fill: var(--text);
+}
+
+.px-eye {
+  fill: var(--background);
+}
+
+.px-body {
+  fill: #6c6c72;
+  transition: fill 140ms var(--ease-out);
+}
+
+.px-step-a {
+  animation: px-step 0.5s steps(1) infinite;
+}
+
+.px-step-b {
+  animation: px-step 0.5s steps(1) -0.25s infinite;
+}
+
+.world-link-label {
+  color: var(--muted);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  opacity: 0;
+  text-transform: uppercase;
+  transform: translateX(4px);
+  transition:
+    opacity 140ms var(--ease-out),
+    transform 140ms var(--ease-out);
+}
+
+.world-link:hover .pixel-guy,
+.world-link:focus-visible .pixel-guy {
+  animation: px-hop 0.45s steps(4) infinite;
+}
+
+.world-link:hover .px-body,
+.world-link:focus-visible .px-body {
+  fill: var(--hover);
+}
+
+.world-link:hover .world-link-label,
+.world-link:focus-visible .world-link-label {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+@keyframes px-step {
+  0%,
+  49.9% {
+    visibility: visible;
+  }
+
+  50%,
+  100% {
+    visibility: hidden;
+  }
+}
+
+@keyframes px-hop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
 @keyframes rise-in {
   from {
     opacity: 0;
@@ -349,126 +361,7 @@ h1 {
   }
 }
 
-@keyframes friend-float {
-  0%,
-  100% {
-    transform: translateY(0) rotate(-1deg);
-  }
-
-  50% {
-    transform: translateY(-10px) rotate(1.5deg);
-  }
-}
-
-@keyframes friend-shadow {
-  0%,
-  100% {
-    opacity: 0.42;
-    transform: scaleX(0.92);
-  }
-
-  50% {
-    opacity: 0.22;
-    transform: scaleX(1.12);
-  }
-}
-
-@keyframes friend-shard {
-  0%,
-  100% {
-    transform: skew(0deg, 0deg) scale(1) rotate(0deg);
-  }
-
-  25% {
-    transform: skew(-5deg, 2deg) scale(1.04, 0.98) rotate(-2deg);
-  }
-
-  62% {
-    transform: skew(4deg, -3deg) scale(0.98, 1.05) rotate(2deg);
-  }
-}
-
-@keyframes friend-edge {
-  0%,
-  100% {
-    opacity: 0.48;
-    transform: translate(0, 0);
-  }
-
-  42% {
-    opacity: 1;
-    transform: translate(2px, -1px);
-  }
-
-  70% {
-    opacity: 0.7;
-    transform: translate(-1px, 2px);
-  }
-}
-
-@keyframes friend-facet {
-  0%,
-  100% {
-    opacity: 0.44;
-    transform: translate(0, 0);
-  }
-
-  48% {
-    opacity: 0.72;
-    transform: translate(1px, -1px);
-  }
-}
-
-@keyframes friend-face {
-  0%,
-  100% {
-    transform: translate(0, 0) rotate(0deg);
-  }
-
-  34% {
-    transform: translate(-3px, 2px) rotate(-7deg);
-  }
-
-  68% {
-    transform: translate(4px, -1px) rotate(8deg);
-  }
-}
-
-@keyframes friend-blink {
-  0%,
-  8%,
-  12%,
-  100% {
-    transform: scaleY(1);
-  }
-
-  10% {
-    transform: scaleY(0.18);
-  }
-}
-
-@keyframes friend-mouth {
-  0%,
-  100% {
-    transform: translate(0, 0) rotate(0deg);
-  }
-
-  36% {
-    transform: translate(5px, -4px) rotate(18deg);
-  }
-
-  68% {
-    transform: translate(-2px, 3px) rotate(-12deg);
-  }
-}
-
 @media (max-width: 809px) {
-  .floating-friend {
-    top: 58px;
-    right: 28px;
-    width: 64px;
-    opacity: 0.9;
-  }
 
   .site-shell {
     padding: 60px 60px 54px;
@@ -494,12 +387,6 @@ h1 {
 }
 
 @media (max-width: 560px) {
-  .floating-friend {
-    top: 32px;
-    right: 18px;
-    width: 52px;
-    opacity: 0.82;
-  }
 
   .site-shell {
     height: 100svh;
@@ -523,14 +410,23 @@ h1 {
 }
 
 @media (max-width: 360px) {
-  .floating-friend {
-    display: none;
-  }
 
   .footer {
     align-items: flex-start;
     flex-direction: column;
     gap: 20px;
+  }
+}
+
+@media (max-width: 560px) {
+  .world-link {
+    top: 14px;
+    right: 12px;
+  }
+
+  .pixel-guy {
+    width: 20px;
+    height: 28px;
   }
 }
 
@@ -543,14 +439,12 @@ h1 {
     transition-duration: 1ms !important;
   }
 
-  .friend-body,
-  .friend-shadow,
-  .friend-shape,
-  .friend-facet,
-  .friend-edge,
-  .friend-face,
-  .friend-eye,
-  .friend-mouth {
+  .pixel-guy,
+  .px-step-a {
     animation: none !important;
+  }
+
+  .px-step-b {
+    display: none;
   }
 }

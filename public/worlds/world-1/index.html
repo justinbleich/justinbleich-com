@@ -1,0 +1,1052 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>html, body { margin: 0; } img { max-width: 100%; } [hidden] { display: none !important; }</style>
+<title>Bleich Run</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a monochrome side-scroller as the hero. The career runs left to right (past to present); a dialogue box under the screen, then the plain experience list and contact. */
+:root {
+  --bg: #0c0c0d;
+  --surface: #141416;
+  --fg: #f1f1ef;
+  --muted: #8e8e93;
+  --dim: #3c3c42;
+  --rule: rgba(241, 241, 239, 0.12);
+
+  /* game palette */
+  --g-sky: #101012;
+  --g-far: #17171a;
+  --g-far-win: #2a2a2f;
+  --g-mid: #1d1d21;
+  --g-tile: #29292e;
+  --g-tile-dot: #34343a;
+  --g-edge: #a4a4aa;
+  --g-plat: #37373d;
+  --g-ink: #f1f1ef;
+  --g-shade: #6c6c72;
+  --g-hair: #4a4a50;
+  --g-portal: #f2c14e;
+  --g-portal-deep: #b0702a;
+
+  --f-pixel: "Silkscreen", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --f-body: "Geist", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --gutter: 1rem;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--f-body);
+  font-size: 1rem;
+  line-height: 1.55;
+  padding-inline: var(--gutter);
+  padding-block: 1.25rem 3rem;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration-color: var(--muted); text-underline-offset: 0.2em; }
+a:hover { text-decoration-color: var(--fg); }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--fg); outline-offset: 3px; }
+::selection { background: var(--fg); color: var(--bg); }
+
+.page { max-width: 64rem; margin-inline: auto; }
+
+.mono {
+  font-family: var(--f-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.25rem 1.5rem;
+  color: var(--muted);
+}
+
+.top { padding-block: clamp(1.75rem, 5vw, 3rem) 1.5rem; display: grid; gap: 0.75rem; }
+h1 {
+  margin: 0;
+  font-family: var(--f-pixel);
+  font-weight: 400;
+  font-size: clamp(2.25rem, 8vw, 4.75rem);
+  line-height: 1;
+  letter-spacing: 0;
+  text-wrap: balance;
+}
+.sub { margin: 0; font-size: clamp(1.0625rem, 2vw, 1.25rem); color: var(--muted); }
+.sub span { color: var(--fg); }
+
+/* Game */
+.frame {
+  position: relative;
+  border: 1px solid var(--dim);
+  background: var(--g-sky);
+}
+.frame:focus-within { border-color: var(--fg); }
+canvas {
+  display: block;
+  width: 100%;
+  height: 360px;
+  outline: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.portal-card {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(calc(100% - 2rem), 26rem);
+  display: grid;
+  gap: 0.5rem;
+  padding: 1.1rem 1.2rem 1.2rem;
+  background: var(--surface);
+  border: 1px solid var(--g-portal);
+  box-shadow: 0 0 0 4px var(--bg), 0 0 40px rgba(242, 193, 78, 0.25);
+}
+.portal-card p { margin: 0; }
+.portal-eyebrow { color: var(--g-portal); }
+.portal-title { font-family: var(--f-pixel); font-size: clamp(1.1rem, 3vw, 1.5rem); line-height: 1.2; }
+.portal-desc { color: var(--muted); }
+.portal-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.35rem; }
+.portal-go {
+  display: inline-flex; align-items: center;
+  padding: 0.6rem 1rem;
+  background: var(--g-portal); color: var(--bg);
+  font-family: var(--f-mono); font-size: 0.8125rem; letter-spacing: 0.06em; text-transform: uppercase;
+  text-decoration: none;
+}
+.portal-go:hover { background: var(--fg); }
+.log {
+  display: grid;
+  gap: 0.3rem;
+  align-content: start;
+  min-height: 8.5rem;
+  padding: 1rem 1.1rem 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--dim);
+  border-top: 0;
+}
+.log p { margin: 0; }
+.log-eyebrow { color: var(--muted); }
+.log-title { font-size: clamp(1.1875rem, 2.4vw, 1.5rem); line-height: 1.3; font-weight: 500; text-wrap: balance; }
+.log-desc { color: var(--muted); font-size: 1.0625rem; max-width: 40rem; text-wrap: pretty; }
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  padding-block: 0.9rem;
+}
+.keys { margin: 0; color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.9rem; }
+.keys span { display: inline-flex; align-items: center; gap: 0.35rem; }
+kbd {
+  display: inline-block;
+  min-width: 1.6rem;
+  padding: 0.15rem 0.4rem;
+  border: 1px solid var(--dim);
+  border-bottom-width: 2px;
+  font-family: var(--f-mono);
+  font-size: 0.75rem;
+  text-align: center;
+  color: var(--fg);
+}
+
+.pad { display: none; width: 100%; justify-content: space-between; gap: 0.75rem; }
+.pad-group { display: flex; gap: 0.75rem; }
+.pad button {
+  width: 4rem;
+  height: 4rem;
+  background: var(--surface);
+  border: 1px solid var(--muted);
+  font-family: var(--f-pixel);
+  font-size: 1.25rem;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.pad .jump { width: 6.5rem; font-size: 1rem; }
+.pad button[data-on="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+
+.btn {
+  padding: 0.5rem 0.85rem;
+  background: transparent;
+  border: 1px solid var(--dim);
+  cursor: pointer;
+  font-family: var(--f-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.btn:hover { border-color: var(--fg); background: var(--fg); color: var(--bg); }
+
+@media (hover: none) and (pointer: coarse) {
+  .pad { display: flex; }
+  .keys { display: none; }
+}
+
+/* Experience list */
+.exp { margin-top: clamp(2.5rem, 7vw, 4.5rem); }
+.label { margin: 0 0 0.75rem; font-weight: 400; color: var(--muted); }
+.list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--fg); }
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+  padding-block: 1.25rem;
+  border-bottom: 1px solid var(--rule);
+}
+.row-main { min-width: 0; display: grid; gap: 0.2rem; }
+.row-title { margin: 0; font-size: clamp(1.1875rem, 2.4vw, 1.4375rem); line-height: 1.3; }
+.row-desc { margin: 0; color: var(--muted); font-size: 1.0625rem; text-wrap: pretty; }
+.row-side { display: flex; align-items: center; gap: 0.9rem; }
+.state { color: var(--muted); white-space: nowrap; }
+.state::before { content: "□ "; }
+.row[data-found="true"] .state { color: var(--fg); }
+.row[data-found="true"] .state::before { content: "■ "; }
+.also { margin: 1rem 0 0; color: var(--muted); }
+
+/* Contact */
+.contact { margin-top: clamp(2.5rem, 7vw, 4.5rem); padding-top: 1.25rem; border-top: 1px solid var(--fg); display: grid; gap: 1rem; }
+.contact h2 { margin: 0; font-weight: 400; color: var(--muted); }
+.email { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; min-width: 0; }
+.email-text {
+  font-size: clamp(1.25rem, 4vw, 2rem);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.links { display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; margin: 0; padding: 0; list-style: none; font-size: clamp(1.125rem, 3vw, 1.5rem); }
+
+.foot {
+  margin-top: clamp(3rem, 8vw, 5rem);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.25rem 1.5rem;
+  color: var(--muted);
+}
+
+@media (max-width: 30rem) {
+  .row { grid-template-columns: minmax(0, 1fr); }
+}
+@media (min-width: 52rem) {
+  :root { --gutter: 2rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="bar mono">
+    <span><a href="/">Justin Bleich</a> / <a href="/worlds">Worlds</a></span>
+    <span>San Francisco, CA</span>
+  </header>
+
+  <section class="top" aria-label="Introduction">
+    <h1>Justin Bleich</h1>
+    <p class="sub">Senior Product Designer. <span>Currently leading OnePay Crypto design.</span></p>
+  </section>
+
+  <main>
+    <section aria-label="Career platformer">
+      <div class="frame" id="frame">
+        <canvas id="game" tabindex="0" aria-label="A side-scrolling game. Run right through Justin's career: Sprinklr, NFTX, OKX, then OnePay. Hit each question block from below to unlock the role. The same roles are listed in plain text below the game."></canvas>
+        <div class="portal-card" id="portal-card" hidden role="dialog" aria-labelledby="portal-title">
+          <p class="portal-eyebrow mono">World 1 clear</p>
+          <p class="portal-title" id="portal-title">The portal leads to World 2.</p>
+          <p class="portal-desc">Same career, new dimension. A low-poly gallery where you jump into paintings.</p>
+          <div class="portal-actions">
+            <a class="portal-go" id="portal-go" href="/worlds/world-2">Enter World 2 →</a>
+            <button class="btn" id="portal-stay" type="button">Stay here</button>
+          </div>
+        </div>
+      </div>
+      <div class="log" id="log" aria-live="polite">
+        <p class="log-eyebrow mono" id="log-eyebrow">Level 1 · Career</p>
+        <p class="log-title" id="log-title">Run right through my career.</p>
+        <p class="log-desc" id="log-desc">Hit each ? block from below to unlock a role. Pixels are optional. The flag at the end is the present.</p>
+      </div>
+      <div class="controls">
+        <p class="keys mono">
+          <span><kbd>←</kbd><kbd>→</kbd> Run</span>
+          <span><kbd>Space</kbd> Jump</span>
+          <span>Hold to jump higher</span>
+        </p>
+        <div class="pad" id="pad">
+          <div class="pad-group">
+            <button type="button" data-k="left" aria-label="Run left">◀</button>
+            <button type="button" data-k="right" aria-label="Run right">▶</button>
+          </div>
+          <button type="button" class="jump" data-k="jump" aria-label="Jump">Jump</button>
+        </div>
+        <button class="btn" id="reset" type="button">Restart run</button>
+      </div>
+    </section>
+
+    <section class="exp" aria-labelledby="exp-label">
+      <h2 class="label mono" id="exp-label">Experience</h2>
+      <ol class="list" id="list">
+        <li class="row" data-id="onepay">
+          <div class="row-main">
+            <p class="row-title">Current → OnePay</p>
+            <p class="row-desc">Leading OnePay Crypto design</p>
+          </div>
+          <div class="row-side"><span class="state mono">Locked</span><button class="btn warp" type="button" data-id="onepay">Warp</button></div>
+        </li>
+        <li class="row" data-id="okx">
+          <div class="row-main">
+            <p class="row-title">2024–2026 → <a href="https://www.okx.com" target="_blank" rel="noopener">OKX</a></p>
+            <p class="row-desc">Built global payments experiences to bridge consumers and web3</p>
+          </div>
+          <div class="row-side"><span class="state mono">Locked</span><button class="btn warp" type="button" data-id="okx">Warp</button></div>
+        </li>
+        <li class="row" data-id="nftx">
+          <div class="row-main">
+            <p class="row-title">2021–2024 → <a href="https://v2.nftx.io" target="_blank" rel="noopener">NFTX</a></p>
+            <p class="row-desc">The first NFT liquidity protocol in web3, creating tradable pools for collections</p>
+          </div>
+          <div class="row-side"><span class="state mono">Locked</span><button class="btn warp" type="button" data-id="nftx">Warp</button></div>
+        </li>
+        <li class="row" data-id="sprinklr">
+          <div class="row-main">
+            <p class="row-title">Previously → <a href="https://www.sprinklr.com" target="_blank" rel="noopener">Sprinklr</a></p>
+            <p class="row-desc">Designed universal search and a new self-serve dashboard experience</p>
+          </div>
+          <div class="row-side"><span class="state mono">Locked</span><button class="btn warp" type="button" data-id="sprinklr">Warp</button></div>
+        </li>
+      </ol>
+      <p class="also">Also → <a href="https://app.frax.finance" target="_blank" rel="noopener">FRAX</a>, <a href="https://paste.so" target="_blank" rel="noopener">Paste</a></p>
+    </section>
+
+    <section class="contact" aria-labelledby="contact-label">
+      <h2 class="mono" id="contact-label">Contact</h2>
+      <div class="email">
+        <span class="email-text" id="email-text">justin.bleich@gmail.com</span>
+        <button class="btn" id="copy-btn" type="button">Copy</button>
+      </div>
+      <ul class="links">
+        <li><a href="https://linkedin.com/in/justinbleich" target="_blank" rel="noopener">LinkedIn</a></li>
+        <li><a href="https://farcaster.xyz/jtb" target="_blank" rel="noopener">Farcaster</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="foot mono">
+    <span>© 2026 Justin Bleich</span>
+    <span>San Francisco, CA</span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- constants ---------- */
+  var T = 16, ROWS = 15, COLS = 150, LW = COLS * T, LH = ROWS * T;
+  var STEP = 1 / 120;
+  var GRAV = 1150, JUMP = -372, JUMP_CUT = -150, MAXFALL = 520;
+  var ACC = 1500, AIR = 1000, FRIC = 1700, MAXV = 128;
+  var COYOTE = 0.1, BUFFER = 0.13;
+  var reduce = false;
+  try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+
+  var ROLES = {
+    sprinklr: { name: 'Sprinklr', period: 'Previously', initial: 'S', desc: 'Designed universal search and a new self-serve dashboard experience.' },
+    nftx:     { name: 'NFTX', period: '2021–2024', initial: 'N', desc: 'The first NFT liquidity protocol in web3, creating tradable pools for collections.' },
+    okx:      { name: 'OKX', period: '2024–2026', initial: 'O', desc: 'Built global payments experiences to bridge consumers and web3.' },
+    onepay:   { name: 'OnePay', period: 'Current', initial: 'P', desc: 'Leading OnePay Crypto design.' }
+  };
+  var TICK_LABELS = { sprinklr: 'PREV', nftx: '2021', okx: '2024', onepay: 'NOW' };
+
+  /* ---------- level ---------- */
+  var map = [];
+  for (var rr = 0; rr < ROWS; rr++) map.push(new Uint8Array(COLS));
+  function fill(c0, c1, r0, r1, t) {
+    for (var r = r0; r <= r1; r++) for (var c = c0; c <= c1; c++) map[r][c] = t;
+  }
+  function ground(c0, c1, top) { fill(c0, c1, top, ROWS - 1, 1); }
+  function plat(c0, c1, r) { fill(c0, c1, r, r, 2); }
+
+  ground(0, 22, 12);                       /* start + Sprinklr */
+  ground(26, 33, 12); plat(28, 31, 9);     /* pit 23–25 */
+  ground(34, 52, 11);                      /* NFTX plateau */
+  ground(57, 71, 12); plat(60, 63, 9); plat(66, 69, 6); /* pit 53–56 */
+  ground(75, 87, 12);                      /* OKX, pit 72–74 */
+  ground(88, 88, 11); ground(89, 89, 10); ground(90, 92, 9); /* stairs */
+  ground(96, 117, 9);                      /* OnePay plateau, pit 93–95 */
+  ground(118, 149, 12);                    /* run-out to the flag */
+
+  var BLOCKS = [
+    { c: 15, r: 8, id: 'sprinklr' },
+    { c: 45, r: 7, id: 'nftx' },
+    { c: 81, r: 8, id: 'okx' },
+    { c: 104, r: 5, id: 'onepay' }
+  ];
+  BLOCKS.forEach(function (b) { b.used = false; b.bump = 0; map[b.r][b.c] = 3; });
+
+  var SIGNS = [
+    { c: 4, t: 'CAREER →' },
+    { c: 11, t: 'PREVIOUSLY' },
+    { c: 41, t: '2021' },
+    { c: 77, t: '2024' },
+    { c: 99, t: 'NOW' }
+  ];
+  var FLAG_C = 140, FLAG_X = FLAG_C * T + 7;
+  var PORTAL_C = 146, PORTAL_X = PORTAL_C * T + 8;
+  var portalOpen = 0, inPortal = false;
+  var portalCard = document.getElementById('portal-card');
+
+  var coins = [];
+  function coinRow(c0, c1, r) { for (var c = c0; c <= c1; c++) coins.push({ x: c * T + 6, y: r * T + 6, got: false, ph: c * 0.7 }); }
+  coinRow(5, 8, 11);
+  coinRow(28, 31, 8);
+  coins.push({ x: 53 * T + 6, y: 9 * T + 6, got: false, ph: 1 }, { x: 54 * T + 6, y: 8 * T + 6, got: false, ph: 2 },
+             { x: 55 * T + 6, y: 8 * T + 6, got: false, ph: 3 }, { x: 56 * T + 6, y: 9 * T + 6, got: false, ph: 4 });
+  coinRow(66, 69, 5);
+  coinRow(72, 74, 10);
+  coinRow(108, 113, 8);
+  coinRow(122, 130, 11);
+
+  function surface(col) {
+    for (var r = 0; r < ROWS; r++) if (map[r][col] === 1) return r * T;
+    return 12 * T;
+  }
+
+  /* ---------- backdrop ---------- */
+  var seed = 7;
+  function rnd() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }
+  var far = [], mid = [];
+  (function () {
+    var x = -40, w, h, wins, wx, wy;
+    while (x < LW * 0.3 + 800) {
+      w = 24 + Math.floor(rnd() * 40); h = 50 + Math.floor(rnd() * 110); wins = [];
+      for (wy = LH - h + 8; wy < LH - 14; wy += 10) for (wx = 5; wx < w - 6; wx += 7) if (rnd() < 0.2) wins.push(wx, wy);
+      far.push({ x: x, w: w, h: h, wins: wins });
+      x += w + 4 + Math.floor(rnd() * 14);
+    }
+    x = -60;
+    while (x < LW * 0.6 + 800) {
+      w = 70 + Math.floor(rnd() * 90);
+      mid.push({ x: x, w: w, tiers: 2 + Math.floor(rnd() * 3) });
+      x += w + 20 + Math.floor(rnd() * 60);
+    }
+  })();
+
+  /* ---------- state ---------- */
+  var canvas = document.getElementById('game');
+  var frame = document.getElementById('frame');
+  var ctx = canvas.getContext('2d');
+  var S = 2, dpr = 1, cw = 0, ch = 0, cssW = 0, viewW = 300;
+  var camX = 0, time = 0;
+  var player = { x: 0, y: 0, w: 10, h: 14, vx: 0, vy: 0, onGround: false, face: 1, run: 0 };
+  var input = { left: false, right: false, jumpHeld: false };
+  var coyote = 0, buffer = 0;
+  var found = 0, pixels = 0, finished = false, flagRise = 0, started = false;
+  var checkpoint = 3, flicker = 0;
+  var particles = [], popups = [];
+
+  var css = getComputedStyle(document.documentElement);
+  function tok(n) { return css.getPropertyValue(n).trim(); }
+  var COL = {
+    sky: tok('--g-sky'), far: tok('--g-far'), farWin: tok('--g-far-win'), mid: tok('--g-mid'),
+    tile: tok('--g-tile'), dot: tok('--g-tile-dot'), edge: tok('--g-edge'), plat: tok('--g-plat'),
+    ink: tok('--g-ink'), shade: tok('--g-shade'), hair: tok('--g-hair'), portal: tok('--g-portal'), portalDeep: tok('--g-portal-deep')
+  };
+
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+
+  /* ---------- collision ---------- */
+  function solidAt(c, r) {
+    if (c < 0 || c >= COLS) return true;
+    if (r < 0 || r >= ROWS) return false;
+    return map[r][c] !== 0;
+  }
+  function moveX(p, dx) {
+    p.x += dx;
+    var r0 = Math.floor(p.y / T), r1 = Math.floor((p.y + p.h - 0.01) / T), r, c;
+    if (dx > 0) {
+      c = Math.floor((p.x + p.w - 0.01) / T);
+      for (r = r0; r <= r1; r++) if (solidAt(c, r)) { p.x = c * T - p.w; p.vx = 0; break; }
+    } else if (dx < 0) {
+      c = Math.floor(p.x / T);
+      for (r = r0; r <= r1; r++) if (solidAt(c, r)) { p.x = (c + 1) * T; p.vx = 0; break; }
+    }
+  }
+  function moveY(p, dy) {
+    p.y += dy;
+    p.onGround = false;
+    var c0 = Math.floor(p.x / T), c1 = Math.floor((p.x + p.w - 0.01) / T), c, r;
+    if (dy > 0) {
+      r = Math.floor((p.y + p.h - 0.01) / T);
+      for (c = c0; c <= c1; c++) if (solidAt(c, r)) { p.y = r * T - p.h; p.vy = 0; p.onGround = true; break; }
+    } else if (dy < 0) {
+      r = Math.floor(p.y / T);
+      var hit = false, best = -1, bd = 1e9;
+      for (c = c0; c <= c1; c++) {
+        if (!solidAt(c, r)) continue;
+        hit = true;
+        var t = (r >= 0 && r < ROWS && c >= 0 && c < COLS) ? map[r][c] : 0;
+        if (t === 3 || t === 4) {
+          var d = Math.abs(c * T + T / 2 - (p.x + p.w / 2));
+          if (d < bd) { bd = d; best = c; }
+        }
+      }
+      if (hit) {
+        p.y = (r + 1) * T; p.vy = 0;
+        if (best >= 0) hitBlockAt(best, r);
+      }
+    }
+  }
+
+  /* ---------- effects ---------- */
+  function burst(x, y, n, colors, power) {
+    n = reduce ? Math.ceil(n * 0.3) : n;
+    for (var i = 0; i < n; i++) {
+      var a = Math.random() * Math.PI * 2, s = (0.4 + Math.random() * 0.6) * (power || 160);
+      particles.push({ x: x, y: y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 80, life: 0.5 + Math.random() * 0.5, size: Math.random() < 0.5 ? 2 : 3, color: colors[i % colors.length] });
+    }
+  }
+  function dust(x, y, n) {
+    if (reduce) return;
+    for (var i = 0; i < n; i++) particles.push({ x: x + (Math.random() - 0.5) * 8, y: y - 1, vx: (Math.random() - 0.5) * 60, vy: -20 - Math.random() * 30, life: 0.3 + Math.random() * 0.2, size: 2, color: COL.shade });
+  }
+
+  /* ---------- dialogue box + list ---------- */
+  var logE = document.getElementById('log-eyebrow');
+  var logT = document.getElementById('log-title');
+  var logD = document.getElementById('log-desc');
+  function setLog(e, t, d) { logE.textContent = e; logT.textContent = t; logD.innerHTML = d; }
+  var INTRO = ['Level 1 · Career', 'Run right through my career.', 'Hit each ? block from below to unlock a role. Pixels are optional. The flag at the end is the present.'];
+
+  function markList() {
+    BLOCKS.forEach(function (b) {
+      var row = document.querySelector('.row[data-id="' + b.id + '"]');
+      if (!row) return;
+      row.setAttribute('data-found', b.used ? 'true' : 'false');
+      row.querySelector('.state').textContent = b.used ? 'Found' : 'Locked';
+    });
+  }
+
+  function showRole(id) {
+    var d = ROLES[id];
+    var e = 'Unlocked ' + found + '/4';
+    if (found === 4 && !finished) e += ' · Flag ahead';
+    setLog(e, d.period + ' → ' + d.name, d.desc);
+  }
+
+  function hitBlockAt(c, r) {
+    var b = null;
+    for (var i = 0; i < BLOCKS.length; i++) if (BLOCKS[i].c === c && BLOCKS[i].r === r) b = BLOCKS[i];
+    if (!b) return;
+    b.bump = 1;
+    if (!b.used) {
+      b.used = true;
+      map[b.r][b.c] = 4;
+      found++;
+      checkpoint = b.c - 2;
+      popups.push({ text: ROLES[b.id].name.toUpperCase(), x: b.c * T + 8, y: b.r * T - 6, t: 0 });
+      burst(b.c * T + 8, b.r * T, 14, [COL.ink, COL.edge, COL.shade], 150);
+      markList();
+    }
+    showRole(b.id);
+  }
+
+  function finish() {
+    finished = true;
+    burst(FLAG_X, surface(FLAG_C) - 90, 44, [COL.ink, COL.edge, COL.shade], 220);
+    var missing = 4 - found;
+    var e = 'Level clear · ' + pixels + '/' + coins.length + ' pixels';
+    var tail = missing ? ' You skipped ' + missing + ' block' + (missing > 1 ? 's' : '') + '. Use Warp below to go back.' : '';
+    setLog(e, 'You made it to the present.',
+      'Thanks for playing. Say hi at <a href="mailto:justin.bleich@gmail.com">justin.bleich@gmail.com</a>, or find me on ' +
+      '<a href="https://linkedin.com/in/justinbleich" target="_blank" rel="noopener">LinkedIn</a> and ' +
+      '<a href="https://farcaster.xyz/jtb" target="_blank" rel="noopener">Farcaster</a>. A portal just opened past the flag.' + tail);
+  }
+
+  /* ---------- spawning ---------- */
+  function placeAt(col) {
+    player.x = col * T + 3;
+    player.y = surface(col) - player.h;
+    player.vx = 0; player.vy = 0; player.onGround = true;
+    snapCamera();
+  }
+  function snapCamera() {
+    camX = clamp(player.x + player.w / 2 - viewW * 0.42, 0, Math.max(0, LW - viewW));
+  }
+  function fell() {
+    placeAt(checkpoint);
+    flicker = 0.9;
+    logE.textContent = 'Fell in a gap · Back at checkpoint';
+  }
+
+  function resetRun() {
+    BLOCKS.forEach(function (b) { b.used = false; b.bump = 0; map[b.r][b.c] = 3; });
+    coins.forEach(function (k) { k.got = false; });
+    found = 0; pixels = 0; finished = false; flagRise = 0; checkpoint = 3; started = false;
+    portalOpen = 0; inPortal = false; portalCard.hidden = true;
+    particles = []; popups = [];
+    placeAt(3);
+    setLog(INTRO[0], INTRO[1], INTRO[2]);
+    markList();
+  }
+
+  function warp(id) {
+    var b = null;
+    for (var i = 0; i < BLOCKS.length; i++) if (BLOCKS[i].id === id) b = BLOCKS[i];
+    if (!b) return;
+    placeAt(b.c - 2);
+    checkpoint = Math.max(checkpoint, b.c - 2);
+    flicker = 0.5;
+    started = true;
+    setLog('Warped · ' + ROLES[id].name, 'The ? block is right above you.', 'Jump into it from below to unlock this role.');
+    if (b.used) showRole(b.id);
+    try { frame.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' }); } catch (e) { frame.scrollIntoView(); }
+    try { canvas.focus({ preventScroll: true }); } catch (e) {}
+  }
+
+  /* ---------- update ---------- */
+  function update(dt) {
+    time += dt;
+    var p = player;
+    var ax = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+    if (ax !== 0) {
+      var a = p.onGround ? ACC : AIR;
+      if (p.vx * ax < 0) a *= 1.8;
+      p.vx += ax * a * dt;
+      p.face = ax;
+    } else if (p.onGround) {
+      var f = FRIC * dt;
+      p.vx = Math.abs(p.vx) <= f ? 0 : p.vx - Math.sign(p.vx) * f;
+    } else {
+      p.vx *= 1 - 1.5 * dt;
+    }
+    p.vx = clamp(p.vx, -MAXV, MAXV);
+
+    coyote = p.onGround ? COYOTE : coyote - dt;
+    buffer -= dt;
+    if (buffer > 0 && coyote > 0) {
+      p.vy = JUMP; buffer = 0; coyote = 0; p.onGround = false;
+      dust(p.x + p.w / 2, p.y + p.h, 3);
+    }
+    if (!input.jumpHeld && p.vy < JUMP_CUT) p.vy = JUMP_CUT;
+    p.vy += GRAV * (p.vy > 0 ? 1.35 : 1) * dt;
+    if (p.vy > MAXFALL) p.vy = MAXFALL;
+
+    var was = p.onGround, fallV = p.vy;
+    moveX(p, p.vx * dt);
+    moveY(p, p.vy * dt);
+    if (p.onGround && !was && fallV > 260) dust(p.x + p.w / 2, p.y + p.h, 4);
+    if (p.onGround && Math.abs(p.vx) > 8) p.run += Math.abs(p.vx) * dt * 0.09;
+
+    if (p.y > LH + 40) fell();
+
+    for (var i = 0; i < coins.length; i++) {
+      var k = coins[i];
+      if (k.got) continue;
+      if (k.x < p.x + p.w && k.x + 4 > p.x && k.y < p.y + p.h && k.y + 4 > p.y) {
+        k.got = true; pixels++;
+        burst(k.x + 2, k.y + 2, 5, [COL.ink, COL.edge], 90);
+      }
+    }
+
+    if (!finished && p.x + p.w >= FLAG_X - 1) finish();
+    if (finished && portalOpen < 1) portalOpen = Math.min(1, portalOpen + dt * 0.8);
+    var nowIn = finished && portalOpen > 0.6 && p.x + p.w > PORTAL_X - 7 && p.x < PORTAL_X + 7;
+    if (nowIn && !inPortal) enterPortal();
+    inPortal = nowIn;
+    if (finished) flagRise = Math.min(1, flagRise + dt * 1.4);
+
+    for (i = 0; i < BLOCKS.length; i++) BLOCKS[i].bump = Math.max(0, BLOCKS[i].bump - dt * 6);
+    for (i = popups.length - 1; i >= 0; i--) { popups[i].t += dt; if (popups[i].t > 1.2) popups.splice(i, 1); }
+    for (i = particles.length - 1; i >= 0; i--) {
+      var q = particles[i];
+      q.vy += 600 * dt; q.x += q.vx * dt; q.y += q.vy * dt; q.life -= dt;
+      if (q.life <= 0) particles.splice(i, 1);
+    }
+    if (flicker > 0) flicker -= dt;
+
+    var target = clamp(p.x + p.w / 2 - viewW * 0.42, 0, Math.max(0, LW - viewW));
+    camX += (target - camX) * Math.min(1, dt * 7);
+  }
+
+  /* ---------- drawing ---------- */
+  function R(x, y, w, h, par) {
+    var ox = camX * (par === undefined ? 1 : par);
+    var x0 = Math.round((x - ox) * S), x1 = Math.round((x + w - ox) * S);
+    if (x1 < 0 || x0 > cw) return;
+    var y0 = Math.round(y * S), y1 = Math.round((y + h) * S);
+    ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+  }
+  function pixelFont(size) { ctx.font = Math.round(size) + 'px Silkscreen, ui-monospace, Menlo, monospace'; }
+  function textW(x, y, str, size, color, align) {
+    pixelFont(size * S);
+    ctx.fillStyle = color;
+    ctx.textAlign = align || 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(str, Math.round((x - camX) * S), Math.round(y * S));
+  }
+
+  function drawBackdrop() {
+    ctx.fillStyle = COL.sky;
+    ctx.fillRect(0, 0, cw, ch);
+    var i, b, j;
+    for (i = 0; i < far.length; i++) {
+      b = far[i];
+      ctx.fillStyle = COL.far;
+      R(b.x, LH - b.h, b.w, b.h, 0.3);
+      ctx.fillStyle = COL.farWin;
+      for (j = 0; j < b.wins.length; j += 2) R(b.x + b.wins[j], b.wins[j + 1], 2, 3, 0.3);
+    }
+    ctx.fillStyle = COL.mid;
+    for (i = 0; i < mid.length; i++) {
+      b = mid[i];
+      for (j = 0; j < b.tiers; j++) {
+        var inset = j * 14;
+        R(b.x + inset, LH - 30 - (j + 1) * 16, b.w - inset * 2, 16 + 30, 0.6);
+      }
+    }
+  }
+
+  function drawTiles() {
+    var c0 = Math.max(0, Math.floor(camX / T)), c1 = Math.min(COLS - 1, Math.ceil((camX + viewW) / T));
+    for (var r = 0; r < ROWS; r++) {
+      for (var c = c0; c <= c1; c++) {
+        var t = map[r][c];
+        if (t === 1) {
+          ctx.fillStyle = COL.tile; R(c * T, r * T, T, T);
+          if (r === 0 || map[r - 1][c] === 0) { ctx.fillStyle = COL.edge; R(c * T, r * T, T, 2); ctx.fillStyle = COL.dot; R(c * T, r * T + 2, T, 1); }
+          if ((c * 7 + r * 13) % 5 === 0) { ctx.fillStyle = COL.dot; R(c * T + 5, r * T + 7, 2, 2); }
+          if ((c * 11 + r * 3) % 7 === 0) { ctx.fillStyle = COL.dot; R(c * T + 11, r * T + 12, 2, 2); }
+        } else if (t === 2) {
+          ctx.fillStyle = COL.plat; R(c * T, r * T, T, T);
+          ctx.fillStyle = COL.edge; R(c * T, r * T, T, 2);
+          ctx.fillStyle = COL.sky; R(c * T, r * T + T - 1, T, 1); R(c * T + (c % 2 ? 0 : 8), r * T + 2, 1, T - 3);
+        }
+      }
+    }
+  }
+
+  function drawBlocks() {
+    for (var i = 0; i < BLOCKS.length; i++) {
+      var b = BLOCKS[i];
+      var x = b.c * T, y = b.r * T - Math.sin(b.bump * Math.PI) * 5;
+      if (b.used) {
+        ctx.fillStyle = COL.shade; R(x, y, T, T);
+        ctx.fillStyle = COL.tile; R(x + 2, y + 2, T - 4, T - 4);
+        textW(x + 8, y + 8.5, ROLES[b.id].initial, 8, COL.edge);
+      } else {
+        ctx.fillStyle = COL.ink; R(x, y, T, T);
+        ctx.fillStyle = COL.sky; R(x + 2, y + 2, T - 4, T - 4);
+        var blink = Math.sin(time * 4 + i) > -0.6;
+        textW(x + 8, y + 8.5, '?', 8, blink ? COL.ink : COL.edge);
+        ctx.fillStyle = COL.ink;
+        R(x + 1, y + 1, 1, 1); R(x + T - 2, y + 1, 1, 1); R(x + 1, y + T - 2, 1, 1); R(x + T - 2, y + T - 2, 1, 1);
+      }
+    }
+  }
+
+  function drawSigns() {
+    for (var i = 0; i < SIGNS.length; i++) {
+      var s = SIGNS[i], cx = s.c * T + 8, gy = surface(s.c);
+      if ((cx - camX) * S < -200 || (cx - camX) * S > cw + 200) continue;
+      pixelFont(7 * S);
+      var w = ctx.measureText(s.t).width / S + 8;
+      var top = gy - 30;
+      ctx.fillStyle = COL.hair; R(cx - 1, top + 12, 2, gy - top - 12);
+      ctx.fillStyle = COL.shade; R(cx - w / 2, top, w, 12);
+      ctx.fillStyle = COL.tile; R(cx - w / 2 + 1, top + 1, w - 2, 10);
+      textW(cx, top + 6.5, s.t, 7, COL.ink);
+    }
+  }
+
+  function drawCoins() {
+    for (var i = 0; i < coins.length; i++) {
+      var k = coins[i];
+      if (k.got) continue;
+      var bob = reduce ? 0 : Math.round(Math.sin(time * 3 + k.ph) * 1.5);
+      ctx.fillStyle = COL.ink; R(k.x, k.y + bob, 4, 4);
+      ctx.fillStyle = COL.shade; R(k.x + 2, k.y + bob + 2, 2, 2);
+    }
+  }
+
+  function enterPortal() {
+    burst(PORTAL_X, surface(PORTAL_C) - 18, 24, [COL.portal, COL.ink, COL.portalDeep], 170);
+    portalCard.hidden = false;
+    input.left = input.right = input.jumpHeld = false;
+    setLog('World 1 clear', 'The portal leads to World 2.', 'Open it from the card on screen, or <a href="/worlds/world-2">enter World 2 here</a>.');
+    setTimeout(function () { try { document.getElementById('portal-go').focus({ preventScroll: true }); } catch (e) {} }, 30);
+  }
+  function drawPortal() {
+    if (portalOpen <= 0) return;
+    var gy = surface(PORTAL_C), cy = gy - 18, s = portalOpen;
+    var rx = 8 * s, ry = 17 * s;
+    ctx.fillStyle = COL.portalDeep;
+    for (var i = 0; i < 28; i++) {
+      var a = i / 28 * Math.PI * 2;
+      R(PORTAL_X + Math.cos(a) * rx - 1, cy + Math.sin(a) * ry - 1, 2, 2);
+    }
+    ctx.fillStyle = COL.portal;
+    var spin = reduce ? 0 : time * 3;
+    for (i = 0; i < 10; i++) {
+      var b = spin + i / 10 * Math.PI * 2;
+      R(PORTAL_X + Math.cos(b) * rx - 1.5, cy + Math.sin(b) * ry - 1.5, 3, 3);
+    }
+    for (i = 0; i < 6; i++) {
+      var c2 = -spin * 1.6 + i / 6 * Math.PI * 2;
+      R(PORTAL_X + Math.cos(c2) * rx * 0.5 - 1, cy + Math.sin(c2) * ry * 0.5 - 1, 2, 2);
+    }
+    ctx.globalAlpha = 0.5 + 0.3 * Math.sin(time * 4);
+    R(PORTAL_X - 1, cy - 1, 2, 2);
+    ctx.globalAlpha = 1;
+    if (s >= 1) textW(PORTAL_X, gy - 44, 'WORLD 2', 7, COL.portal);
+  }
+  function drawFlag() {
+    var gy = surface(FLAG_C), top = gy - 96;
+    ctx.fillStyle = COL.edge; R(FLAG_X, top, 2, 96);
+    ctx.fillStyle = COL.ink; R(FLAG_X - 1, top - 3, 4, 4);
+    var clothY = gy - 22 - flagRise * 66;
+    ctx.fillStyle = finished ? COL.ink : COL.shade;
+    R(FLAG_X + 2, clothY, 16, 10);
+    ctx.fillStyle = COL.sky; R(FLAG_X + 14, clothY + 3, 4, 4);
+    textW(FLAG_X + 1, top - 12, finished ? 'HI!' : 'SAY HI', 7, COL.ink);
+    ctx.fillStyle = COL.shade; R(FLAG_X - 6, gy - 4, 14, 4);
+  }
+
+  function drawPlayer() {
+    var p = player;
+    if (flicker > 0 && Math.floor(flicker * 20) % 2 === 0) return;
+    var x = p.x, y = p.y;
+    ctx.fillStyle = COL.hair; R(x + 1, y, 8, 2);
+    ctx.fillStyle = COL.ink; R(x + 1, y + 2, 8, 4);
+    ctx.fillStyle = COL.sky; R(x + (p.face > 0 ? 6 : 3), y + 3, 1, 2);
+    ctx.fillStyle = COL.shade; R(x + 1, y + 6, 8, 5);
+    ctx.fillStyle = COL.ink; R(x + (p.face > 0 ? 7 : 1), y + 7, 2, 2);
+    ctx.fillStyle = COL.ink;
+    if (!p.onGround) { R(x + 1, y + 11, 3, 2); R(x + 6, y + 11, 3, 3); }
+    else if (Math.abs(p.vx) > 8) {
+      if (Math.floor(p.run) % 2 === 0) { R(x + 2, y + 11, 2, 3); R(x + 6, y + 11, 2, 2); }
+      else { R(x + 2, y + 11, 2, 2); R(x + 6, y + 11, 2, 3); }
+    } else { R(x + 2, y + 11, 2, 3); R(x + 6, y + 11, 2, 3); }
+  }
+
+  function drawFx() {
+    var i;
+    for (i = 0; i < popups.length; i++) {
+      var u = popups[i];
+      ctx.globalAlpha = Math.max(0, 1 - Math.max(0, u.t - 0.6) / 0.6);
+      textW(u.x, u.y - Math.min(1, u.t / 0.5) * 18, u.text, 8, COL.ink);
+    }
+    ctx.globalAlpha = 1;
+    for (i = 0; i < particles.length; i++) {
+      var q = particles[i];
+      ctx.globalAlpha = Math.min(1, q.life * 2);
+      ctx.fillStyle = q.color; R(q.x, q.y, q.size, q.size);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawHint() {
+    if (started) return;
+    if (Math.floor(time * 2.5) % 2 === 0) return;
+    textW(player.x + player.w / 2 + 2, player.y - 10, 'RUN →', 7, COL.ink);
+  }
+
+  function drawHud() {
+    var pad = Math.round(7 * S);
+    var fs = Math.max(Math.round(7 * S), Math.round(12 * dpr));
+    ctx.font = fs + 'px Silkscreen, ui-monospace, Menlo, monospace';
+    ctx.textBaseline = 'top';
+    ctx.textAlign = 'left';
+    var label = 'FOUND ' + found + '/4   PX ' + pixels + '/' + coins.length;
+    ctx.fillStyle = COL.sky; ctx.globalAlpha = 0.75;
+    ctx.fillRect(pad - Math.round(4 * dpr), pad - Math.round(4 * dpr), ctx.measureText(label).width + Math.round(8 * dpr), fs + Math.round(8 * dpr));
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = COL.ink;
+    ctx.fillText(label, pad, pad);
+
+    if (cssW < 440) return;
+    var tw = Math.min(cw * 0.36, 250 * dpr), x0 = cw - pad - tw, ly = pad + Math.round(fs / 2);
+    var th = Math.max(1, Math.round(dpr));
+    ctx.fillStyle = COL.shade; ctx.fillRect(x0, ly, tw, th);
+    var lf = Math.max(Math.round(fs * 0.75), Math.round(10 * dpr));
+    ctx.font = lf + 'px Silkscreen, ui-monospace, Menlo, monospace';
+    ctx.textAlign = 'center';
+    for (var i = 0; i < BLOCKS.length; i++) {
+      var b = BLOCKS[i], tx = Math.round(x0 + tw * (b.c * T / FLAG_X));
+      var s = Math.round(3 * dpr);
+      ctx.fillStyle = b.used ? COL.ink : COL.sky;
+      ctx.fillRect(tx - s, ly - s + th / 2, s * 2, s * 2);
+      ctx.strokeStyle = COL.ink; ctx.lineWidth = Math.max(1, dpr);
+      ctx.strokeRect(tx - s + 0.5, ly - s + th / 2 + 0.5, s * 2 - 1, s * 2 - 1);
+      ctx.fillStyle = b.used ? COL.ink : COL.shade;
+      ctx.fillText(TICK_LABELS[b.id], tx, ly + Math.round(6 * dpr));
+    }
+    ctx.fillStyle = finished ? COL.ink : COL.shade;
+    ctx.fillRect(x0 + tw - Math.round(1 * dpr), ly - Math.round(6 * dpr), Math.round(2 * dpr), Math.round(7 * dpr));
+    var px = Math.round(x0 + tw * clamp((player.x + player.w / 2) / FLAG_X, 0, 1));
+    ctx.fillStyle = COL.ink;
+    ctx.beginPath(); ctx.arc(px, ly + th / 2, Math.round(4 * dpr), 0, Math.PI * 2); ctx.fill();
+  }
+
+  function render() {
+    ctx.imageSmoothingEnabled = false;
+    drawBackdrop();
+    drawSigns();
+    drawTiles();
+    drawFlag();
+    drawPortal();
+    drawBlocks();
+    drawCoins();
+    drawPlayer();
+    drawFx();
+    drawHint();
+    drawHud();
+  }
+
+  /* ---------- sizing ---------- */
+  function resize() {
+    var w = frame.clientWidth || 340;
+    var h = Math.round(clamp(w * 0.46, 300, 440));
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cssW = w;
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    canvas.style.height = h + 'px';
+    cw = canvas.width; ch = canvas.height;
+    S = ch / LH;
+    viewW = cw / S;
+    snapCamera();
+  }
+
+  /* ---------- input ---------- */
+  var KEYS = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'jump', KeyW: 'jump', Space: 'jump' };
+  function inView() {
+    var r = frame.getBoundingClientRect();
+    return r.bottom > 40 && r.top < window.innerHeight - 40;
+  }
+  function press(k) {
+    started = true;
+    if (k === 'jump') { if (!input.jumpHeld) buffer = BUFFER; input.jumpHeld = true; }
+    else input[k] = true;
+  }
+  function releaseKey(k) {
+    if (k === 'jump') input.jumpHeld = false; else input[k] = false;
+  }
+  window.addEventListener('keydown', function (e) {
+    var k = KEYS[e.code];
+    if (!k) return;
+    var t = e.target;
+    if (t && t !== canvas && t !== document.body && /^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/.test(t.tagName)) return;
+    if (t !== canvas && !inView()) return;
+    e.preventDefault();
+    if (e.repeat && k === 'jump') return;
+    press(k);
+  });
+  window.addEventListener('keyup', function (e) {
+    var k = KEYS[e.code];
+    if (k) releaseKey(k);
+  });
+  window.addEventListener('blur', function () { input.left = input.right = input.jumpHeld = false; });
+  canvas.addEventListener('pointerdown', function () { try { canvas.focus({ preventScroll: true }); } catch (e) {} });
+
+  var padBtns = document.querySelectorAll('#pad button');
+  Array.prototype.forEach.call(padBtns, function (btn) {
+    var k = btn.getAttribute('data-k');
+    function down(e) {
+      e.preventDefault();
+      try { btn.setPointerCapture(e.pointerId); } catch (err) {}
+      btn.setAttribute('data-on', 'true');
+      press(k);
+    }
+    function up() { btn.removeAttribute('data-on'); releaseKey(k); }
+    btn.addEventListener('pointerdown', down);
+    btn.addEventListener('pointerup', up);
+    btn.addEventListener('pointercancel', up);
+    btn.addEventListener('lostpointercapture', up);
+    btn.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  });
+
+  document.getElementById('reset').addEventListener('click', function () {
+    resetRun();
+    try { canvas.focus({ preventScroll: true }); } catch (e) {}
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.warp'), function (btn) {
+    btn.addEventListener('click', function () { warp(btn.getAttribute('data-id')); });
+  });
+
+  document.getElementById('portal-stay').addEventListener('click', function () {
+    portalCard.hidden = true;
+    try { canvas.focus({ preventScroll: true }); } catch (e) {}
+  });
+
+  /* ---------- copy email ---------- */
+  var copyBtn = document.getElementById('copy-btn');
+  var emailText = document.getElementById('email-text');
+  var copyTimer;
+  function flash(msg) {
+    copyBtn.textContent = msg;
+    clearTimeout(copyTimer);
+    copyTimer = setTimeout(function () { copyBtn.textContent = 'Copy'; }, 1600);
+  }
+  function selectEmail() {
+    try {
+      var range = document.createRange();
+      range.selectNodeContents(emailText);
+      var sel = window.getSelection();
+      sel.removeAllRanges(); sel.addRange(range);
+    } catch (e) {}
+  }
+  copyBtn.addEventListener('click', function () {
+    var v = emailText.textContent.trim();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(v).then(function () { flash('Copied'); }, function () { selectEmail(); flash('Selected'); });
+    } else { selectEmail(); flash('Selected'); }
+  });
+
+  /* ---------- loop ---------- */
+  var acc = 0, last = performance.now();
+  function loop(now) {
+    var dt = Math.min((now - last) / 1000, 0.05);
+    last = now;
+    acc += dt;
+    while (acc >= STEP) { update(STEP); acc -= STEP; }
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  resize();
+  placeAt(3);
+  markList();
+  render();
+  if (window.ResizeObserver) new ResizeObserver(function () { resize(); render(); }).observe(frame);
+  else window.addEventListener('resize', function () { resize(); render(); });
+  requestAnimationFrame(function (t) { last = t; requestAnimationFrame(loop); });
+
+})();
+</script>
+</body>
+</html>
