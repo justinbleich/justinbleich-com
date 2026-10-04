@@ -258,8 +258,27 @@ kbd {
   * { transition: none !important; }
 }
 </style>
+<link rel="stylesheet" href="/worlds/shell.css">
+<style>
+/* Fullscreen: dialogue box top left, restart and touch pad along the bottom. */
+.log {
+  position: fixed; top: 3.9rem; left: 0.9rem; z-index: 5;
+  width: min(23rem, calc(100vw - 1.8rem)); min-height: 0;
+  padding: 0.75rem 0.9rem 0.85rem;
+  border: 1px solid var(--dim); background: rgba(20, 20, 22, 0.84);
+  pointer-events: none;
+}
+.log a { pointer-events: auto; }
+.log-title { font-size: 1.0625rem; }
+.log-desc { font-size: 0.9375rem; }
+#reset { position: fixed; right: 0.9rem; bottom: 0.9rem; z-index: 6; background: rgba(12, 12, 14, 0.78); }
+.pad { position: fixed; inset: auto 0 0 0; z-index: 6; width: auto; padding: 0.9rem; }
+@media (hover: none) and (pointer: coarse) {
+  #reset { bottom: 6.2rem; }
+}
+</style>
 </head>
-<body>
+<body data-world="1">
 <div class="page">
   <header class="bar mono">
     <span><a href="/">Justin Bleich</a> / <a href="/worlds">Worlds</a></span>
@@ -274,7 +293,7 @@ kbd {
   <main>
     <section aria-label="Career platformer">
       <div class="frame" id="frame">
-        <canvas id="game" tabindex="0" aria-label="A side-scrolling game. Run right through Justin's career: Sprinklr, NFTX, OKX, then OnePay. Hit each question block from below to unlock the role. The same roles are listed in plain text below the game."></canvas>
+        <canvas id="game" tabindex="0" aria-label="A side-scrolling game. Run right, hit the question blocks from below, and reach the flag to unlock the first stop in Justin's career."></canvas>
         <div class="portal-card" id="portal-card" hidden role="dialog" aria-labelledby="portal-title">
           <p class="portal-eyebrow mono">World 1 clear</p>
           <p class="portal-title" id="portal-title">The portal leads to World 2.</p>
@@ -286,9 +305,9 @@ kbd {
         </div>
       </div>
       <div class="log" id="log" aria-live="polite">
-        <p class="log-eyebrow mono" id="log-eyebrow">Level 1 · Career</p>
-        <p class="log-title" id="log-title">Run right through my career.</p>
-        <p class="log-desc" id="log-desc">Hit each ? block from below to unlock a role. Pixels are optional. The flag at the end is the present.</p>
+        <p class="log-eyebrow mono" id="log-eyebrow">World 1 · The Run</p>
+        <p class="log-title" id="log-title">Run to the flag.</p>
+        <p class="log-desc" id="log-desc">Hit the ? blocks from below on the way. Pixels are optional. The flag unlocks the first stop in my career.</p>
       </div>
       <div class="controls">
         <p class="keys mono">
@@ -361,6 +380,7 @@ kbd {
   </footer>
 </div>
 
+<script src="/worlds/shell.js"></script>
 <script>
 (function () {
   'use strict';
@@ -380,7 +400,7 @@ kbd {
     okx:      { name: 'OKX', period: '2024–2026', initial: 'O', desc: 'Built global payments experiences to bridge consumers and web3.' },
     onepay:   { name: 'OnePay', period: 'Current', initial: 'P', desc: 'Leading OnePay Crypto design.' }
   };
-  var TICK_LABELS = { sprinklr: 'PREV', nftx: '2021', okx: '2024', onepay: 'NOW' };
+  var TICK_LABELS = { sprinklr: '1', nftx: '2', okx: '3', onepay: '4' };
 
   /* ---------- level ---------- */
   var map = [];
@@ -409,11 +429,7 @@ kbd {
   BLOCKS.forEach(function (b) { b.used = false; b.bump = 0; map[b.r][b.c] = 3; });
 
   var SIGNS = [
-    { c: 4, t: 'CAREER →' },
-    { c: 11, t: 'PREVIOUSLY' },
-    { c: 41, t: '2021' },
-    { c: 77, t: '2024' },
-    { c: 99, t: 'NOW' }
+    { c: 134, t: 'FLAG →' }
   ];
   var FLAG_C = 140, FLAG_X = FLAG_C * T + 7;
   var PORTAL_C = 146, PORTAL_X = PORTAL_C * T + 8;
@@ -460,7 +476,8 @@ kbd {
   var canvas = document.getElementById('game');
   var frame = document.getElementById('frame');
   var ctx = canvas.getContext('2d');
-  var S = 2, dpr = 1, cw = 0, ch = 0, cssW = 0, viewW = 300;
+  var padEl = document.getElementById('pad');
+  var S = 2, OY = 0, dpr = 1, cw = 0, ch = 0, cssW = 0, viewW = 300;
   var camX = 0, time = 0;
   var player = { x: 0, y: 0, w: 10, h: 14, vx: 0, vy: 0, onGround: false, face: 1, run: 0 };
   var input = { left: false, right: false, jumpHeld: false };
@@ -540,7 +557,7 @@ kbd {
   var logT = document.getElementById('log-title');
   var logD = document.getElementById('log-desc');
   function setLog(e, t, d) { logE.textContent = e; logT.textContent = t; logD.innerHTML = d; }
-  var INTRO = ['Level 1 · Career', 'Run right through my career.', 'Hit each ? block from below to unlock a role. Pixels are optional. The flag at the end is the present.'];
+  var INTRO = ['World 1 · The Run', 'Run to the flag.', 'Hit the ? blocks from below on the way. Pixels are optional. The flag unlocks the first stop in my career.'];
 
   function markList() {
     BLOCKS.forEach(function (b) {
@@ -552,10 +569,9 @@ kbd {
   }
 
   function showRole(id) {
-    var d = ROLES[id];
-    var e = 'Unlocked ' + found + '/4';
-    if (found === 4 && !finished) e += ' · Flag ahead';
-    setLog(e, d.period + ' → ' + d.name, d.desc);
+    var e = 'Blocks ' + found + '/4';
+    if (finished) { setLog(e, 'Block ' + found + ' of 4.', 'The portal past the flag leads to World 2.'); return; }
+    setLog(e, found === 4 ? 'All four blocks. Flag ahead.' : 'Block ' + found + ' of 4.', 'Reach the flag to unlock this world’s stop in my career.');
   }
 
   function hitBlockAt(c, r) {
@@ -568,7 +584,7 @@ kbd {
       map[b.r][b.c] = 4;
       found++;
       checkpoint = b.c - 2;
-      popups.push({ text: ROLES[b.id].name.toUpperCase(), x: b.c * T + 8, y: b.r * T - 6, t: 0 });
+      popups.push({ text: found + '/4', x: b.c * T + 8, y: b.r * T - 6, t: 0 });
       burst(b.c * T + 8, b.r * T, 14, [COL.ink, COL.edge, COL.shade], 150);
       markList();
     }
@@ -578,13 +594,12 @@ kbd {
   function finish() {
     finished = true;
     burst(FLAG_X, surface(FLAG_C) - 90, 44, [COL.ink, COL.edge, COL.shade], 220);
-    var missing = 4 - found;
-    var e = 'Level clear · ' + pixels + '/' + coins.length + ' pixels';
-    var tail = missing ? ' You skipped ' + missing + ' block' + (missing > 1 ? 's' : '') + '. Use Warp below to go back.' : '';
-    setLog(e, 'You made it to the present.',
-      'Thanks for playing. Say hi at <a href="mailto:justin.bleich@gmail.com">justin.bleich@gmail.com</a>, or find me on ' +
-      '<a href="https://linkedin.com/in/justinbleich" target="_blank" rel="noopener">LinkedIn</a> and ' +
-      '<a href="https://farcaster.xyz/jtb" target="_blank" rel="noopener">Farcaster</a>. A portal just opened past the flag.' + tail);
+    var note = found + '/4 blocks · ' + pixels + '/' + coins.length + ' pixels';
+    setLog('World 1 clear · ' + note, 'You reached the flag.', 'A portal just opened past it. It leads to World 2.');
+    setTimeout(function () {
+      input.left = input.right = input.jumpHeld = false;
+      window.BW.complete({ note: note, onClose: function () { try { canvas.focus({ preventScroll: true }); } catch (e) {} } });
+    }, 900);
   }
 
   /* ---------- spawning ---------- */
@@ -698,7 +713,7 @@ kbd {
     var ox = camX * (par === undefined ? 1 : par);
     var x0 = Math.round((x - ox) * S), x1 = Math.round((x + w - ox) * S);
     if (x1 < 0 || x0 > cw) return;
-    var y0 = Math.round(y * S), y1 = Math.round((y + h) * S);
+    var y0 = Math.round(y * S) + OY, y1 = Math.round((y + h) * S) + OY;
     ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
   }
   function pixelFont(size) { ctx.font = Math.round(size) + 'px Silkscreen, ui-monospace, Menlo, monospace'; }
@@ -707,12 +722,14 @@ kbd {
     ctx.fillStyle = color;
     ctx.textAlign = align || 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(str, Math.round((x - camX) * S), Math.round(y * S));
+    ctx.fillText(str, Math.round((x - camX) * S), Math.round(y * S) + OY);
   }
 
   function drawBackdrop() {
     ctx.fillStyle = COL.sky;
     ctx.fillRect(0, 0, cw, ch);
+    ctx.fillStyle = COL.tile;
+    ctx.fillRect(0, OY + Math.round(LH * S), cw, ch);
     var i, b, j;
     for (i = 0; i < far.length; i++) {
       b = far[i];
@@ -757,7 +774,7 @@ kbd {
       if (b.used) {
         ctx.fillStyle = COL.shade; R(x, y, T, T);
         ctx.fillStyle = COL.tile; R(x + 2, y + 2, T - 4, T - 4);
-        textW(x + 8, y + 8.5, ROLES[b.id].initial, 8, COL.edge);
+        textW(x + 8, y + 8.5, '!', 8, COL.edge);
       } else {
         ctx.fillStyle = COL.ink; R(x, y, T, T);
         ctx.fillStyle = COL.sky; R(x + 2, y + 2, T - 4, T - 4);
@@ -795,10 +812,9 @@ kbd {
 
   function enterPortal() {
     burst(PORTAL_X, surface(PORTAL_C) - 18, 24, [COL.portal, COL.ink, COL.portalDeep], 170);
-    portalCard.hidden = false;
     input.left = input.right = input.jumpHeld = false;
-    setLog('World 1 clear', 'The portal leads to World 2.', 'Open it from the card on screen, or <a href="/worlds/world-2">enter World 2 here</a>.');
-    setTimeout(function () { try { document.getElementById('portal-go').focus({ preventScroll: true }); } catch (e) {} }, 30);
+    setLog('World 1 clear', 'Entering World 2…', '');
+    setTimeout(function () { location.href = '/worlds/world-2'; }, 350);
   }
   function drawPortal() {
     if (portalOpen <= 0) return;
@@ -881,7 +897,7 @@ kbd {
     ctx.font = fs + 'px Silkscreen, ui-monospace, Menlo, monospace';
     ctx.textBaseline = 'top';
     ctx.textAlign = 'left';
-    var label = 'FOUND ' + found + '/4   PX ' + pixels + '/' + coins.length;
+    var label = 'BLOCKS ' + found + '/4   PX ' + pixels + '/' + coins.length;
     ctx.fillStyle = COL.sky; ctx.globalAlpha = 0.75;
     ctx.fillRect(pad - Math.round(4 * dpr), pad - Math.round(4 * dpr), ctx.measureText(label).width + Math.round(8 * dpr), fs + Math.round(8 * dpr));
     ctx.globalAlpha = 1;
@@ -930,14 +946,19 @@ kbd {
   /* ---------- sizing ---------- */
   function resize() {
     var w = frame.clientWidth || 340;
-    var h = Math.round(clamp(w * 0.46, 300, 440));
+    var h = frame.clientHeight || Math.round(clamp(w * 0.46, 300, 440));
     dpr = Math.min(window.devicePixelRatio || 1, 2);
     cssW = w;
     canvas.width = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
-    canvas.style.height = h + 'px';
     cw = canvas.width; ch = canvas.height;
-    S = ch / LH;
+    /* fill the height, but never show fewer than 18 tiles across: on tall
+       screens the level sits on the bottom edge with sky above */
+    S = Math.min(ch / LH, cw / (15 * T));
+    OY = Math.round(ch - LH * S);
+    /* on touch, lift the level clear of the pad when there is sky to spare */
+    var lift = Math.round(padEl.offsetHeight * dpr);
+    if (OY >= lift) OY -= lift;
     viewW = cw / S;
     snapCamera();
   }

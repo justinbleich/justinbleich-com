@@ -1,0 +1,184 @@
+/* Shared shell for every world: the game fills the viewport, the page chrome
+   is replaced by one persistent exit pill, and clearing a world shows one
+   reveal card. Loaded after each world's own styles so these rules win. */
+
+:root {
+  --bw-bg: rgba(12, 12, 14, 0.78);
+  --bw-solid: #131316;
+  --bw-fg: #f2f1ee;
+  --bw-muted: #9a9aa2;
+  --bw-rule: rgba(242, 241, 238, 0.16);
+  --bw-hi: #f2c14e;
+  --bw-mono: "Geist Mono", "DM Mono", "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --bw-body: "Geist", "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ---------- fullscreen layout (world pages only) ---------- */
+body[data-world] {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  padding: 0 !important;
+}
+html:has(body[data-world]) { height: 100%; overflow: hidden; }
+
+body[data-world] .page { max-width: none !important; margin: 0 !important; }
+body[data-world] .bar,
+body[data-world] .top,
+body[data-world] .checker,
+body[data-world] .exp,
+body[data-world] .contact,
+body[data-world] .foot,
+body[data-world] nav.worlds { display: none !important; }
+
+body[data-world] .frame {
+  position: fixed !important;
+  inset: 0;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+body[data-world] .frame > canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* key hints float over the game, bottom left */
+body[data-world] .controls,
+body[data-world] .below { padding: 0 !important; }
+body[data-world] .keys {
+  position: fixed;
+  left: max(0.9rem, env(safe-area-inset-left));
+  bottom: max(0.9rem, env(safe-area-inset-bottom));
+  z-index: 6;
+  max-width: calc(100vw - 1.8rem);
+  margin: 0;
+  padding: 0.45rem 0.7rem;
+  border-radius: 8px;
+  background: var(--bw-bg);
+  color: var(--bw-fg);
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+body[data-world] .keys kbd { background: transparent; color: var(--bw-fg); border-color: var(--bw-rule); }
+
+/* ---------- persistent exit ---------- */
+.bw-chrome {
+  position: fixed;
+  top: max(0.7rem, env(safe-area-inset-top));
+  left: 50%;
+  z-index: 40;
+  display: flex;
+  align-items: stretch;
+  transform: translateX(-50%);
+  border: 1px solid var(--bw-rule);
+  border-radius: 999px;
+  background: var(--bw-bg);
+  color: var(--bw-fg);
+  font-family: var(--bw-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.bw-chrome a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0.85rem;
+  color: inherit;
+  text-decoration: none;
+}
+.bw-chrome a + a { border-left: 1px solid var(--bw-rule); color: var(--bw-muted); }
+.bw-chrome a:hover { color: var(--bw-hi); }
+.bw-chrome a:focus-visible { outline: 2px solid var(--bw-hi); outline-offset: 2px; border-radius: 999px; }
+
+/* ---------- reveal card ---------- */
+.bw-reveal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(6, 6, 8, 0.62);
+  overflow: auto;
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+.bw-reveal[hidden] { display: none; }
+.bw-card {
+  width: min(100%, 30rem);
+  display: grid;
+  gap: 0.55rem;
+  padding: 1.4rem 1.5rem 1.5rem;
+  border: 1px solid var(--bw-rule);
+  border-top: 3px solid var(--bw-hi);
+  border-radius: 10px;
+  background: var(--bw-solid);
+  color: var(--bw-fg);
+  font-family: var(--bw-body);
+  line-height: 1.5;
+  text-align: left;
+  animation: bw-rise 0.35s cubic-bezier(0.2, 0, 0, 1);
+}
+.bw-card p { margin: 0; }
+.bw-eyebrow,
+.bw-note,
+.bw-pips {
+  font-family: var(--bw-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.bw-eyebrow { color: var(--bw-hi); }
+.bw-note { color: var(--bw-muted); }
+.bw-title {
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+.bw-desc { color: var(--bw-muted); font-size: 1.0625rem; text-wrap: pretty; }
+.bw-desc a { color: var(--bw-fg); text-underline-offset: 0.2em; }
+.bw-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
+.bw-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--bw-rule);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--bw-fg);
+  cursor: pointer;
+  font-family: var(--bw-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+.bw-btn:hover { border-color: var(--bw-fg); }
+.bw-btn.bw-go { border-color: var(--bw-fg); background: var(--bw-fg); color: var(--bw-solid); }
+.bw-btn.bw-go:hover { border-color: var(--bw-hi); background: var(--bw-hi); }
+.bw-btn:focus-visible { outline: 2px solid var(--bw-hi); outline-offset: 3px; }
+.bw-pips { display: flex; gap: 0.35rem; margin-top: 0.7rem; color: var(--bw-muted); }
+.bw-pips i {
+  width: 1.4rem;
+  height: 0.25rem;
+  border-radius: 2px;
+  background: var(--bw-rule);
+}
+.bw-pips i[data-on="true"] { background: var(--bw-hi); }
+
+@keyframes bw-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bw-card { animation: none; }
+}

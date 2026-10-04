@@ -193,8 +193,13 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
 @media (min-width: 52rem) { :root { --gutter: 2rem; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
+<link rel="stylesheet" href="/worlds/shell.css">
+<style>
+/* Fullscreen: HUD clears the exit pill. */
+.chamber { top: 1rem; left: 1.1rem; }
+</style>
 </head>
-<body>
+<body data-world="5">
 <div class="page">
   <header class="bar mono">
     <span><a href="/">Justin Bleich</a> / <a href="/worlds">Worlds</a></span>
@@ -217,7 +222,7 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
   <main>
     <section aria-label="Portal test facility">
       <div class="frame" id="frame">
-        <canvas id="c" tabindex="0" aria-label="A first-person test facility. Place two linked portals on white panels to cross each chamber. Each chamber reveals one role. The same roles are listed in plain text below."></canvas>
+        <canvas id="c" tabindex="0" aria-label="A first-person test facility. Place two linked portals on white panels to cross each chamber. Clear all four chambers to finish the tour of Justin's career."></canvas>
         <div class="hud" id="hud">
           <div class="chamber"><span class="mono" id="ch-label">Test chamber</span><b id="ch-num">01 / 04</b></div>
           <div class="cross" aria-hidden="true">
@@ -248,7 +253,7 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
           <div class="panel">
             <p class="eyebrow mono" style="margin:0">World 5 · Bleich Lab</p>
             <p class="panel-title">Enter the facility</p>
-            <p class="panel-desc">Four chambers. Each one opens onto the next stop in my career. Portals only stick to white panels, and you can see and walk through them.</p>
+            <p class="panel-desc">Four chambers, and the last stop on the tour. Portals only stick to white panels, and you can see and walk through them.</p>
             <dl class="controls-list">
               <dt>Move</dt><dd>W A S D, Space to jump</dd>
               <dt>Look</dt><dd>Mouse (click to lock), or drag</dd>
@@ -319,6 +324,7 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
   </footer>
 </div>
 
+<script src="/worlds/shell.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function () {
@@ -557,8 +563,8 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
       g.font = '800 250px Archivo, "Arial Black", sans-serif'; g.textBaseline = 'top'; g.fillText(num, 36, 30);
       g.fillRect(36, 300, 440, 6);
       g.font = '500 30px "IBM Plex Mono", monospace'; g.fillText('TEST ' + num + ' / 04', 36, 330);
-      g.font = '800 64px Archivo, "Arial Black", sans-serif'; g.fillText(r.name.toUpperCase(), 36, 380);
-      g.font = '500 30px "IBM Plex Mono", monospace'; g.fillStyle = '#5d6370'; g.fillText(r.period.toUpperCase(), 36, 460);
+      g.font = '800 64px Archivo, "Arial Black", sans-serif'; g.fillText('BLEICH LAB', 36, 380);
+      g.font = '500 30px "IBM Plex Mono", monospace'; g.fillStyle = '#5d6370'; g.fillText('PORTAL TEST', 36, 460);
       /* pictograms */
       g.strokeStyle = C.a; g.lineWidth = 10; g.beginPath(); g.ellipse(80, 570, 22, 36, 0, 0, 7); g.stroke();
       g.strokeStyle = C.b; g.beginPath(); g.ellipse(160, 570, 22, 36, 0, 0, 7); g.stroke();
@@ -882,11 +888,11 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
     c.done = true; completed++;
     var r = ROLES[c.role];
     roleEl.style.borderTopColor = i % 2 ? C.b : C.a;
-    roleE.textContent = 'Test ' + r.n + ' passed · ' + r.period;
-    roleT.textContent = r.period + ' → ' + r.name;
-    roleD.innerHTML = r.desc + (r.url ? ' <a href="' + r.url + '" target="_blank" rel="noopener">Visit ↗</a>' : '');
+    roleE.textContent = 'Test ' + r.n + ' / 04';
+    roleT.textContent = 'Test ' + r.n + ' passed';
+    roleD.textContent = i === 3 ? 'Every test passed.' : 'Head through the door to the next chamber.';
     roleEl.hidden = false; roleEl.style.animation = 'none'; void roleEl.offsetWidth; roleEl.style.animation = '';
-    roleTimer = 7;
+    roleTimer = 3.5;
     var row = document.querySelector('.row[data-id="' + c.role + '"]');
     if (row) { row.setAttribute('data-on', 'true'); row.querySelector('.state').textContent = 'Passed'; }
     if (i === 3) setTimeout(showFinale, 1600);
@@ -894,9 +900,12 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
   function showFinale() {
     if (finaleShown) return; finaleShown = true;
     var secs = Math.round((performance.now() - startTime) / 1000);
-    document.getElementById('fin-desc').innerHTML = 'Four tests, ' + portalsPlaced + ' portals, ' + Math.floor(secs / 60) + ' min ' + (secs % 60) + ' s. That is the whole career so far. Say hi at <a href="mailto:justin.bleich@gmail.com">justin.bleich@gmail.com</a>.';
-    document.getElementById('finale').hidden = false;
     unlock();
+    window.BW.complete({
+      note: 'Four tests · ' + portalsPlaced + ' portals · ' + Math.floor(secs / 60) + ' min ' + (secs % 60) + ' s',
+      stayLabel: 'Keep exploring',
+      onClose: function () { try { canvas.focus({ preventScroll: true }); } catch (e) {} }
+    });
   }
   document.getElementById('fin-close').addEventListener('click', function () { document.getElementById('finale').hidden = true; try { canvas.focus({ preventScroll: true }); } catch (e) {} });
 
@@ -1177,8 +1186,7 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
 
   function resize() {
     var w = frame.clientWidth || 360;
-    var h = Math.round(clamp(w * 0.58, 380, 640));
-    canvas.style.height = h + 'px';
+    var h = frame.clientHeight || Math.round(clamp(w * 0.58, 380, 640));
     renderer.setPixelRatio(pixelRatio);
     renderer.setSize(w, h, false);
     camera.aspect = w / h; camera.updateProjectionMatrix();

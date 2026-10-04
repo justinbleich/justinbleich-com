@@ -1,61 +1,51 @@
 # Bleich Worlds
 
-Justin Bleich's portfolio as five small browser games. Each world is a different
-genre and console era, and each tells the same career: Sprinklr → NFTX → OKX →
-OnePay. The worlds link to each other in a loop:
+Justin Bleich's career as five small browser games, served from `public/worlds/`
+at `/worlds`. Each world is a different genre and console era, and each one
+unlocks **one** stop in the career when it is cleared:
 
-```
-index.html (world select)
-   └─ World 1 → World 2 → World 3 → World 4 → World 5 ─┐
-        ↑                                              │
-        └──────────────────────────────────────────────┘
-```
+| World | Path | What it is | Clearing it reveals | Finish line |
+| --- | --- | --- | --- | --- |
+| 1 · The Run | `world-1/` | Gray 2D platformer (Canvas 2D) | Previously → Sprinklr | Touch the flag. A portal past it goes to World 2. |
+| 2 · The Gallery | `world-2/` | N64-style hall (three.js) | 2021–2024 → NFTX | Three star paintings open the door; jump into the last painting. |
+| 3 · The Diorama | `world-3/` | Isometric puzzle (three.js, orthographic) | 2024–2026 → OKX | Light plinths I–III, then reach the TOP plinth. |
+| 4 · Grand Prix | `world-4/` | Kart race, 2 laps, 3 AI rivals (three.js) | Current → OnePay | Cross the finish line. |
+| 5 · The Lab | `world-5/` | First-person portal facility (three.js) | Finale: FRAX, Paste, contact | Clear chamber 4. |
 
-Every page is a single self-contained HTML file. There is no build step and no
-`package.json`. The only external resources are Google Fonts and three.js r128
-from cdnjs (Worlds 2–5).
+`index.html` is the world select. It shows which stops have been unlocked.
 
-## Structure
+## The shell
 
-| Path | World | What it is | Tech |
-| --- | --- | --- | --- |
-| `index.html` | — | World select landing page | HTML/CSS |
-| `world-1/` | The Run | Gray 2D platformer. Hit `?` blocks from below to unlock roles. A gold portal past the flag leads to World 2. | Canvas 2D |
-| `world-2/` | The Gallery | N64-style hall. Jump into paintings to see roles and earn stars. 3 stars open the door to OnePay. A warp painting leads to World 3. | three.js |
-| `world-3/` | The Diorama | Isometric puzzle. Tap-to-walk, rotating bridge (crank), lift (lever), stairs rise after OKX. | three.js (orthographic) |
-| `world-4/` | Grand Prix | Kart race. 2 laps, 4 career gates, drift boost, boost pads, 3 AI rivals. | three.js |
-| `world-5/` | The Lab | First-person portal test facility. 4 chambers, one role each. Live portal rendering. | three.js (PBR, shadows, render targets) |
-| `extras/minimal/` | — | The first static one-pager. **Content is outdated** (shows OKX as current, no OnePay). | HTML/CSS |
-| `extras/pool/` | — | Physics "liquidity pool" one-pager. **Content is outdated** (same as above). | Canvas 2D |
+`shell.css` and `shell.js` are shared by every page in this folder.
+
+- **Fullscreen.** `body[data-world="N"]` makes `.frame` fill the viewport and
+  hides the old page chrome (header, title, experience list, contact, footer).
+  Each world's `resize()` reads `frame.clientHeight`.
+- **Persistent exit.** `shell.js` injects the pill at the top centre: `✕ Exit`
+  goes to `/`, `World N/5` goes to the world select.
+- **Reveal card.** Each world calls `window.BW.complete({ note, stayLabel, onClose })`
+  at its finish line. The shell shows the stop, the link to the next world, and
+  records the clear in `localStorage` (`bleich-worlds-cleared`).
+
+## Content lives in one place
+
+The career content is the `WORLDS` array (and `FINALE`) at the top of
+`shell.js`. Change a role, its order, or which world reveals it there. The
+worlds themselves no longer name any role: their in-game objectives are generic
+(blocks, stars, plinths, gates, test chambers). Each world still carries a
+hidden copy of the old experience list and a `ROLES` object keyed by the old ids
+(`sprinklr`, `nftx`, `okx`, `onepay`); those ids are now just names for the four
+objectives.
 
 ## Run locally
 
-Any static file server works. Open the root, not a single file, so the relative
-world links resolve.
-
 ```sh
-npx serve .
-# or
-python3 -m http.server 8000
+npm run dev
 ```
 
-## Deploy
-
-- **Vercel:** import the repo, Framework preset "Other", no build command, output directory `.`.
-- **GitHub Pages:** Settings → Pages → deploy from the default branch, root folder.
-- To host under a path on an existing site (for example `justinbleich.com/play/`), deploy this folder at that path. All world links are relative (`../world-2/`), so they keep working.
-
-## Content lives in every world
-
-The career content is duplicated per world. When roles change, update all five
-files (plus `index.html`):
-
-1. **The `ROLES` object** in each world's script: name, period, description, URL.
-2. **The plain-text experience list** (`<ol class="list">`) near the bottom of each page.
-3. **World-specific placements:** blocks (World 1 `BLOCKS`), paintings and plates (World 2 `PAINTINGS`, `PLATES`), plinth tiles (World 3 `tile(... { role })`), gates (World 4 `GATES`), chambers and signs (World 5 `CH`, `sign(...)`).
-
-Contact links (email, LinkedIn, Farcaster) appear in each page's contact section
-and in a few in-game end screens.
+`vite.config.js` maps `/worlds` and `/worlds/world-N` to their `index.html` in
+dev and preview. On Vercel, `cleanUrls` does the same, which is why every link
+between worlds is absolute (`/worlds/world-2`) rather than relative.
 
 ## Tuning knobs
 
@@ -107,8 +97,6 @@ SwiftShader is slow for World 5 (three scene renders per frame). Lower
 
 ## Ideas backlog
 
-- Update `extras/` to current roles, or drop them
 - Sound effects and music per world
-- FRAX and Paste as hidden bonus content
-- A persistent "world select" overlay inside each game
+- Lock each world until the previous one is cleared
 - World 5: more chambers, floor and ceiling portals, momentum flings

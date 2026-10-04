@@ -237,8 +237,15 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
 @media (min-width: 52rem) { :root { --gutter: 2rem; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
+<link rel="stylesheet" href="/worlds/shell.css">
+<style>
+/* Fullscreen: HUD clears the exit pill, key hints sit bottom left. */
+.hud-tl { top: 1rem; left: 1.1rem; }
+.hud-tr { top: 1rem; right: 1.1rem; }
+.hud-br { right: 1.1rem; bottom: 1rem; }
+</style>
 </head>
-<body>
+<body data-world="4">
 <div class="page">
   <header class="bar mono">
     <span><a href="/">Justin Bleich</a> / <a href="/worlds">Worlds</a></span>
@@ -255,7 +262,7 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
   <main>
     <section aria-label="Kart race" style="margin-top: 1.25rem;">
       <div class="frame" id="frame">
-        <canvas id="c" tabindex="0" aria-label="A kart race around a looping track with four gates, one for each role. Use the arrow keys or the on-screen pad to drive. The same roles are listed in plain text below."></canvas>
+        <canvas id="c" tabindex="0" aria-label="A kart race around a looping track with four gates. Use the arrow keys or the on-screen pad to drive. Finish two laps to unlock this world's stop in Justin's career."></canvas>
         <div class="hud" id="hud">
           <div class="hud-tl">
             <div class="pos" id="pos">1<small>ST</small></div>
@@ -289,7 +296,7 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
           <div class="panel">
             <p class="eyebrow mono">World 4 · 2 laps · 3 rivals</p>
             <p class="panel-title">Bleich Grand Prix</p>
-            <p class="panel-desc">Drive through the four gates to see each role. Hold drift through corners to charge a boost. Your rivals are the heroes of Worlds 1, 2 and 3.</p>
+            <p class="panel-desc">Two laps, four gates. Cross the finish line to unlock this world’s stop in my career. Hold drift through corners to charge a boost. Your rivals are the heroes of Worlds 1, 2 and 3.</p>
             <div class="panel-actions"><button class="btn go" id="start-btn" type="button">Start race</button></div>
           </div>
         </div>
@@ -352,6 +359,7 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
   </footer>
 </div>
 
+<script src="/worlds/shell.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function () {
@@ -542,7 +550,7 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
   GATES.forEach(function (gt) {
     gt.idx = Math.round(gt.f * N);
     var r = ROLES[gt.id];
-    arch(gt.idx, C[gt.id], 'GATE ' + r.gate + ' · ' + r.name.toUpperCase(), r.period.toUpperCase(), gt.id === 'okx');
+    arch(gt.idx, C[gt.id], 'GATE ' + r.gate, 'CHECKPOINT ' + r.gate + ' / 4', gt.id === 'okx');
   });
   var startTex = canvasTex(64, 16, function (c, w, h) { for (var yy = 0; yy < 2; yy++) for (var xx = 0; xx < 8; xx++) { c.fillStyle = (xx + yy) % 2 ? '#131419' : '#f5f3ee'; c.fillRect(xx * 8, yy * 8, 8, 8); } });
   var startLine = new THREE.Mesh(new THREE.PlaneGeometry(W, 2.2), new THREE.MeshLambertMaterial({ map: startTex }));
@@ -785,11 +793,11 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
     revealed[id] = true;
     var r = ROLES[id];
     toastEl.style.borderLeftColor = C[id] === C.okx ? C.fg : C[id];
-    toastE.textContent = 'Gate ' + r.gate + ' of 4 · ' + r.period;
-    toastTi.textContent = r.period + ' → ' + r.name;
-    toastD.innerHTML = r.desc + (r.url ? ' <a href="' + r.url + '" target="_blank" rel="noopener">Visit ↗</a>' : '');
+    toastE.textContent = 'Checkpoint';
+    toastTi.textContent = 'Gate ' + r.gate + ' of 4';
+    toastD.textContent = '';
     toastEl.hidden = false; toastEl.style.animation = 'none'; void toastEl.offsetWidth; toastEl.style.animation = '';
-    toastT = 5.5;
+    toastT = 2.2;
     var row = document.querySelector('.row[data-id="' + id + '"]');
     if (row) { row.setAttribute('data-on', 'true'); row.querySelector('.state').textContent = 'Passed'; }
   }
@@ -804,15 +812,19 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
     try { best = parseFloat(localStorage.getItem('bleich-gp-best')) || 0; } catch (e) {}
     var isBest = !best || you.finishT < best;
     if (isBest) { try { localStorage.setItem('bleich-gp-best', String(you.finishT)); } catch (e) {} }
-    document.getElementById('res-eyebrow').textContent = 'Race complete · ' + Object.keys(revealed).length + '/4 gates';
+    /* the shell reveals the role; the standings stay up behind it for "Race again" */
+    window.BW.complete({
+      note: place + ord(place).toLowerCase() + ' place · ' + fmt(you.finishT) + (isBest ? ' · New best' : ' · Best ' + fmt(best)),
+      stayLabel: 'See standings'
+    });
+    document.getElementById('res-eyebrow').textContent = 'Race complete';
     document.getElementById('res-title').textContent = place + ord(place).toLowerCase() + ' place · ' + fmt(you.finishT);
-    document.getElementById('res-desc').innerHTML = (isBest ? 'New personal best on this device. ' : 'Your best here: ' + fmt(best) + '. ') + 'One world left: a portal test facility in World 5. Say hi at <a href="mailto:justin.bleich@gmail.com">justin.bleich@gmail.com</a>.';
+    document.getElementById('res-desc').textContent = isBest ? 'New personal best on this device.' : 'Your best here: ' + fmt(best) + '.';
     document.getElementById('res-list').innerHTML = st.map(function (k, j) {
       var t = k.finished ? fmt(k.finishT) : 'Racing';
       return '<li data-you="' + (k.you ? 'true' : 'false') + '"><b>' + (j + 1) + ord(j + 1).toLowerCase() + '</b><i style="background:' + k.color + '"></i><span>' + (k.you ? 'You' : k.name) + '</span><span class="mono">' + t + '</span></li>';
     }).join('');
     resultsEl.hidden = false;
-    try { document.getElementById('again-btn').focus({ preventScroll: true }); } catch (e) {}
   }
   function startRace() {
     grid();
@@ -956,8 +968,7 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
   }
   function resize() {
     var w = frame.clientWidth || 360;
-    var h = Math.round(clamp(w * 0.56, 360, 600));
-    canvas.style.height = h + 'px';
+    var h = frame.clientHeight || Math.round(clamp(w * 0.56, 360, 600));
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     renderer.setSize(w, h, false);
     camera.aspect = w / h; camera.updateProjectionMatrix();

@@ -274,8 +274,16 @@ kbd {
 @media (min-width: 52rem) { :root { --gutter: 2rem; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
+<link rel="stylesheet" href="/worlds/shell.css">
+<style>
+/* Fullscreen: only the key hints remain outside the frame. */
+.controls > span { display: none !important; }
+.hud { inset: 0.9rem 1rem auto 1rem; }
+.touch { padding-bottom: max(0.9rem, env(safe-area-inset-bottom)); }
+@media (max-width: 34rem) { .hud { top: 3.4rem; } }
+</style>
 </head>
-<body>
+<body data-world="2">
 <div class="page">
   <header class="bar mono">
     <span><a href="/">Justin Bleich</a> / <a href="/worlds">Worlds</a></span>
@@ -291,9 +299,9 @@ kbd {
   <main>
     <section aria-label="Gallery game">
       <div class="frame" id="frame">
-        <canvas id="c" tabindex="0" aria-label="A low-poly gallery hall. Jump into the paintings to see each role. The same roles are listed in plain text below."></canvas>
+        <canvas id="c" tabindex="0" aria-label="A low-poly gallery hall. Jump into three paintings to collect stars, then open the door to the last painting to unlock this world's stop in Justin's career."></canvas>
         <div class="hud">
-          <span class="stars" id="stars">★ 0/4</span>
+          <span class="stars" id="stars">★ 0/3</span>
           <span class="area mono" id="area">Gallery hall</span>
         </div>
         <div class="toast" id="toast" hidden></div>
@@ -367,6 +375,7 @@ kbd {
   </footer>
 </div>
 
+<script src="/worlds/shell.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function () {
@@ -556,10 +565,10 @@ kbd {
   };
 
   var ROLES = {
-    sprinklr: { star: true, eyebrow: 'Painting 1 · Previously', title: 'Previously → Sprinklr', desc: 'Designed universal search and a new self-serve dashboard experience.', url: 'https://www.sprinklr.com', urlLabel: 'Visit Sprinklr' },
-    nftx: { star: true, eyebrow: 'Painting 2 · 2021–2024', title: '2021–2024 → NFTX', desc: 'The first NFT liquidity protocol in web3, creating tradable pools for collections.', url: 'https://v2.nftx.io', urlLabel: 'Visit NFTX' },
-    okx: { star: true, eyebrow: 'Painting 3 · 2024–2026', title: '2024–2026 → OKX', desc: 'Built global payments experiences to bridge consumers and web3.', url: 'https://www.okx.com', urlLabel: 'Visit OKX' },
-    onepay: { star: true, eyebrow: 'Painting 4 · Current', title: 'Current → OnePay', desc: 'Leading OnePay Crypto design. This is the last star, and the present day. The warp painting in the hall leads on to World 3. Say hi at <a href="mailto:justin.bleich@gmail.com">justin.bleich@gmail.com</a>, <a href="https://linkedin.com/in/justinbleich" target="_blank" rel="noopener">LinkedIn</a> or <a href="https://farcaster.xyz/jtb" target="_blank" rel="noopener">Farcaster</a>.' },
+    sprinklr: { star: true, eyebrow: 'Star painting', title: 'A star was hiding in here.', desc: 'Three stars open the door at the end of the hall.' },
+    nftx: { star: true, eyebrow: 'Star painting', title: 'A star was hiding in here.', desc: 'Three stars open the door at the end of the hall.' },
+    okx: { star: true, eyebrow: 'Star painting', title: 'A star was hiding in here.', desc: 'Three stars open the door at the end of the hall.' },
+    onepay: { star: false, eyebrow: 'The last painting', title: 'The last painting', desc: '' },
     world3: { star: false, eyebrow: 'Warp painting', title: 'Onward to World 3', desc: 'This painting leads to an isometric puzzle diorama. Turn a bridge, ride a lift, and climb to the present.', url: WORLD3, urlLabel: 'Enter World 3' }
   };
 
@@ -652,8 +661,8 @@ kbd {
   var bannerT = textTex(256, 48, function (g, w, h) {
     g.fillStyle = C.red; g.fillRect(0, 0, w, h);
     g.fillStyle = C.gold; g.fillRect(0, 0, w, 4); g.fillRect(0, h - 4, w, 4);
-    g.font = '22px Bungee, Impact, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillText('THE PRESENT', w / 2, h / 2 + 1);
+    g.font = '18px Bungee, Impact, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText('THE LAST PAINTING', w / 2, h / 2 + 1);
   });
   plane(5.5, 1.03, new THREE.MeshBasicMaterial({ map: bannerT }), 0, 5.2, -29.98);
   var entryBannerT = textTex(256, 48, function (g, w, h) {
@@ -673,13 +682,15 @@ kbd {
     { id: 'onepay', wall: 'far', at: 0, cy: 3.2 }
   ];
   var PW = 3.2, PH = 2.4;
-  var PLATES = { sprinklr: ['SPRINKLR', 'PREVIOUSLY'], nftx: ['NFTX', '2021–2024'], okx: ['OKX', '2024–2026'], world3: ['WORLD 3', 'WARP'], onepay: ['ONEPAY', 'CURRENT'] };
+  var PLATES = { sprinklr: ['STAR I', 'JUMP IN'], nftx: ['STAR II', 'JUMP IN'], okx: ['STAR III', 'JUMP IN'], world3: ['WORLD 3', 'WARP'], onepay: ['? ? ?', 'JUMP IN'] };
+  /* the last painting carries this world's art; its old slot in the hall takes the spare */
+  var ART_FOR = { nftx: 'onepay', onepay: 'nftx' };
   PAINTINGS.forEach(function (p) {
     var g = new THREE.Group();
     if (p.wall === 'left') { g.position.set(-8 + 0.06, p.cy, p.at); g.rotation.y = Math.PI / 2; p.n = [1, 0]; }
     else if (p.wall === 'right') { g.position.set(8 - 0.06, p.cy, p.at); g.rotation.y = -Math.PI / 2; p.n = [-1, 0]; }
     else { g.position.set(p.at, p.cy, -42 + 0.06); p.n = [0, 1]; }
-    var artT = tex(256, 192, ART[p.id]);
+    var artT = tex(256, 192, ART[ART_FOR[p.id] || p.id]);
     p.img = artT.userData.canvas;
     var geo = new THREE.PlaneGeometry(PW, PH, 24, 18);
     p.base = Float32Array.from(geo.attributes.position.array);
@@ -871,7 +882,7 @@ kbd {
   function starCount() { var n = 0; for (var k in got) if (got[k]) n++; return n; }
   function hallStars() { return (got.sprinklr ? 1 : 0) + (got.nftx ? 1 : 0) + (got.okx ? 1 : 0); }
   function syncUI() {
-    starsEl.textContent = '★ ' + starCount() + '/4';
+    starsEl.textContent = '★ ' + hallStars() + '/3';
     Object.keys(got).forEach(function (id) {
       var row = document.querySelector('.row[data-id="' + id + '"]');
       if (!row) return;
@@ -886,7 +897,7 @@ kbd {
   function showCard(p) {
     var r = ROLES[p.id];
     try { cardImg.src = p.img.toDataURL(); } catch (e) {}
-    cardImg.alt = 'Painting for ' + r.title;
+    cardImg.alt = '';
     var e = r.eyebrow;
     if (r.star) e += got[p.id] ? ' · Star already collected' : ' · ★ Star inside';
     cardE.textContent = e;
@@ -899,7 +910,7 @@ kbd {
     cardA.appendChild(leave);
     if (r.url) {
       var a = document.createElement('a');
-      a.className = 'pill ghost'; a.href = r.url; if (r.url.indexOf('../') !== 0) { a.target = '_blank'; a.rel = 'noopener'; } a.textContent = r.urlLabel + ' ↗';
+      a.className = 'pill ghost'; a.href = r.url; if (r.url.charAt(0) !== '/') { a.target = '_blank'; a.rel = 'noopener'; } a.textContent = r.urlLabel + (r.url.charAt(0) === '/' ? ' →' : ' ↗');
       cardA.appendChild(a);
     }
     insideEl.hidden = false;
@@ -952,15 +963,14 @@ kbd {
     got[id] = true;
     celebrate = 1.8;
     starMesh.visible = true;
-    var n = starCount();
-    toast(n === 4 ? 'ALL 4 STARS!' : 'STAR GET! ★ ' + n + '/4', 2.6);
+    var n = hallStars();
+    toast(n === 3 ? 'ALL 3 STARS!' : 'STAR GET! ★ ' + n + '/3', 2.6);
     syncUI();
-    if (hallStars() === 3 && !doorState.open) doorTimer = 2.4;
-    if (n === 4) setTimeout(function () { toast('Thanks for playing. Say hi below.', 3.5); }, 2800);
+    if (n === 3 && !doorState.open) doorTimer = 2.4;
   }
   function openDoor() {
     doorState.open = true; doorBox.on = false;
-    toast('The door to the present is open', 3);
+    toast('The door at the end of the hall is open', 3);
     syncUI();
   }
 
@@ -1049,7 +1059,12 @@ kbd {
       P.z = enterFrom.z + (enterTo.z - enterFrom.z) * e;
       P.scale = 1 - 0.75 * e;
       fadeEl.style.opacity = clamp((modeT - 0.3) / 0.5, 0, 1);
-      if (modeT >= 0.85) { mode = 'inside'; fadeEl.style.opacity = 1; showCard(cur); }
+      if (modeT >= 0.85) {
+        mode = 'inside'; fadeEl.style.opacity = 1;
+        /* the last painting is the finish line: the shell reveals the role */
+        if (cur.id === 'onepay') window.BW.complete({ note: '★ ' + hallStars() + '/3 stars', stayLabel: 'Back to the gallery', onClose: leavePainting });
+        else showCard(cur);
+      }
     } else if (mode === 'leaving') {
       modeT += dt;
       fadeEl.style.opacity = 1 - clamp(modeT / 0.6, 0, 1);
@@ -1081,7 +1096,7 @@ kbd {
     if (toastTimer > 0) { toastTimer -= dt; if (toastTimer <= 0) toastEl.hidden = true; }
     gem.rotation.y += dt * 1.2; gem.position.y = 2.2 + Math.sin(time * 1.6) * 0.15;
 
-    areaEl.textContent = P.z < -30.4 ? 'The present' : 'Gallery hall';
+    areaEl.textContent = P.z < -30.4 ? 'Back room' : 'Gallery hall';
 
     camTarget(tmpV);
     camPos.lerp(tmpV, 1 - Math.exp(-dt * 7));
@@ -1111,8 +1126,7 @@ kbd {
   /* ---------- sizing + loop ---------- */
   function resize() {
     var w = frame.clientWidth || 360;
-    var h = Math.round(clamp(w * 0.58, 320, 560));
-    canvas.style.height = h + 'px';
+    var h = frame.clientHeight || Math.round(clamp(w * 0.58, 320, 560));
     var scale = Math.max(0.5, 340 / w);
     renderer.setPixelRatio(Math.min(scale, 1));
     renderer.setSize(w, h, false);
