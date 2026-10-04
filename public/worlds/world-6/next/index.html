@@ -89,7 +89,7 @@ h2{font-size:28px}
     <p class="eyebrow">World 6 · Chapter one</p>
     <h1>Ashgrove Reading Room</h1>
     <p>You arrive after midnight. The fire is still lit, and the study looks as if someone left in a hurry.</p>
-    <p class="small">Drag to look around. Tap anything that glints.</p>
+    <p class="small">Drag to look around, or use the arrow keys to turn and step. Tap anything that glints.</p>
     <button class="btn" id="enterBtn" type="button">Enter the room</button>
   </div>
 </section>
@@ -136,7 +136,6 @@ renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 
 const TAU=Math.PI*2;
-const LIBRARY='/worlds/world-6/next/library';
 const calm=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const lerp=(a,b,t)=>a+(b-a)*t;
@@ -366,43 +365,21 @@ function blob(x,z,w,d,rot,op){
   const m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),new THREE.MeshBasicMaterial({map:blobTex,transparent:true,depthWrite:false,opacity:op==null?1:op}));
   m.rotation.x=-Math.PI/2;m.rotation.z=rot||0;m.position.set(x,0.022,z);scene.add(m);return m;
 }
-/* ---------- scene, materials, helpers ---------- */
+/* ---------- scene, helpers ---------- */
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x0a0604);
-scene.fog=new THREE.FogExp2(0x140b06,0.026);
 const camera=new THREE.PerspectiveCamera(60,1,0.05,60);
 camera.rotation.order='YXZ';
-
-let envTex=null;
-try{
-  const pm=new THREE.PMREMGenerator(renderer),es=new THREE.Scene();
-  es.add(new THREE.Mesh(new THREE.BoxGeometry(20,20,20),new THREE.MeshBasicMaterial({color:0x3a2616,side:THREE.BackSide})));
-  const L=(c,i,w,h,x,y,z)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({color:new THREE.Color(c).multiplyScalar(i),side:THREE.DoubleSide}));m.position.set(x,y,z);m.lookAt(0,0,0);es.add(m);};
-  L(0xffa860,6,8,5,0,2,-9);L(0xffe0b0,4,6,6,0,9,0);L(0x7a90d0,3,5,7,9,3,2);L(0xffc890,2.5,6,4,-9,2,3);
-  envTex=pm.fromScene(es,0.03).texture;
-}catch(e){envTex=null;}
-
-const woodTex=makeWoodTex(24,40,24,false), woodDarkTex=makeWoodTex(22,38,13,true);
-const mWood=new THREE.MeshStandardMaterial({map:woodTex,roughness:.5,envMap:envTex,envMapIntensity:.25});
-const mWoodDark=new THREE.MeshStandardMaterial({map:woodDarkTex,roughness:.55,envMap:envTex,envMapIntensity:.2});
-const mBrass=new THREE.MeshStandardMaterial({color:C(0xd1a850),metalness:1,roughness:.32,envMap:envTex,envMapIntensity:1.1});
-const mIron=new THREE.MeshStandardMaterial({color:C(0x24201c),metalness:.8,roughness:.5,envMap:envTex,envMapIntensity:.6});
-const mLeather=new THREE.MeshStandardMaterial({color:C(0x5a2a18),roughness:.42,envMap:envTex,envMapIntensity:.45});
-const mPlaster=new THREE.MeshStandardMaterial({color:C(0x3a2a20),roughness:1});
+const envTex=null;
+const mBrass=new THREE.MeshStandardMaterial({color:C(0xd1a850),metalness:.6,roughness:.35});
+const mIron=new THREE.MeshStandardMaterial({color:C(0x24201c),metalness:.5,roughness:.5});
+const mWood=new THREE.MeshStandardMaterial({color:C(0x6a4428),roughness:.55});
+const mWoodDark=new THREE.MeshStandardMaterial({color:C(0x3a2416),roughness:.6});
 const mCream=new THREE.MeshStandardMaterial({color:C(0xe8dcc0),roughness:.8});
 const stoneT=makeStoneTex();stoneT.wrapS=stoneT.wrapT=THREE.RepeatWrapping;
-const mStone=new THREE.MeshStandardMaterial({map:stoneT,bumpMap:stoneT,bumpScale:.6,roughness:.92});
-const mRed=new THREE.MeshStandardMaterial({color:C(0x5a1814),roughness:.85,side:THREE.DoubleSide});
-const wallBase=makeWallTex(),panelBase=makePanelTex();
-function repMat(base,u,v,rough){const t=base.clone();t.needsUpdate=true;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(u,v);return new THREE.MeshStandardMaterial({map:t,bumpMap:t,bumpScale:.25,roughness:rough});}
-
-function box(w,h,d,mat,x,y,z,parent,cast,recv){
-  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x||0,y||0,z||0);
-  m.castShadow=!!cast;m.receiveShadow=recv!==false;(parent||scene).add(m);return m;
-}
-function cyl(rt,rb,h,mat,x,y,z,parent,seg){
-  const m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg||16),mat);m.position.set(x,y,z);(parent||scene).add(m);return m;
-}
+const mStone=new THREE.MeshStandardMaterial({map:stoneT,roughness:.92});
+function box(w,h,d,mat,x,y,z,parent){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x||0,y||0,z||0);(parent||scene).add(m);return m;}
+function cyl(rt,rb,h,mat,x,y,z,parent,seg){const m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg||16),mat);m.position.set(x,y,z);(parent||scene).add(m);return m;}
 function glow(color,size,x,y,z,op,parent){
   const s=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:color,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,opacity:op==null?1:op}));
   s.scale.set(size,size,1);s.position.set(x,y,z);(parent||scene).add(s);return s;
@@ -411,82 +388,91 @@ const pickables=[];
 const hitMat=new THREE.MeshBasicMaterial({visible:false});
 function hit(w,h,d,x,y,z,data){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),hitMat);m.position.set(x,y,z);m.userData=data;scene.add(m);pickables.push(m);return m;}
 
-/* ---------- shell ---------- */
-const floorT=makeFloorTex();
-const floor=new THREE.Mesh(new THREE.PlaneGeometry(10,12),new THREE.MeshStandardMaterial({map:floorT,roughness:.5,envMap:envTex,envMapIntensity:.22}));
-floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
-const ceil=new THREE.Mesh(new THREE.PlaneGeometry(10,12),mPlaster);ceil.rotation.x=Math.PI/2;ceil.position.y=4.4;scene.add(ceil);
-for(let i=0;i<5;i++)box(10,0.3,0.26,mWoodDark,0,4.25,-5+i*2.5,scene,false,false);
-
-function wall(w,h,d,x,y,z,len){
-  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),repMat(wallBase,len/1.5,h/1.5,.95));
-  m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;scene.add(m);return m;
-}
-wall(10.6,4.4,0.3,0,2.2,-6.15,10.6);                 // north
-wall(10.6,4.4,0.3,0,2.2,6.15,10.6);                  // south
-wall(0.3,4.4,5,-5.15,2.2,-3.5,5);                    // west, north of doorway
-wall(0.3,4.4,5,-5.15,2.2,3.5,5);                     // west, south of doorway
-wall(0.3,1.9,2,-5.15,3.45,0,2);                      // west lintel
-wall(0.3,1.0,12,5.15,0.5,0,12);                      // east sill strip
-wall(0.3,1.1,12,5.15,3.85,0,12);                     // east head strip
-wall(0.3,2.3,2,5.15,2.15,-5,2);                      // east piers
-wall(0.3,2.3,5,5.15,2.15,0,5);
-wall(0.3,2.3,2,5.15,2.15,5,2);
-
-function wains(len,x,z,ry){
-  const g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=ry;scene.add(g);
-  box(len,1.0,0.06,repMat(panelBase,len/0.9,1,.6),0,0.5,0,g,false,true);
-  box(len,0.07,0.1,mWood,0,1.03,0.02,g,false,true);
-  box(len,0.12,0.09,mWoodDark,0,0.06,0.015,g,false,true);
-}
-wains(12,4.96,0,-Math.PI/2);                         // east (faces -x)
-wains(10,0,5.97,Math.PI);                            // south (faces -z)
-wains(5,-4.96,-3.5,Math.PI/2);wains(5,-4.96,3.5,Math.PI/2);
-
-function crown(len,x,z,ry){
-  const g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=ry;scene.add(g);
-  box(len,0.06,0.22,mWood,0,4.37,0.11,g,false,false);box(len,0.06,0.15,mWoodDark,0,4.31,0.075,g,false,false);box(len,0.05,0.08,mWood,0,4.265,0.04,g,false,false);
-}
-crown(10,0,-6,0);crown(10,0,6,Math.PI);crown(12,5,0,-Math.PI/2);crown(12,-5,0,Math.PI/2);
-const aoMat=new THREE.MeshBasicMaterial({map:aoTex,transparent:true,depthWrite:false});
-function aoStrip(len,x,z,ry){
-  const g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=ry;scene.add(g);
-  const m=new THREE.Mesh(new THREE.PlaneGeometry(len,0.9),aoMat);m.rotation.x=-Math.PI/2;m.position.set(0,0.02,0.45);g.add(m);
-}
-aoStrip(10,0,-6,0);aoStrip(10,0,6,Math.PI);aoStrip(12,5,0,-Math.PI/2);aoStrip(12,-5,0,Math.PI/2);
-lathe([[0.001,0],[0.5,0],[0.55,0.03],[0.3,0.08],[0.08,0.16],[0.001,0.18]],mWood,0,4.4,0,scene,48).rotation.x=Math.PI;
-
-/* ---------- lights ---------- */
-scene.add(new THREE.HemisphereLight(0xb89a7a,0x2a1810,0.7));
-scene.add(new THREE.AmbientLight(0x5a4030,0.35));
-const moon=new THREE.DirectionalLight(0x8fa8ff,1.0);
-moon.position.set(14,8,0);moon.target.position.set(-1,0,0);scene.add(moon,moon.target);
-moon.castShadow=true;moon.shadow.mapSize.set(Math.min(innerWidth,innerHeight)>600?2048:1024,Math.min(innerWidth,innerHeight)>600?2048:1024);
-Object.assign(moon.shadow.camera,{left:-9,right:9,top:9,bottom:-9,near:1,far:40});
-moon.shadow.bias=-0.0006;moon.shadow.normalBias=0.03;
+/* ---------- lights (only the live props use them; the room itself is baked) ---------- */
+scene.add(new THREE.HemisphereLight(0xb89a7a,0x2a1810,0.55));
+const moon=new THREE.DirectionalLight(0x8fa8ff,0.7);moon.position.set(14,8,0);scene.add(moon);
 const fireLight=new THREE.PointLight(0xff7b2e,2.2,15,1.5);fireLight.position.set(0,0.9,-5.3);scene.add(fireLight);
-const chandLight=new THREE.PointLight(0xffc27a,0.9,12,1.6);chandLight.position.set(0,3.3,0);scene.add(chandLight);
-const lampLight=new THREE.PointLight(0xffd08a,1.0,5,1.6);scene.add(lampLight);
+const chandLight=new THREE.PointLight(0xffc27a,0.7,12,1.6);chandLight.position.set(0,3.3,0);scene.add(chandLight);
+const lampLight=new THREE.PointLight(0xffd08a,1.0,5,1.6);lampLight.position.set(-2.35,1.12,1.5);scene.add(lampLight);
 const corLight=new THREE.PointLight(0xffc070,0,7,1.5);corLight.position.set(-6.8,1.7,0);scene.add(corLight);
 
-/* ---------- windows, curtains ---------- */
+/* ---------- the baked world ---------- */
+const ASSETS='/worlds/world-6/next/assets/';
+const LMX=2.1;const bakedMats=[];            // {m, base}  for flicker
+const pivot=new THREE.Group();pivot.position.set(-4.775,0,-1.0);scene.add(pivot);
+const secretHolder=new THREE.Group();secretHolder.position.set(4.775,0,1.0);pivot.add(secretHolder);
+const texCache={};
+const texLoader=new THREE.TextureLoader();
+function loadTex(url,srgb,rep,done){
+  const key=url+(rep?'r':'');if(texCache[key])return texCache[key];
+  const t=texLoader.load(url,function(){done&&done();},undefined,function(){done&&done();});
+  if(srgb)t.encoding=THREE.sRGBEncoding;
+  if(rep)t.wrapS=t.wrapT=THREE.RepeatWrapping;
+  t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
+  texCache[key]=t;return t;
+}
+const sRGB2lin=new Float32Array(256);for(let i=0;i<256;i++){const v=i/255;sRGB2lin[i]=v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4);}
+function loadWorld(){
+  const base='/worlds/world-6/next/room/';
+  return Promise.all([fetch(base+'world.json').then(r=>r.json()),fetch(base+'world.b64.txt').then(r=>r.text()).then(function(t){const b=atob(t.trim()),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u.buffer;}),fetch(base+'lm_scales.json').then(r=>r.json())]).then(function(res){
+    const man=res[0],bin=res[1],scales=res[2];
+    let pending=0;const wait=new Promise(function(ok){window.__texDone=ok;});
+    const need=[];
+    const lms={};
+    ['arch','furn','shelf','secret'].forEach(function(c){lms[c]=loadTex(base+'lm_'+c+'.jpg',true,false,function(){});lms[c].flipY=true;});
+    const mats={};
+    function matFor(chunk,name){
+      const key=chunk+'|'+name;if(mats[key])return mats[key];
+      const d=man.mats[name];
+      const o={color:new THREE.Color(d.color[0],d.color[1],d.color[2]),lightMap:lms[chunk],lightMapIntensity:scales[chunk]*LMX};
+      if(d.map)o.map=loadTex(base+'tex_'+d.map+'.jpg',true,true);
+      /* shared with the library: the same scanned parquet, under this room's baked light */
+      if(name==='floor'){o.map=loadTex(ASSETS+'textures/herringbone_parquet_diff.jpg',true,true);o.map.repeat.set(1.25,1.25);o.color=new THREE.Color(0xd9b596).convertSRGBToLinear();}
+      if(name==='fabric'||name==='paper'||name==='canvas')o.side=THREE.DoubleSide;
+      if(name==='book')o.vertexColors=true;
+      const m=new THREE.MeshBasicMaterial(o);
+      bakedMats.push({m:m,base:scales[chunk]*LMX});
+      mats[key]=m;return m;
+    }
+    man.chunks.forEach(function(ch){
+      const holder=ch.name==='secret'?secretHolder:scene;
+      ch.groups.forEach(function(g){
+        const geo=new THREE.BufferGeometry();
+        geo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(bin,g.pos,g.n*3),3));
+        geo.setAttribute('uv',new THREE.BufferAttribute(new Float32Array(bin,g.uv0,g.n*2),2));
+        geo.setAttribute('uv2',new THREE.BufferAttribute(new Float32Array(bin,g.uv1,g.n*2),2));
+        if(g.col>=0){
+          const u8=new Uint8Array(bin,g.col,g.n*4),f=new Float32Array(g.n*3);
+          for(let i=0;i<g.n;i++){f[i*3]=sRGB2lin[u8[i*4]];f[i*3+1]=sRGB2lin[u8[i*4+1]];f[i*3+2]=sRGB2lin[u8[i*4+2]];}
+          geo.setAttribute('color',new THREE.BufferAttribute(f,3));
+        }
+        let idx=new Uint32Array(bin,g.idx,g.tris*3);
+        /* the baked desk is replaced by the library's (built below), so its triangles are dropped */
+        if(ch.name==='furn'&&(g.mat==='wood_dark'||g.mat==='wood_mid'||g.mat==='brass')){
+          const P=geo.attributes.position,top=g.mat==='brass'?0.7:0.82,keep=[];
+          const inDesk=i=>{const x=P.getX(i),y=P.getY(i),z=P.getZ(i);return x>=-2.75&&x<=-0.45&&z>=1.05&&z<=2.2&&y<=top;};
+          for(let t=0;t<idx.length;t+=3){if(!(inDesk(idx[t])&&inDesk(idx[t+1])&&inDesk(idx[t+2])))keep.push(idx[t],idx[t+1],idx[t+2]);}
+          idx=new Uint32Array(keep);
+        }
+        geo.setIndex(new THREE.BufferAttribute(idx,1));
+        geo.computeBoundingSphere();
+        const mesh=new THREE.Mesh(geo,matFor(ch.name,g.mat));
+        if(ch.name==='secret')mesh.frustumCulled=false;
+        holder.add(mesh);
+      });
+    });
+    return new Promise(function(ok){
+      const imgs=Object.keys(texCache).map(k=>texCache[k]);
+      let t0=performance.now();
+      (function chk(){const done=imgs.every(t=>t.image&&t.image.width);if(done||performance.now()-t0>20000)ok();else setTimeout(chk,60);})();
+    });
+  });
+}
+/* ---------- windows (sky) and moonbeams ---------- */
 const skyMat=new THREE.MeshBasicMaterial({map:makeSkyTex(),fog:false});
 [-3.25,3.25].forEach(function(z){
   const sky=new THREE.Mesh(new THREE.PlaneGeometry(1.5,2.3),skyMat);sky.position.set(5.12,2.15,z);sky.rotation.y=-Math.PI/2;scene.add(sky);
-  box(0.06,2.3,0.05,mWoodDark,5.0,2.15,z,scene,false,false);
-  [1.6,2.7].forEach(y=>box(0.06,0.05,1.5,mWoodDark,5.0,y,z,scene,false,false));
-  box(0.1,0.08,1.6,mWood,4.98,0.99,z,scene,false,false);
-  [-1,1].forEach(function(s){
-    const geo=new THREE.PlaneGeometry(0.55,3.0,40,1),p=geo.attributes.position;
-    for(let i=0;i<p.count;i++)p.setZ(i,Math.sin(p.getX(i)*30)*0.06);
-    geo.computeVertexNormals();geo.rotateY(-Math.PI/2);
-    const cm=new THREE.Mesh(geo,mRed);cm.position.set(4.9,1.9,z+s*0.98);scene.add(cm);
-  });
-  box(0.16,0.2,2.5,mRed,4.9,3.45,z,scene,false,false);
-  const rod=cyl(0.015,0.015,2.7,mBrass,4.88,3.62,z,scene,8);rod.rotation.x=Math.PI/2;
 });
-
-/* ---------- moonbeams ---------- */
 const beamMat=new THREE.MeshBasicMaterial({map:beamTex,color:0x7f9aff,transparent:true,opacity:.2,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,fog:false});
 (function(){
   const dir=new THREE.Vector3(-15,-8,0).normalize(),u=new THREE.Vector3(0,0,1),n=u.clone().cross(dir).normalize(),z2=n.clone().cross(dir).normalize(),L=4.9;
@@ -498,57 +484,16 @@ const beamMat=new THREE.MeshBasicMaterial({map:beamTex,color:0x7f9aff,transparen
   });
 })();
 
-/* ---------- shelves ---------- */
-const bookTex=makeBookTex();
-const BOOKS=[0x5a1e1a,0x7a2a1f,0x2f3d2a,0x23324a,0x4a3220,0x6b4a24,0x3a2a3f,0x8a6a2e,0x20262c,0x5a3a2a,0x6a1f2f,0x2c4a42].map(h=>C(h));
-const bookGeo=new THREE.BoxGeometry(1,1,1);
-const bookMat=new THREE.MeshStandardMaterial({map:bookTex,roughness:.75});
-function makeShelf(w,h,d,seed){
-  const g=new THREE.Group(),r=rng(seed);
-  box(0.05,h,d,mWood,-w/2+0.025,h/2,0,g,false,true);box(0.05,h,d,mWood,w/2-0.025,h/2,0,g,false,true);
-  box(w,h,0.03,mWoodDark,0,h/2,-d/2+0.015,g,false,true);
-  for(let i=0;i<6;i++)box(w-0.1,0.04,d-0.03,mWood,0,0.2+i*0.52,0,g,false,true);
-  box(w+0.08,0.1,d+0.06,mWood,0,h+0.05,0.01,g,false,true);
-  box(w+0.04,0.16,d+0.04,mWoodDark,0,0.08,0.02,g,false,true);
-  const items=[];
-  for(let row=0;row<6;row++){
-    let px=-w/2+0.07;const y0=0.22+row*0.52;
-    while(px<w/2-0.12){
-      const t=0.035+r()*0.05;
-      if(r()<0.06){px+=0.1+r()*0.14;continue;}
-      const bh=0.27+r()*0.17,bd=d*0.72,bz=-d/2+0.05+bd/2+r()*(d-0.1-bd);
-      items.push([px+t/2,y0+bh/2,bz,t,bh,bd,BOOKS[Math.floor(r()*BOOKS.length)]]);px+=t+0.004;
-    }
-  }
-  const im=new THREE.InstancedMesh(bookGeo,bookMat,items.length),dm=new THREE.Object3D();
-  items.forEach(function(it,i){dm.position.set(it[0],it[1],it[2]);dm.scale.set(it[3],it[4],it[5]);dm.updateMatrix();im.setMatrixAt(i,dm.matrix);im.setColorAt(i,it[6]);});
-  im.instanceMatrix.needsUpdate=true;if(im.instanceColor)im.instanceColor.needsUpdate=true;g.add(im);
-  return g;
-}
-[-3.2,3.2].forEach(function(x,i){const s=makeShelf(2.4,3.3,0.45,100+i);s.position.set(x,0,-5.78);scene.add(s);});
-[[-4.75,-4.75],[-4.75,-2.25],[-4.75,2.25],[-4.75,4.75]].forEach(function(p,i){
-  const s=makeShelf(2.5,3.3,0.45,200+i);s.rotation.y=Math.PI/2;s.position.set(-4.775,0,p[1]);scene.add(s);
-});
-const pivot=new THREE.Group();pivot.position.set(-4.775,0,-1.0);scene.add(pivot);
-const secret=makeShelf(2.0,3.3,0.45,300);secret.rotation.y=Math.PI/2;secret.position.set(0,0,1.0);pivot.add(secret);
-
 /* ---------- hidden stair behind the shelf ---------- */
 const corT=stoneT.clone();corT.needsUpdate=true;corT.wrapS=corT.wrapT=THREE.RepeatWrapping;corT.repeat.set(3,1.5);
-const corridor=new THREE.Mesh(new THREE.BoxGeometry(4.2,2.5,2),new THREE.MeshStandardMaterial({map:corT,bumpMap:corT,bumpScale:.5,color:C(0xb89a78),roughness:.9,side:THREE.BackSide}));
+const corridor=new THREE.Mesh(new THREE.BoxGeometry(4.2,2.5,2),new THREE.MeshStandardMaterial({map:corT,color:C(0xb89a78),roughness:.9,side:THREE.BackSide}));
 corridor.position.set(-7.4,1.25,0);scene.add(corridor);
 const endGlowMat=new THREE.MeshBasicMaterial({map:makeGlowEnd(),transparent:true,opacity:0,fog:false});
 const endGlow=new THREE.Mesh(new THREE.PlaneGeometry(2,2.5),endGlowMat);endGlow.position.set(-9.44,1.25,0);endGlow.rotation.y=Math.PI/2;scene.add(endGlow);
-for(let i=0;i<5;i++)box(0.34,0.1*(i+1),1.9,mStone,-8.0-i*0.34,0.05*(i+1),0,scene,false,false);
+for(let i=0;i<5;i++)box(0.34,0.1*(i+1),1.9,mStone,-8.0-i*0.34,0.05*(i+1),0);
 
-/* ---------- fireplace ---------- */
-[-0.85,0.85].forEach(x=>rbox(0.5,1.5,0.7,mStone,x,0.75,-5.65,scene,0.03,true));
-[-0.78,0.78].forEach(x=>rbox(0.22,0.2,0.3,mStone,x,1.45,-5.38,scene,0.04,false));
-rbox(2.7,0.18,0.95,mWood,0,1.6,-5.525,scene,0.045,true);
-rbox(2.75,0.05,1.0,mWoodDark,0,1.7,-5.5,scene,0.02,false);
-rbox(2.3,2.7,0.5,mStone,0,3.05,-5.75,scene,0.04,false);
-box(2.6,0.05,1.0,mStone,0,0.025,-5.5,scene,false,true);
-box(1.2,1.5,0.06,new THREE.MeshStandardMaterial({color:C(0x0c0805),roughness:1}),0,0.75,-5.97,scene,false,true);
-box(0.9,0.05,0.35,new THREE.MeshBasicMaterial({color:0xff6a1a}),0,0.11,-5.75,scene,false,false);
+/* ---------- fire ---------- */
+box(0.9,0.05,0.35,new THREE.MeshBasicMaterial({color:0xff6a1a}),0,0.115,-5.75);
 [-0.15,0.15].forEach(function(z){const l=cyl(0.07,0.07,0.9,new THREE.MeshStandardMaterial({color:C(0x2a160a),roughness:1}),0,0.14,-5.75+z,scene,10);l.rotation.z=Math.PI/2;});
 const flames=[];
 [[-0.3,0.8],[-0.14,1.0],[0.03,1.2],[0.19,0.95],[0.33,0.75]].forEach(function(f,i){
@@ -562,84 +507,53 @@ for(let i=0;i<EMB;i++){embPos[i*3]=(Math.random()-.5)*0.7;embPos[i*3+1]=0.2+Math
 const embGeo=new THREE.BufferGeometry();embGeo.setAttribute('position',new THREE.BufferAttribute(embPos,3));
 const embers=new THREE.Points(embGeo,new THREE.PointsMaterial({size:0.035,map:glowTex,color:0xff9a3a,transparent:true,opacity:.9,depthWrite:false,blending:THREE.AdditiveBlending}));
 embers.frustumCulled=false;scene.add(embers);
-[-0.42,0.42].forEach(function(x){lathe([[0.001,0],[0.05,0],[0.05,0.02],[0.025,0.05],[0.02,0.3],[0.04,0.34],[0.03,0.4],[0.001,0.4]],mIron,x,0,-5.5,scene,20);box(0.03,0.03,0.5,mIron,x,0.2,-5.72,scene,false,false);});
 const fireGlow=glow(0xff8a3a,1.8,0,0.55,-5.6,0.9);
 const candleGlows=[fireGlow];
-// painting and frame
-const paintMat=new THREE.MeshStandardMaterial({map:paintTex,emissiveMap:paintTex,emissive:0xffffff,emissiveIntensity:.5,roughness:.8});
-const painting=new THREE.Mesh(new THREE.PlaneGeometry(1.9,1.1875),paintMat);painting.position.set(0,2.85,-5.485);scene.add(painting);
+[-0.9,0.9].forEach(x=>candleGlows.push(glow(0xffa84a,0.35,x,2.14,-5.5,0.9)));
+glow(0xffd9a0,0.5,0,3.55,-5.36,0.5);
+
+/* ---------- painting (live, so the puzzle clue stays crisp) ---------- */
+const paintMat=new THREE.MeshBasicMaterial({map:paintTex,color:new THREE.Color(0.8,0.8,0.8)});
+const painting=new THREE.Mesh(new THREE.PlaneGeometry(1.9,1.1875),paintMat);painting.position.set(0,2.85,-5.464);scene.add(painting);
 painting.userData={act:'painting',node:'hearth'};pickables.push(painting);
-const fm=new THREE.MeshStandardMaterial({color:C(0xb8923f),metalness:.8,roughness:.4,envMap:envTex,envMapIntensity:.9});
-box(2.1,0.1,0.07,fm,0,3.49,-5.48,scene,false,false);box(2.1,0.1,0.07,fm,0,2.21,-5.48,scene,false,false);
-box(0.1,1.3,0.07,fm,-1.0,2.85,-5.48,scene,false,false);box(0.1,1.3,0.07,fm,1.0,2.85,-5.48,scene,false,false);
-box(0.5,0.05,0.16,mBrass,0,3.62,-5.42,scene,false,false);glow(0xffd9a0,0.5,0,3.55,-5.36,0.5);
-// mantel decor
-[-0.9,0.9].forEach(function(x){
-  lathe(CANDLESTICK,mBrass,x,1.69,-5.5,scene,32);cyl(0.024,0.024,0.18,mCream,x,1.985,-5.5,scene,24);
-  candleGlows.push(glow(0xffa84a,0.35,x,2.14,-5.5,0.9));
+[[-2.8,41],[2.8,43]].forEach(function(p){
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(0.8,1.0),new THREE.MeshStandardMaterial({map:makeChartTex(p[1]),roughness:.9}));m.position.set(p[0],2.2,5.966);m.rotation.y=Math.PI;scene.add(m);
 });
-box(0.35,0.22,0.2,mLeather,0.3,1.79,-5.5,scene,false,false);box(0.28,0.17,0.2,new THREE.MeshStandardMaterial({color:C(0x23324a),roughness:.7}),0.3,1.99,-5.5,scene,false,false);
 
-/* ---------- rug and seating ---------- */
-const rug=new THREE.Mesh(new THREE.PlaneGeometry(4.6,3.2),new THREE.MeshStandardMaterial({map:makeRugTex(),roughness:1}));
-rug.rotation.x=-Math.PI/2;rug.position.set(0,0.012,-2.6);rug.receiveShadow=true;scene.add(rug);
-
-function armchair(x,z,ry){
-  const g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=ry;scene.add(g);
-  rbox(0.84,0.2,0.8,mLeather,0,0.4,0.03,g,0.07,true);
-  rbox(0.9,0.9,0.22,mLeather,0,0.82,-0.34,g,0.09,true);
-  [-0.4,0.4].forEach(s2=>rbox(0.19,0.52,0.88,mLeather,s2,0.56,0,g,0.08,true));
-  rbox(0.7,0.14,0.2,mLeather,0,0.97,-0.31,g,0.06,false);
-  [[-0.4,-0.37],[0.4,-0.37],[-0.4,0.37],[0.4,0.37]].forEach(p=>{const f=lathe([[0.001,0],[0.03,0],[0.04,0.05],[0.03,0.14],[0.001,0.16]],mWoodDark,p[0],0.0,p[1],g,16);f.scale.set(1,1.2,1);});
-  for(let i=0;i<7;i++){const st=new THREE.Mesh(new THREE.SphereGeometry(0.014,10,8),mBrass);st.position.set(-0.36+i*0.12,0.5,0.45);g.add(st);}
-  for(let i=0;i<7;i++){const st=new THREE.Mesh(new THREE.SphereGeometry(0.014,10,8),mBrass);st.position.set(-0.36+i*0.12,1.2,-0.22);g.add(st);}
-}
-armchair(-1.7,-3.7,2.41);armchair(1.7,-3.7,-2.41);
-const sideTable=cyl(0.28,0.28,0.04,mWood,-2.9,0.62,-4.3,scene,48);sideTable.castShadow=true;
-lathe([[0.001,0],[0.2,0],[0.21,0.02],[0.1,0.06],[0.04,0.12],[0.06,0.25],[0.035,0.35],[0.05,0.5],[0.001,0.6]],mWoodDark,-2.9,0.0,-4.3,scene,32);
-lathe(CANDLESTICK,mBrass,-2.9,0.64,-4.3,scene,32).scale.setScalar(0.7);cyl(0.018,0.018,0.12,mCream,-2.9,0.9,-4.3,scene,16);
+/* ---------- other candle glows ---------- */
 candleGlows.push(glow(0xffa84a,0.3,-2.9,1.0,-4.3,0.9));
+[-1.4,1.4].forEach(x=>candleGlows.push(glow(0xffa84a,0.4,x,2.17,5.88,0.9)));
+for(let i=0;i<8;i++){const a=i/8*TAU;candleGlows.push(glow(0xffa84a,0.22,Math.cos(a)*0.6,3.56,Math.sin(a)*0.6,0.9));}
 
-/* ---------- reading desk ---------- */
-rbox(2.0,0.07,0.95,mWood,-1.6,0.78,1.6,scene,0.02,true);rbox(2.06,0.03,1.0,mWoodDark,-1.6,0.74,1.6,scene,0.012,false);
-[[-2.55,1.2],[-0.65,1.2],[-2.55,2.0],[-0.65,2.0]].forEach(p=>lathe(TURNED_LEG,mWoodDark,p[0],0,p[1],scene,24));
-box(1.9,0.5,0.04,mWoodDark,-1.6,0.5,1.2,scene,true,true);
-[-2.2,-1.0].forEach(x=>{rbox(0.5,0.16,0.04,mWood,x,0.6,2.1,scene,0.01,false);box(0.04,0.04,0.04,mBrass,x,0.6,2.13,scene,false,false);});
-// lamp
-lathe(LAMP_BASE,mBrass,-2.35,0.815,1.45,scene,40);
-const shade=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.17,0.17,48,1,true),new THREE.MeshStandardMaterial({color:C(0x1f5a3a),emissive:C(0x3a7a50),emissiveIntensity:.5,side:THREE.DoubleSide,roughness:.4}));
+/* ---------- desk: the library's desk, in the library's scanned wood ---------- */
+(function(){
+  const t=loadTex(ASSETS+'textures/dark_wood_diff.jpg',true,true);
+  const wood=c=>new THREE.MeshStandardMaterial({map:t,color:new THREE.Color(c).convertSRGBToLinear(),roughness:.55});
+  const light=wood(0xffeacc),dark=wood(0x8f7a68),dk=new THREE.Group();dk.position.set(-1.6,0,1.6);scene.add(dk);
+  box(2.3,0.07,1.15,light,0,0.78,0,dk);box(2.1,0.22,1.0,dark,0,0.635,-0.03,dk);
+  [[-1.05,-0.48],[1.05,-0.48],[-1.05,0.48],[1.05,0.48]].forEach(q=>box(0.09,0.75,0.09,light,q[0],0.375,q[1],dk));
+  [-0.5,0.5].forEach(x=>{box(0.74,0.18,0.03,light,x,0.635,0.5,dk);box(0.07,0.07,0.03,mBrass,x,0.635,0.525,dk);});
+})();
+/* ---------- desk: lamp shade, open book, globe ---------- */
+const shade=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.17,0.17,48,1,true),new THREE.MeshStandardMaterial({color:C(0x1f5a3a),emissive:C(0x3a7a50),emissiveIntensity:.6,side:THREE.DoubleSide,roughness:.4}));
 shade.position.set(-2.35,1.17,1.45);scene.add(shade);
-lampLight.position.set(-2.35,1.12,1.5);candleGlows.push(glow(0xffd08a,0.6,-2.35,1.12,1.45,0.8));
-// open book
+candleGlows.push(glow(0xffd08a,0.6,-2.35,1.12,1.45,0.8));
 const pageMat=new THREE.MeshStandardMaterial({map:makePageTex(),roughness:.9});
+const mLeatherLive=new THREE.MeshStandardMaterial({color:C(0x5a2a18),roughness:.5});
 const bk=new THREE.Group();bk.position.set(-1.55,0.815,1.65);bk.rotation.y=0.12;scene.add(bk);
-box(0.66,0.03,0.44,mLeather,0,0,0,bk,true,true);
-const pl=box(0.3,0.02,0.4,pageMat,-0.16,0.03,0,bk,false,true);pl.rotation.z=0.07;
-const pr=box(0.3,0.02,0.4,pageMat,0.16,0.03,0,bk,false,true);pr.rotation.z=-0.07;
+box(0.66,0.03,0.44,mLeatherLive,0,0,0,bk);
+const pl=box(0.3,0.02,0.4,pageMat,-0.16,0.03,0,bk);pl.rotation.z=0.07;
+const pr=box(0.3,0.02,0.4,pageMat,0.16,0.03,0,bk);pr.rotation.z=-0.07;
 hit(0.9,0.35,0.7,-1.55,0.95,1.65,{act:'book',node:'desk'});
-// stack of books
-[[0.4,0.05,0x5a1e1a,0.05],[0.36,0.05,0x23324a,-0.08],[0.32,0.04,0x2f3d2a,0.1]].forEach(function(b,i){
-  const m=new THREE.MeshStandardMaterial({color:C(b[2]),roughness:.7});
-  const bb=box(b[0],b[1],0.28,m,-0.95,0.835+i*0.05,2.0,scene,true,true);bb.rotation.y=b[3];
-});
-// globe
 const globeG=new THREE.Group();globeG.position.set(-0.85,0.8,1.5);scene.add(globeG);
-lathe([[0.001,0],[0.11,0],[0.115,0.015],[0.05,0.05],[0.02,0.1],[0.012,0.25],[0.001,0.25]],mBrass,0,0,0,globeG,40);
 const globe=new THREE.Mesh(new THREE.SphereGeometry(0.17,64,40),new THREE.MeshStandardMaterial({map:makeGlobeTex(),roughness:.5}));
-globe.position.y=0.4;globe.rotation.z=0.4;globe.castShadow=true;globeG.add(globe);
+globe.position.y=0.4;globe.rotation.z=0.4;globeG.add(globe);
 const gr=new THREE.Mesh(new THREE.TorusGeometry(0.19,0.008,12,64),mBrass);gr.position.y=0.4;gr.rotation.y=Math.PI/2;globeG.add(gr);
 hit(0.4,0.6,0.4,-0.85,1.1,1.5,{act:'globe',node:'desk'});
-// chair
-const chair=new THREE.Group();chair.position.set(-3.5,0,1.7);chair.rotation.y=1.3;scene.add(chair);
-rbox(0.5,0.05,0.5,mWood,0,0.45,0,chair,0.02,true);rbox(0.5,0.6,0.05,mWood,0,0.78,-0.22,chair,0.02,true);
-[[-0.2,-0.2],[0.2,-0.2],[-0.2,0.2],[0.2,0.2]].forEach(p=>box(0.05,0.45,0.05,mWoodDark,p[0],0.22,p[1],chair,false,false));
 
-/* ---------- cabinet with dials (east wall) ---------- */
-rbox(0.3,1.6,2.1,mWoodDark,4.85,1.6,0,scene,0.03,true);rbox(0.34,0.08,2.2,mWood,4.84,2.44,0,scene,0.025,false);
-box(0.04,1.5,2.0,new THREE.MeshStandardMaterial({map:woodTex,roughness:.5,color:C(0x8a6a50)}),4.69,1.6,0,scene,false,true);
-box(0.03,0.03,2.0,mBrass,4.68,1.12,0,scene,false,false);box(0.03,0.03,2.0,mBrass,4.68,2.08,0,scene,false,false);
-[[-1,0.9],[1,0.9],[-1,2.3],[1,2.3]].forEach(p=>{const r=cyl(0.03,0.03,0.03,mBrass,4.68,p[1],p[0]*0.95,scene,10);r.rotation.z=Math.PI/2;});
-const plate=box(0.02,0.16,1.4,new THREE.MeshStandardMaterial({map:makePlateTex(),metalness:.5,roughness:.4}),4.68,2.2,0,scene,false,false);
+/* ---------- cabinet dials ---------- */
+const plate=new THREE.Mesh(new THREE.PlaneGeometry(1.4,0.16),new THREE.MeshBasicMaterial({map:makePlateTex(),color:new THREE.Color(.55,.55,.55)}));
+plate.position.set(4.668,2.2,0);plate.rotation.y=-Math.PI/2;scene.add(plate);
 const dialTex=SYMS.map(makeDialTex);
 const dialIdx=[4,5,0,1];
 const dials=[];
@@ -655,45 +569,15 @@ for(let i=0;i<4;i++){
   dials.push({g:g,face:face,halo:halo,busy:false});
 }
 
-/* ---------- chandelier ---------- */
-cyl(0.01,0.01,1.1,mIron,0,3.85,0,scene,6);
-const ringC=new THREE.Mesh(new THREE.TorusGeometry(0.6,0.025,12,72),mIron);ringC.rotation.x=Math.PI/2;ringC.position.y=3.3;scene.add(ringC);
-for(let i=0;i<8;i++){
-  const a=i/8*TAU,x=Math.cos(a)*0.6,z=Math.sin(a)*0.6;
-  cyl(0.025,0.025,0.16,mCream,x,3.4,z,scene,8);candleGlows.push(glow(0xffa84a,0.22,x,3.52,z,0.9));
-}
-
-/* ---------- south wall: door, sconces, charts ---------- */
-box(1.3,2.5,0.1,mWoodDark,0,1.25,5.93,scene,false,true);box(1.08,2.38,0.08,repMat(panelBase,1,2,.6),0,1.2,5.9,scene,false,true);
-const knob=new THREE.Mesh(new THREE.SphereGeometry(0.04,12,8),mBrass);knob.position.set(0.42,1.1,5.84);scene.add(knob);
+/* ---------- door, fire and telescope hit boxes ---------- */
 hit(1.3,2.5,0.3,0,1.25,5.8,{act:'door',node:'door'});
-[-1.4,1.4].forEach(function(x){box(0.08,0.2,0.1,mBrass,x,1.9,5.93,scene,false,false);cyl(0.03,0.03,0.12,mCream,x,2.05,5.88,scene,8);candleGlows.push(glow(0xffa84a,0.4,x,2.17,5.88,0.9));});
-[[-2.8,41],[2.8,43]].forEach(function(p){
-  const m=new THREE.Mesh(new THREE.PlaneGeometry(0.8,1.0),new THREE.MeshStandardMaterial({map:makeChartTex(p[1]),roughness:.9}));m.position.set(p[0],2.2,5.96);m.rotation.y=Math.PI;scene.add(m);
-  box(0.9,0.06,0.04,fm,p[0],2.72,5.96,scene,false,false);box(0.9,0.06,0.04,fm,p[0],1.68,5.96,scene,false,false);
-  box(0.06,1.1,0.04,fm,p[0]-0.45,2.2,5.96,scene,false,false);box(0.06,1.1,0.04,fm,p[0]+0.45,2.2,5.96,scene,false,false);
-});
 hit(3.0,1.0,0.4,0,0.9,-5.4,{act:'fire',node:null});
+hit(0.6,1.6,0.6,4.0,0.9,-3.2,{act:'scope',node:null});
 
-/* ---------- library ladder ---------- */
-const ladder=new THREE.Group();ladder.position.set(-4.05,0,-2.3);ladder.rotation.z=0.16;scene.add(ladder);
-[-0.22,0.22].forEach(z=>box(0.045,3.1,0.05,mWood,0,1.55,z,ladder,true,false));
-for(let i=0;i<9;i++)box(0.05,0.04,0.44,mWood,0,0.3+i*0.33,0,ladder,false,false);
-
-/* ---------- telescope and plants ---------- */
-(function(){
-  const g=new THREE.Group();g.position.set(4.0,0,-3.2);scene.add(g);
-  [0,1,2].forEach(function(i){const a=i/3*TAU+0.4,leg=cyl(0.018,0.014,1.15,mWoodDark,Math.cos(a)*0.2,0.55,Math.sin(a)*0.2,g,12);leg.rotation.z=-Math.cos(a)*0.2;leg.rotation.x=Math.sin(a)*0.2;});
-  cyl(0.05,0.05,0.06,mBrass,0,1.1,0,g,24);
-  const tube=new THREE.Group();tube.position.set(0,1.18,0);tube.rotation.z=-0.95;g.add(tube);
-  const body=cyl(0.055,0.055,1.1,mBrass,0,0.2,0,tube,40);body.castShadow=true;
-  cyl(0.07,0.055,0.12,mBrass,0,0.78,0,tube,40);cyl(0.035,0.035,0.2,mBrass,0,-0.45,0,tube,24);
-  cyl(0.05,0.05,0.02,new THREE.MeshStandardMaterial({color:C(0x335577),metalness:.2,roughness:.1,envMap:envTex,envMapIntensity:1.4}),0,0.845,0,tube,40);
-  hit(0.6,1.6,0.6,4.0,0.9,-3.2,{act:'scope',node:null});
-})();
+/* ---------- plants ---------- */
 function plant(x,z,seed){
   const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
-  lathe(POT,new THREE.MeshStandardMaterial({color:C(0x8a4a2a),roughness:.7,envMap:envTex,envMapIntensity:.2}),0,0,0,g,32);
+  const pot=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.14,0.3,32),new THREE.MeshStandardMaterial({color:C(0x8a4a2a),roughness:.7}));pot.position.y=0.15;g.add(pot);
   cyl(0.19,0.19,0.02,new THREE.MeshStandardMaterial({color:C(0x2a1a10),roughness:1}),0,0.29,0,g,24);
   const r=rng(seed);
   for(let i=0;i<22;i++){
@@ -701,15 +585,10 @@ function plant(x,z,seed){
     for(let k=0;k<p.count;k++){const t=(p.getY(k)+len/2)/len;p.setZ(k,t*t*0.38*len+Math.sin(t*3)*0.01);p.setX(k,p.getX(k)*(1-t*0.75));p.setY(k,t*len*0.92);}
     geo.computeVertexNormals();
     const m=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:C(0x2f5a2a).lerp(C(0x5a8a3a),r()),roughness:.6,side:THREE.DoubleSide}));
-    m.position.y=0.3;m.rotation.y=r()*TAU;m.rotation.x=(0.2+r()*0.55);m.castShadow=true;g.add(m);
+    m.position.y=0.3;m.rotation.y=r()*TAU;m.rotation.x=(0.2+r()*0.55);g.add(m);
   }
 }
 plant(4.45,-4.7,5);plant(4.4,5.3,9);plant(-4.4,5.35,13);
-
-/* ---------- contact shadows ---------- */
-blob(-1.7,-3.7,1.5,1.5,0,.9);blob(1.7,-3.7,1.5,1.5,0,.9);blob(-2.9,-4.3,0.9,0.9,0,.7);
-blob(-1.6,1.6,2.8,1.7,0,.95);blob(-3.5,1.7,0.9,0.9,0,.8);blob(4.0,-3.2,0.9,0.9,0,.7);
-blob(4.45,-4.7,0.7,0.7,0,.8);blob(4.4,5.3,0.7,0.7,0,.8);blob(-4.4,5.35,0.7,0.7,0,.8);blob(-3.95,-2.3,0.9,1.2,0,.6);
 
 /* ---------- dust motes ---------- */
 const DUST=170,dustPos=new Float32Array(DUST*3),dustSeed=[];
@@ -729,8 +608,13 @@ dials.forEach((d,i)=>glint(4.6,1.28,-0.66+i*0.44,'dial'));
 glint(-1.0,1.0,1.65,'book');
 glint(-0.8,2.45,-5.43,'painting');
 
+/* ---------- load ---------- */
+const enterBtn=$('enterBtn');enterBtn.disabled=true;const enterLabel=enterBtn.textContent;enterBtn.textContent='Lighting the room…';
+loadWorld().then(function(){enterBtn.disabled=false;enterBtn.textContent=enterLabel;window.__ready=true;}).catch(function(e){fail('The room data could not be loaded ('+e.message+').');});
 /* ---------- audio (all synthesized, starts on first tap) ---------- */
 let actx=null,master=null,muted=false,burst=null;
+try{muted=localStorage.getItem('bleich-sound')==='0';}catch(e){}
+$('soundBtn').setAttribute('aria-pressed',String(!muted));
 function nbuf(sec){const b=actx.createBuffer(1,Math.floor(actx.sampleRate*sec),actx.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;return b;}
 function crackle(){
   if(!actx)return;
@@ -745,7 +629,7 @@ function crackle(){
 function startAudio(){
   try{
     const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
-    actx=new AC();master=actx.createGain();master.gain.value=1;master.connect(actx.destination);
+    actx=new AC();master=actx.createGain();master.gain.value=muted?0:1;master.connect(actx.destination);
     const bed=actx.createBuffer(1,actx.sampleRate*3,actx.sampleRate),d=bed.getChannelData(0);let last=0;
     for(let i=0;i<d.length;i++){last=(last+0.02*(Math.random()*2-1))/1.02;d[i]=last*3.5;}
     const src=actx.createBufferSource(),lp=actx.createBiquadFilter(),g=actx.createGain();
@@ -841,7 +725,7 @@ function stepThrough(){
     /* chapter two: the stair comes out in the library */
     $('flash').style.opacity='1';
     try{sessionStorage.setItem('bleich-library-arrive','1');}catch(e){}
-    setTimeout(function(){location.href=LIBRARY;},900);
+    setTimeout(function(){location.href='/worlds/world-6/next/library';},900);
   });
 }
 
@@ -852,18 +736,36 @@ document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',
 addEventListener('keydown',function(e){
   if(e.key==='Escape')closeOverlay();
   if(overlay||busy||!entered)return;
-  if(e.key==='ArrowLeft')state.yaw+=0.12;if(e.key==='ArrowRight')state.yaw-=0.12;
-  if(e.key==='ArrowUp')state.pitch=clamp(state.pitch+0.08,-.9,.9);if(e.key==='ArrowDown')state.pitch=clamp(state.pitch-0.08,-.9,.9);
+  /* the same keys as the library: left and right turn, up steps toward what you
+     face, down or Backspace steps back, 1-5 jump to a place, H asks for a hint */
+  if(e.key==='ArrowLeft'){e.preventDefault();state.yaw+=Math.PI/4;}
+  else if(e.key==='ArrowRight'){e.preventDefault();state.yaw-=Math.PI/4;}
+  else if(e.key==='ArrowUp'){
+    e.preventDefault();let best=null,bd=1.05;
+    Object.keys(NODES).forEach(function(id){
+      const n=NODES[id];if(id===current||(n.locked&&!n.unlocked))return;
+      /* aim at what the place looks at, not at where you stand to see it */
+      const dx=n.x-Math.sin(n.yaw)*3-state.x,dz=n.z-Math.cos(n.yaw)*3-state.z;
+      let d=Math.atan2(-dx,-dz)-state.yaw;d=Math.abs(Math.atan2(Math.sin(d),Math.cos(d)));
+      if(d<bd){bd=d;best=id;}
+    });
+    if(best)goNode(best);
+  }
+  else if((e.key==='ArrowDown'||e.key==='Backspace')&&current!=='door'){e.preventDefault();goNode('door');}
+  else if(/^[1-9]$/.test(e.key)){const b=nav.querySelectorAll('button')[+e.key-1];if(b)b.click();}
+  else if(e.key==='h'||e.key==='H')$('hintBtn').click();
 });
 $('enterBtn').addEventListener('click',function(){
   startAudio();entered=true;$('intro').classList.add('fade');setTimeout(()=>{$('intro').hidden=true;},750);
   buildNav();caption(NODES.door.line,5000);
+  /* warm the cache for the library's models and textures while this room is being played */
   fetch('/worlds/world-6/next/assets/manifest.json').then(r=>r.json()).then(async function(list){
     for(const url of list){try{await fetch(url,{priority:'low'});}catch(e){}}
   }).catch(function(){});
 });
 $('soundBtn').addEventListener('click',function(){
   muted=!muted;this.setAttribute('aria-pressed',String(!muted));if(master)master.gain.value=muted?0:1;
+  try{localStorage.setItem('bleich-sound',muted?'0':'1');}catch(e){}
   if(actx&&actx.state==='suspended')actx.resume();
 });
 const HINTS=['Something above the hearth is worth a closer look.','The painting’s four emblems each have a numeral beneath them.','The book on the desk says to set the dials in numeral order, left to right.','Sun, star, moon, key.'];
@@ -940,6 +842,7 @@ function frame(now){
   embGeo.attributes.position.needsUpdate=true;
   candleGlows.forEach(function(g,i){const b=i===0?1.8:g.userData.b||(g.userData.b=g.scale.x);g.scale.setScalar(b*(1+Math.sin(clock*11+i*2.3)*.05+Math.sin(clock*23+i)*.03));});
   chandLight.intensity=.9+Math.sin(clock*9)*.03;lampLight.intensity=1+Math.sin(clock*4)*.02;
+  { const fk=1+Math.sin(clock*13)*.012+Math.sin(clock*7.3+1)*.015; for(let i=0;i<bakedMats.length;i++)bakedMats[i].m.lightMapIntensity=bakedMats[i].base*fk; }
   // dust
   for(let i=0;i<DUST;i++){dustPos[i*3+1]+=dt*(.02+dustSeed[i]*.03);dustPos[i*3]+=Math.sin(clock*.2+dustSeed[i]*20)*dt*.02;if(dustPos[i*3+1]>4.2)dustPos[i*3+1]=.2;}
   dustGeo.attributes.position.needsUpdate=true;

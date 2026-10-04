@@ -4,151 +4,102 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>html, body { margin: 0; } [hidden] { display: none !important; }</style>
-<title>Bleich Library (graphics prototype)</title>
+<title>Ashgrove · The Library</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap">
 <style>
-/* Layout: a point-and-click library. The room fills the screen; you move between
-   fixed viewpoints by clicking what you want to look at. Keys sit top left, the
-   hint bar and navigation dock to the bottom, and an open book takes over the middle. */
+/* Layout: full-bleed WebGL room, with the same interface as the reading room:
+   place name and keys top left, brass tool buttons top right, a row of place
+   chips along the bottom with a caption above it, and paper for anything you read. */
 :root {
-  --bg: #120d0a;
-  --fg: #efe6d2;
-  --muted: #a89a82;
-  --rule: rgba(239, 230, 210, 0.16);
-  --brass: #c9a24a;
-  --silver: #c3c9d1;
-  --iron: #6f7780;
-  --paper: #ece2c8;
-  --ink: #2a2118;
+  --bg: #120b07; --fg: #eadfc6; --text: #eadfc6; --muted: #b9a883; --brass: #d1a850; --brass-deep: #8a6d2f;
+  --ember: #e8873a; --veil: rgba(10, 6, 3, 0.80); --panel: #1d130c; --paper: #e8dbbd; --paper-ink: #2b1d11;
+  --silver: #c3c9d1; --iron: #7d858e; --ink: #2b1d11; --rule: rgba(234, 223, 198, 0.16);
 
   /* room palette */
-  --w-wall: #24352f;
-  --w-wall-line: #1d2b26;
-  --w-wood: #4a3222;
-  --w-wood-dark: #2e1f15;
-  --w-wood-light: #6b4a31;
-  --w-floor: #3a281b;
-  --w-rug: #6b2a2a;
-  --w-ceil: #17110d;
-  --w-stone: #3b3d42;
-  --w-train: #7a2f2a;
-  --w-cream: #e7dcc0;
-  --w-lamp: #ffd88a;
+  --w-wall: #24352f; --w-wall-line: #1d2b26; --w-wood: #4a3222; --w-wood-dark: #2e1f15; --w-wood-light: #6b4a31;
+  --w-floor: #3a281b; --w-rug: #6b2a2a; --w-ceil: #17110d; --w-stone: #3b3d42; --w-train: #7a2f2a; --w-cream: #e7dcc0; --w-lamp: #ffd88a;
 
-  --f-book: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
-  --f-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --display: 'IM Fell English', Georgia, 'Times New Roman', serif;
+  --sc: 'IM Fell English SC', Georgia, 'Times New Roman', serif;
+  --body: 'Spectral', Georgia, 'Times New Roman', serif;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
-body { background: var(--bg); color: var(--fg); font-family: var(--f-book); line-height: 1.5; -webkit-font-smoothing: antialiased; }
-button { font: inherit; color: inherit; }
-:focus-visible { outline: 2px solid var(--brass); outline-offset: 3px; }
-.mono { font-family: var(--f-mono); font-size: 0.6875rem; letter-spacing: 0.08em; text-transform: uppercase; }
+body { background: var(--bg); color: var(--text); font-family: var(--body); -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
 
 .frame { position: relative; overflow: hidden; background: var(--bg); }
-canvas { display: block; width: 100%; height: 520px; outline: none; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+canvas { display: block; width: 100%; height: 520px; outline: none; touch-action: manipulation; }
 .fade { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }
-.proto { position: absolute; top: 1rem; right: 1.1rem; display: flex; align-items: center; gap: 0.6rem; }
-.proto .btn { background: rgba(18, 13, 10, 0.82); }
-.proto-stats { color: var(--muted); text-align: right; }
-.proto-note { position: absolute; left: 50%; bottom: 1rem; transform: translateX(-50%); width: min(44rem, calc(100% - 1.8rem)); margin: 0; padding: 0.7rem 1rem; border: 1px solid var(--rule); border-radius: 12px; background: rgba(18, 13, 10, 0.82); font-size: 1.0625rem; }
-.frame[data-view="splat"] .dock, .frame[data-view="splat"] .inv { display: none; }
-.frame[data-view="mesh"] .proto-note { display: none; }
-.arrive { position: absolute; inset: 0; z-index: 30; display: grid; place-items: end center; padding: 2rem; background: #ffe8b0; color: #5a3d1c; transition: opacity 1.6s ease; }
+.vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 46%, rgba(0,0,0,0) 48%, rgba(8,4,2,.5) 100%); }
+.arrive { position: absolute; inset: 0; z-index: 30; display: grid; place-items: end center; padding: 2rem; background: #ffe8b0; color: #5a3d1c; font-family: var(--sc); letter-spacing: .12em; transition: opacity 1.6s ease; }
 .arrive.gone { opacity: 0; pointer-events: none; }
 .fail { position: absolute; inset: 0; display: grid; place-items: center; padding: 1.5rem; text-align: center; color: var(--muted); }
 
-/* keys */
-.inv { position: absolute; top: 1rem; left: 1.1rem; display: flex; gap: 0.4rem; pointer-events: none; }
-.slot {
-  width: 2.3rem; height: 2.3rem; display: grid; place-items: center;
-  border: 1px dashed var(--rule); border-radius: 8px; background: rgba(18, 13, 10, 0.55); color: transparent;
-}
-.slot svg { width: 1.5rem; height: 1.5rem; }
+/* top bar: place and keys, tools */
+.bar-top { position: absolute; left: 0; right: 0; top: 0; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+  padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 30px; background: linear-gradient(to bottom, rgba(10,6,3,.72), rgba(10,6,3,0)); pointer-events: none; }
+.bar-top > * { pointer-events: auto; }
+.where { display: grid; gap: 8px; min-width: 0; }
+.place { font-family: var(--sc); font-size: 16px; letter-spacing: .12em; color: var(--brass); padding-top: 8px; text-shadow: 0 1px 6px #000; }
+.inv { display: flex; gap: 6px; }
+.slot { width: 34px; height: 34px; display: grid; place-items: center; border: 1px dashed var(--brass-deep); border-radius: 2px; background: rgba(18,11,7,.5); color: transparent; }
+.slot svg { width: 22px; height: 22px; }
 .slot[data-on="true"] { border-style: solid; border-color: currentColor; }
 .slot[data-on="true"][data-k="brass"] { color: var(--brass); }
 .slot[data-on="true"][data-k="silver"] { color: var(--silver); }
 .slot[data-on="true"][data-k="iron"] { color: var(--iron); }
+.tools { display: flex; gap: 8px; flex-shrink: 0; }
+.ghost { font-family: var(--sc); font-size: 13px; letter-spacing: .1em; min-height: 40px; padding: 0 12px; color: var(--text);
+  background: rgba(18,11,7,.62); border: 1px solid var(--brass-deep); border-radius: 2px; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.ghost[aria-pressed="false"] { color: var(--muted); text-decoration: line-through; }
+.frame[data-mode="ride"] .bar-top, .frame[data-mode="ride"] .nav { display: none; }
 
-/* hint bar + navigation */
-.dock {
-  position: absolute; left: 50%; bottom: max(0.9rem, env(safe-area-inset-bottom)); transform: translateX(-50%);
-  width: min(44rem, calc(100% - 1.8rem));
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem 1rem;
-  padding: 0.65rem 0.8rem 0.65rem 1rem;
-  border: 1px solid var(--rule); border-radius: 12px;
-  background: rgba(18, 13, 10, 0.82);
-  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
-}
-.say { margin: 0; flex: 1 1 16rem; min-width: 0; display: flex; gap: 0.6rem; align-items: baseline; }
-.say-label { color: var(--brass); flex: none; }
-.say-text { font-size: 1.1875rem; line-height: 1.3; text-wrap: pretty; }
-.nav { display: flex; gap: 0.4rem; }
-.btn {
-  display: inline-flex; align-items: center; justify-content: center; min-height: 2.4rem;
-  padding: 0.5rem 0.85rem; border: 1px solid var(--rule); border-radius: 999px;
-  background: transparent; cursor: pointer;
-  font-family: var(--f-mono); font-size: 0.6875rem; letter-spacing: 0.08em; text-transform: uppercase;
-}
-.btn:hover { border-color: var(--brass); color: var(--brass); }
-.btn.go { background: var(--fg); border-color: var(--fg); color: var(--bg); }
-.btn.go:hover { background: var(--brass); border-color: var(--brass); color: var(--bg); }
+/* caption + place chips */
+.caption { position: absolute; left: 16px; right: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 78px); margin: 0 auto; max-width: 36ch; text-align: center;
+  font-style: italic; font-size: 17px; line-height: 1.4; text-wrap: balance; color: var(--text); text-shadow: 0 1px 8px #000, 0 0 18px #000;
+  opacity: 0; transition: opacity .6s; pointer-events: none; }
+.caption.show { opacity: 1; }
+.nav { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; flex-wrap: wrap; gap: 6px;
+  padding: 30px 12px calc(env(safe-area-inset-bottom, 0px) + 14px); background: linear-gradient(to top, rgba(10,6,3,.8), rgba(10,6,3,0)); pointer-events: none; }
+.nav button { pointer-events: auto; font-family: var(--sc); font-size: 14px; letter-spacing: .06em; min-height: 44px; min-width: 44px; padding: 0 10px; color: var(--brass);
+  background: rgba(18,11,7,.7); border: 1px solid var(--brass-deep); border-radius: 2px; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.nav button[aria-current="true"] { background: var(--brass); color: var(--bg); border-color: var(--brass); }
+.nav button.step { color: var(--text); }
 
-/* overlays */
-.overlay { position: absolute; inset: 0; display: grid; place-items: center; padding: 1rem; background: rgba(8, 6, 4, 0.66); overflow: auto; }
-.panel { width: min(100%, 30rem); display: grid; gap: 0.6rem; padding: 1.5rem; border: 1px solid var(--rule); border-top: 3px solid var(--brass); border-radius: 10px; background: #1a130e; }
-.panel p { margin: 0; }
-.panel .eyebrow { color: var(--brass); }
-.panel-title { font-size: clamp(1.9rem, 6vw, 2.6rem); font-weight: 600; line-height: 1.05; }
-.panel-desc { font-size: 1.1875rem; color: var(--muted); text-wrap: pretty; }
-.panel-actions { margin-top: 0.5rem; }
+/* veils and panels */
+.veil { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; overflow: auto;
+  padding: calc(env(safe-area-inset-top, 0px) + 16px) 16px calc(env(safe-area-inset-bottom, 0px) + 16px);
+  background: var(--veil); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+.panel { width: min(100%, 440px); min-width: 0; }
+.eyebrow { font-family: var(--sc); font-size: 13px; letter-spacing: .16em; color: var(--brass); margin: 0 0 10px; }
+h1 { font-family: var(--display); font-weight: 400; margin: 0; line-height: 1.05; text-wrap: balance; font-size: clamp(34px, 10vw, 46px); }
+.panel p { font-size: 17px; line-height: 1.55; color: var(--muted); margin: 14px 0 0; }
+.panel p.small { font-size: 14px; font-style: italic; }
+.btn { font-family: var(--sc); font-size: 15px; letter-spacing: .1em; min-height: 46px; padding: 0 22px; background: var(--brass); color: var(--bg); border: 0; border-radius: 2px; margin-top: 22px; }
+.btn[disabled] { opacity: .6; cursor: default; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; }
 
-/* open book */
-.book {
-  --cover: #555;
-  width: min(100%, 50rem); display: grid; gap: 0.7rem;
-  padding: 0.9rem; border-radius: 10px; background: var(--cover);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-}
-.book-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding-inline: 0.3rem; color: rgba(255, 255, 255, 0.85); }
-.book-head p { margin: 0; }
-.spread { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: #b9ad8f; border-radius: 4px; overflow: hidden; }
-.leaf {
-  position: relative; min-height: 19rem; display: flex; flex-direction: column; gap: 0.8rem;
-  padding: 1.5rem 1.6rem 2.4rem;
-  background: var(--paper); color: var(--ink);
-  font-size: 1.25rem; line-height: 1.45;
-}
-.leaf.left { box-shadow: inset -18px 0 22px -18px rgba(0, 0, 0, 0.35); }
-.leaf.right { box-shadow: inset 18px 0 22px -18px rgba(0, 0, 0, 0.35); }
-.leaf p { margin: 0; text-wrap: pretty; }
-.leaf .head { font-style: italic; color: #6b5a3c; }
-.leaf .folio { position: absolute; bottom: 0.8rem; left: 0; right: 0; text-align: center; color: #8a7a5c; font-family: var(--f-mono); font-size: 0.6875rem; }
-.hollow {
-  margin-top: auto; display: grid; place-items: center; gap: 0.7rem; padding: 1.2rem 1rem;
-  border-radius: 6px; background: #cfc3a4; box-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.45);
-  text-align: center;
-}
-.hollow svg { width: 4.5rem; height: 4.5rem; }
-.hollow .btn { border-color: var(--ink); color: var(--ink); }
-.hollow .btn:hover { background: var(--ink); color: var(--paper); }
-.book-nav { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem; }
-.book-nav .btn { border-color: rgba(255, 255, 255, 0.4); color: #fff; background: rgba(0, 0, 0, 0.25); }
-.book-nav .btn:hover { background: #fff; color: #111; border-color: #fff; }
-.book-nav .btn[disabled] { opacity: 0.35; cursor: default; pointer-events: none; }
-.book.sheet .spread { grid-template-columns: 1fr; }
-.book.sheet { width: min(100%, 28rem); }
+/* anything you read is a sheet of paper, as in the reading room */
+.paper { background: linear-gradient(160deg, #eee2c6, #dccba5); color: var(--paper-ink); padding: 30px 26px 24px; box-shadow: 0 24px 70px rgba(0,0,0,.65); }
+.paper p { font-family: var(--display); font-size: 19px; line-height: 1.55; color: var(--paper-ink); margin: 0 0 .9em; }
+.paper .title { font-family: var(--sc); font-size: 14px; letter-spacing: .14em; color: #6b5433; margin: 0 0 1.2em; padding-bottom: .7em; border-bottom: 1px solid rgba(43,29,17,.25); }
+.paper .head { font-style: italic; }
+.paper .folio { display: none; }
+.paper .pages { font-family: var(--sc); font-size: 13px; letter-spacing: .12em; color: #6b5433; text-align: center; margin: 1em 0 0; }
+.paper .btn { background: var(--paper-ink); color: var(--paper); margin-top: 12px; }
+.paper .btn.alt { background: transparent; color: var(--paper-ink); border: 1px solid rgba(43,29,17,.45); }
+.paper .btn[disabled] { opacity: .3; }
+.hollow { display: grid; place-items: center; gap: 12px; margin: .4em 0 1em; padding: 22px 16px; background: #cdbd97; box-shadow: inset 0 3px 12px rgba(0,0,0,.5); text-align: center; }
+.hollow svg { width: 72px; height: 72px; }
+.hollow p { margin: 0; }
+.hollow .btn { margin-top: 0; }
 
-@media (max-width: 40rem) {
-  .inv { top: 3.5rem; left: 0.9rem; }
-  .spread { grid-template-columns: 1fr; }
-  .leaf { min-height: 0; padding: 1.1rem 1.2rem 2.2rem; font-size: 1.125rem; }
-  .leaf.left, .leaf.right { box-shadow: none; }
-  .say-text { font-size: 1.0625rem; }
-}
-@media (prefers-reduced-motion: reduce) { .fade { transition: none; } }
+@media (max-width: 40rem) { .bar-top { padding-top: calc(env(safe-area-inset-top, 0px) + 56px); } }
+@media (prefers-reduced-motion: reduce) { .fade, .caption { transition: none; } }
 </style>
 <link rel="stylesheet" href="/worlds/shell.css">
 </head>
@@ -156,44 +107,49 @@ canvas { display: block; width: 100%; height: 520px; outline: none; touch-action
 <div class="page">
   <main>
     <section aria-label="Library">
-      <div class="frame" id="frame" data-view="mesh">
-        <canvas id="c" tabindex="0" aria-label="A library. Click shelves, the cabinet and the desk to look closer. Find each volume, read a couple of pages to find the key inside, and use the last key to open the way down to the train."></canvas>
-        <div class="inv" aria-label="Keys">
-          <span class="slot" data-k="brass" title="Brass key"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M11 12h10M17 12v4M20.5 12v3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span>
-          <span class="slot" data-k="silver" title="Silver key"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M11 12h10M17 12v4M20.5 12v3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span>
-          <span class="slot" data-k="iron" title="Iron key"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M11 12h10M17 12v4M20.5 12v3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span>
-        </div>
-        <div class="dock">
-          <p class="say" aria-live="polite"><span class="say-label mono">Hint</span><span class="say-text" id="say">A note has been left on the reading desk.</span></p>
-          <div class="nav">
-            <button class="btn" id="nav-left" type="button" aria-label="Turn left">◀</button>
-            <button class="btn" id="nav-right" type="button" aria-label="Turn right">▶</button>
-            <button class="btn" id="nav-back" type="button" hidden>Step back</button>
-          </div>
-        </div>
-        <div class="proto"><span class="proto-stats mono" id="stats"></span><button class="btn" id="view-btn" type="button">View splat sample</button></div>
-        <p class="proto-note" id="proto-note">Loading the sample splat…</p>
-        <div class="fade" id="fade"></div>
-        <div class="arrive" id="arrive" hidden><span class="mono" id="arrive-text">Climbing the stair…</span></div>
-        <div class="overlay" id="reader" hidden role="dialog" aria-modal="true" aria-labelledby="book-title">
-          <div class="book" id="book">
-            <div class="book-head"><p class="mono" id="book-title"></p><p class="mono" id="book-pages"></p></div>
-            <div class="spread"><div class="leaf left" id="leaf-l"></div><div class="leaf right" id="leaf-r"></div></div>
-            <div class="book-nav">
-              <button class="btn" id="pg-prev" type="button">← Back</button>
-              <button class="btn" id="pg-next" type="button">Turn the page →</button>
-              <button class="btn" id="book-close" type="button">Close</button>
+      <div class="frame" id="frame">
+        <canvas id="c" tabindex="0" aria-label="A library. Click shelves, the cabinet and the desk to look closer; arrow keys turn, step forward and step back. Find each volume, read a couple of pages to find the key inside, and use the last key to open the way down to the train."></canvas>
+        <div class="vignette"></div>
+        <header class="bar-top">
+          <div class="where">
+            <div class="place" id="place">Entrance</div>
+            <div class="inv" aria-label="Keys">
+              <span class="slot" data-k="brass" title="Brass key"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M11 12h10M17 12v4M20.5 12v3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span>
+              <span class="slot" data-k="silver" title="Silver key"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M11 12h10M17 12v4M20.5 12v3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span>
+              <span class="slot" data-k="iron" title="Iron key"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M11 12h10M17 12v4M20.5 12v3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span>
             </div>
           </div>
-        </div>
-        <div class="overlay" id="start">
-          <div class="panel">
-            <p class="eyebrow mono">World 6 · Chapter two</p>
-            <p class="panel-title">The archive</p>
-            <p class="panel-desc">Every world has a volume here. Find one, read a couple of pages, and take what is hidden inside. Click anything to look closer.</p>
-            <div class="panel-actions"><button class="btn go" id="start-btn" type="button">Step inside</button></div>
+          <div class="tools">
+            <button class="ghost" id="hint-btn" type="button">Hint</button>
+            <button class="ghost" id="sound-btn" type="button" aria-pressed="true">Sound</button>
           </div>
-        </div>
+        </header>
+        <p class="caption" id="caption" aria-live="polite"></p>
+        <nav class="nav" id="nav" aria-label="Places in the room"></nav>
+        <div class="fade" id="fade"></div>
+        <div class="arrive" id="arrive" hidden><span id="arrive-text">Climbing the stair…</span></div>
+        <section class="veil" id="reader" hidden role="dialog" aria-modal="true" aria-labelledby="book-title">
+          <div class="panel paper" id="book">
+            <p class="title" id="book-title"></p>
+            <div id="leaf-l"></div>
+            <div id="leaf-r"></div>
+            <p class="pages" id="book-pages"></p>
+            <div class="row">
+              <button class="btn alt" id="pg-prev" type="button">Back a page</button>
+              <button class="btn" id="pg-next" type="button">Turn the page</button>
+              <button class="btn alt" id="book-close" type="button">Close</button>
+            </div>
+          </div>
+        </section>
+        <section class="veil" id="start">
+          <div class="panel">
+            <p class="eyebrow">World 6 · Chapter two</p>
+            <h1>The Archive</h1>
+            <p>Every world has a volume here. Find one, read a couple of pages, and take what is hidden inside.</p>
+            <p class="small">Click anything to look closer. Arrow keys turn and step.</p>
+            <button class="btn" id="start-btn" type="button">Step inside</button>
+          </div>
+        </section>
         <div class="fail" id="fail" hidden><p>This world needs WebGL, which this browser has turned off.</p></div>
       </div>
     </section>
@@ -205,16 +161,14 @@ canvas { display: block; width: 100%; height: 520px; outline: none; touch-action
 {
   "imports": {
     "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/",
-    "@sparkjsdev/spark": "https://sparkjs.dev/releases/spark/2.3.1/spark.module.js"
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
   }
 }
 </script>
 <script type="module">
-/* Graphics prototype for the Library. Same game as world-6, rebuilt on current
-   three.js: scanned CC0 models and textures from Poly Haven, real light units, soft shadows, ambient
-   occlusion and bloom. The "View splat sample" button swaps to a Gaussian splat
-   room rendered with Spark, to compare the two approaches. */
+/* World 6, chapter two: the Library. Current three.js with scanned CC0 models
+   and textures from Poly Haven, real light units, soft shadows, ambient
+   occlusion and bloom. The interface, keys and sounds match the reading room. */
 import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -224,7 +178,6 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
-import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
 
 (async function () {
   'use strict';
@@ -237,6 +190,9 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
   renderer.toneMappingExposure = 1.0;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  /* nothing moves most of the time, so shadows are only redrawn when asked */
+  renderer.shadowMap.autoUpdate = false;
+  var shadowDirty = 4;
 
   var reduce = false;
   try { reduce = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
@@ -311,7 +267,7 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
   try { arrived = sessionStorage.getItem('bleich-library-arrive') === '1'; sessionStorage.removeItem('bleich-library-arrive'); } catch (e) {}
   if (arrived) { arriveEl.hidden = false; document.getElementById('start').hidden = true; }
   var manager = new THREE.LoadingManager();
-  manager.onProgress = function (url, n, total) { var pc = Math.round(n / total * 100) + '%'; startBtn.textContent = 'Loading ' + pc; arriveText.textContent = 'Climbing the stair… ' + pc; };
+  manager.onProgress = function (url, n, total) { var pc = Math.round(n / total * 100) + '%'; startBtn.textContent = 'Lighting the room… ' + pc; arriveText.textContent = 'Climbing the stair… ' + pc; };
   var gltfLoader = new GLTFLoader(manager), texLoader = new THREE.TextureLoader(manager);
   gltfLoader.setDRACOLoader(new DRACOLoader(manager).setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/libs/draco/gltf/'));
   var MODEL_IDS = ['book_encyclopedia_set_01', 'GothicCabinet_01', 'ArmChair_01', 'Chandelier_03', 'vintage_oil_lamp', 'wooden_ladder', 'vintage_grandfather_clock_01', 'fancy_picture_frame_01', 'mantel_clock_01'];
@@ -361,20 +317,22 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
   scene.background = new THREE.Color(C.bg);
   scene.fog = new THREE.Fog(C.bg, 12, 36);
   var camera = new THREE.PerspectiveCamera(62, 16 / 9, 0.1, 140);
+  var gtao = null;
   var hemi = new THREE.HemisphereLight(0xffe7c2, 0x1a120c, 0.75);
   scene.add(hemi);
   envHDR.mapping = THREE.EquirectangularReflectionMapping;
   scene.environment = new THREE.PMREMGenerator(renderer).fromEquirectangular(envHDR).texture;
   scene.environmentIntensity = 0.45;
   /* real light units: a shadow-casting spot for the pool of light, a soft point for the spill */
+  var ROOM_LIGHTS = [];
   function spot(x, y, z, cd, angle, size) {
     var l = new THREE.SpotLight(0xffc878, cd, 0, angle, 0.85, 2);
     l.position.set(x, y, z); l.target.position.set(x, y - 4, z);
     l.castShadow = true; l.shadow.mapSize.set(size, size); l.shadow.bias = -0.0004; l.shadow.normalBias = 0.02;
     l.shadow.camera.near = 0.2; l.shadow.camera.far = 12;
-    scene.add(l); scene.add(l.target); return l;
+    scene.add(l); scene.add(l.target); ROOM_LIGHTS.push(l); return l;
   }
-  function lamp(x, y, z, cd, d) { var l = new THREE.PointLight(0xffc878, cd, d, 2); l.position.set(x, y, z); scene.add(l); return l; }
+  function lamp(x, y, z, cd, d) { var l = new THREE.PointLight(0xffc878, cd, d, 2); l.position.set(x, y, z); scene.add(l); ROOM_LIGHTS.push(l); return l; }
   spot(0, 4.35, -3.5, 120, 1.25, 2048); spot(0, 4.35, 3.5, 80, 1.25, 2048);
   lamp(0, 3.9, -3.5, 22, 18); lamp(0, 3.9, 3.5, 18, 18);
   spot(-0.5, 2.6, 0.9, 14, 0.7, 1024);      /* a pool of light on the desk */
@@ -539,8 +497,8 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
       }
       g.save(); g.translate(w / 2, h / 2); g.rotate(Math.PI / 2);
       g.fillStyle = '#f1e7cf'; g.textAlign = 'center'; g.textBaseline = 'middle';
-      var size = 22; g.font = '600 ' + size + 'px "Cormorant Garamond", Georgia, serif';
-      while (g.measureText(title).width > h - 70 && size > 9) { size--; g.font = '600 ' + size + 'px "Cormorant Garamond", Georgia, serif'; }
+      var size = 22; g.font = '600 ' + size + 'px "IM Fell English", Georgia, serif';
+      while (g.measureText(title).width > h - 70 && size > 9) { size--; g.font = '600 ' + size + 'px "IM Fell English", Georgia, serif'; }
       g.fillText(title, 0, 1);
       g.restore();
     });
@@ -594,12 +552,12 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
     /* the upper doors are the lock */
     hot(box(doorL, 0.7, 0.9, 0.06, ghost, 0.35, 0, 0), 'cabinet', 'The cabinet', function () { cabGate(); });
     hot(box(doorR, 0.7, 0.9, 0.06, ghost, -0.35, 0, 0), 'cabinet', 'The cabinet', function () { cabGate(); });
-    var inner = new THREE.PointLight(0xffc878, 1.4, 3, 2); inner.position.set(0, 2.0, 0.25); cab.add(inner);
+    var inner = new THREE.PointLight(0xffc878, 1.4, 3, 2); inner.position.set(0, 2.0, 0.25); cab.add(inner); ROOM_LIGHTS.push(inner);
   })();
   function cabGate() {
     if (S.cabOpen) return true;
-    if (!S.keys.brass) { say('The cabinet is locked. The lock is brass.'); return false; }
-    S.cabOpen = 0.0001; say('The brass key turns. The doors swing open.');
+    if (!S.keys.brass) { snd.click(); say('The cabinet is locked. The lock is brass.'); return false; }
+    S.cabOpen = 0.0001; snd.chime(); say('The brass key turns. The doors swing open.');
     return false;
   }
   hot(box(scene, 0.2, 2.8, 2.2, ghost, 5.3, 1.5, -2), 'cabinet', 'The glass cabinet');
@@ -611,8 +569,8 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
   var keyBook = spineBook(secret, 0, rowY(1), 0.16, 0.58, '', '#17120e', true);
   hot(keyBook, 'north', 'A book with no title', function () {
     if (S.shelfOpen) return;
-    if (!S.keys.iron) { say('This spine has a keyhole in it. Iron, by the look of it.'); return; }
-    S.shelfOpen = 0.0001; say('The iron key turns. The whole shelf swings out.');
+    if (!S.keys.iron) { snd.click(); say('This spine has a keyhole in it. Iron, by the look of it.'); return; }
+    S.shelfOpen = 0.0001; snd.chime(); snd.rumble(3.2); say('The iron key turns. The whole shelf swings out.');
   });
   hot(box(scene, 2.6, 3, 0.2, ghost, 1.2, 1.6, -7.5), 'north', 'The north shelves');
   var doorway = hot(plane(2.4, 4.2, ghost, 1.2, 2.1, -8.05), 'north', 'A stairway down', function () { if (S.shelfOpen >= 1) goTo('platform', 2.2); });
@@ -639,7 +597,7 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
       g.fillStyle = BOOKS.v3.color; g.fillRect(0, 0, w, h);
       g.strokeStyle = C.brass; g.lineWidth = 3; g.strokeRect(9, 9, w - 18, h - 18);
       g.fillStyle = '#f1e7cf'; g.textAlign = 'center'; g.textBaseline = 'middle';
-      g.font = '600 20px "Cormorant Garamond", Georgia, serif'; g.fillText('OF', w / 2, h / 2 - 14); g.fillText('PORTALS', w / 2, h / 2 + 12);
+      g.font = '600 20px "IM Fell English", Georgia, serif'; g.fillText('OF', w / 2, h / 2 - 14); g.fillText('PORTALS', w / 2, h / 2 + 12);
     });
     fontTexs.push(coverT);
     var side = lam(BOOKS.v3.color);
@@ -662,8 +620,8 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
   })();
   function drawerGate() {
     if (S.drawerOpen) return;
-    if (!S.keys.silver) { say('The drawer is locked. The lock is small, and silver.'); return; }
-    S.drawerOpen = 0.0001; v3Mesh.visible = true; say('The silver key fits. The drawer slides out.');
+    if (!S.keys.silver) { snd.click(); say('The drawer is locked. The lock is small, and silver.'); return; }
+    S.drawerOpen = 0.0001; v3Mesh.visible = true; snd.chime(); say('The silver key fits. The drawer slides out.');
   }
   hot(box(scene, 2.4, 1.2, 1.3, ghost, 0, 0.7, 0.6), 'desk', 'The reading desk');
 
@@ -695,7 +653,7 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
     var bandT = tex(512, 48, function (g, w, h) {
       g.fillStyle = C.cream; g.fillRect(0, 0, w, h);
       g.fillStyle = '#3a1614'; g.textAlign = 'center'; g.textBaseline = 'middle';
-      g.font = '600 30px "Cormorant Garamond", Georgia, serif'; g.fillText('TO THE FINISH  →', w / 2, h / 2 + 2);
+      g.font = '600 30px "IM Fell English", Georgia, serif'; g.fillText('TO THE FINISH  →', w / 2, h / 2 + 2);
     });
     fontTexs.push(bandT);
     var band = new THREE.Mesh(new THREE.PlaneGeometry(7, 0.42), new THREE.MeshBasicMaterial({ map: bandT })); band.position.set(0, 2.42, 1.056); train.add(band);
@@ -713,6 +671,8 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
      base colours, what emits light, the mist, and the wall lamps, which the file
      duplicates along the rail path (one pair every 4th of 100 path frames). The model is
      about half real size, so it is scaled up to fit a train. */
+  /* everything built so far is the room; it is switched off while the train is moving */
+  var ROOM_OBJS = scene.children.filter(function (o) { return !o.isLight; });
   var RIDE_Y = -60, RIDE_SCALE = 2.3, RIDE_EYE = 0.6, LAMP_STEP = 0.04;
   var ridePath, rideRaw, rideGlass, rideLight, ridePool = [], rideTunnel;
   var RIDE_GLASS = new THREE.Color().setRGB(1.0, 0.7, 0.76).multiplyScalar(2.6);   /* white glass, with the preview's pink glare */
@@ -751,6 +711,7 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
       o.userData.noShadow = true;
       o.material = BY_NAME[o.material.name] || BY_NAME['Material.004'];
     });
+    tunnel.visible = false;
     scene.add(tunnel);
     /* Blender is z-up. rideRaw is the rail path in the model's own space; ridePath is the
        same line at world scale, lifted to the driver's eye. */
@@ -766,12 +727,20 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
     if (lamp) {
       lamp.updateMatrix();
       var inv0 = frameAt(0).invert(), base = lamp.matrix.clone();
-      for (var k = 1; k * LAMP_STEP < 0.995; k++) {
-        var c = lamp.clone();
-        c.matrixAutoUpdate = false;
-        c.matrix.copy(frameAt(k * LAMP_STEP)).multiply(inv0).multiply(base);
-        lamp.parent.add(c);
-      }
+      var mats = [];
+      for (var k = 0; k * LAMP_STEP < 0.995; k++) mats.push(frameAt(k * LAMP_STEP).multiply(inv0).multiply(base));
+      /* one instanced draw per lamp part instead of a mesh per lamp */
+      var parts = [];
+      lamp.traverse(function (o) { if (o.isMesh) parts.push(o); });
+      parts.forEach(function (part) {
+        part.updateMatrix();
+        var local = part === lamp ? new THREE.Matrix4() : part.matrix.clone();
+        var im = new THREE.InstancedMesh(part.geometry, part.material, mats.length);
+        mats.forEach(function (m, i) { im.setMatrixAt(i, m.clone().multiply(local)); });
+        im.frustumCulled = false; im.userData.noShadow = true;
+        tunnel.add(im);
+      });
+      lamp.visible = false;
     }
     /* the file hangs point lights at every lamp; a few of them follow the train instead */
     for (var i = 0; i < 4; i++) { var pl = new THREE.PointLight(0xffd9e0, 0, 9 * RIDE_SCALE, 2); scene.add(pl); ridePool.push(pl); }
@@ -779,6 +748,12 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
     scene.add(rideLight); scene.add(rideLight.target);
   })();
   function rideMood(on) {
+    /* on the ride the room, its lights, its shadows and the ambient occlusion pass are all off */
+    ROOM_LIGHTS.forEach(function (l) { l.visible = !on; });
+    ROOM_OBJS.forEach(function (o) { if (o.material !== ghost) o.visible = !on; });
+    rideTunnel.visible = on;
+    if (gtao) gtao.enabled = !on;
+    if (!on) shadowDirty = 4;
     hemi.intensity = on ? 0.05 : 0.75;
     scene.environmentIntensity = on ? 0.04 : 0.45;
     scene.fog = on ? RIDE_FOG : ROOM_FOG; scene.background = on ? RIDE_MIST : ROOM_BG;
@@ -787,16 +762,18 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
 
   /* ---------- viewpoints ---------- */
   var HUB = [0, 1.6, 6.4];
+  /* the entrance has three facings (left and right turn); closeups are a step forward */
   var NODES = {
-    hubN: { pos: HUB, look: [0, 1.5, -8], left: 'hubW', right: 'hubE' },
-    hubW: { pos: HUB, look: [-6, 1.5, -1.5], right: 'hubN' },
-    hubE: { pos: HUB, look: [6, 1.5, -1.5], left: 'hubN' },
-    desk: { pos: [0, 1.75, 2.75], look: [0.1, 0.75, 0.75], back: 'hubN' },
-    west: { pos: [-3.5, 1.45, -2], look: [-6, 1.25, -2], back: 'hubW' },
-    cabinet: { pos: [2.5, 1.55, -2], look: [6, 1.35, -2], back: 'hubE' },
-    north: { pos: [1.2, 1.45, -5.4], look: [1.2, 1.25, -8], back: 'hubN' },
-    platform: { pos: [1.2, -1.4, -14.7], look: [1.2, -2.0, -19.6], back: 'north' }
+    hubN: { label: 'Entrance', pos: HUB, look: [0, 1.5, -8], left: 'hubW', right: 'hubE', fwd: 'desk' },
+    hubW: { home: 'hubN', pos: HUB, look: [-6, 1.5, -1.5], right: 'hubN', fwd: 'west' },
+    hubE: { home: 'hubN', pos: HUB, look: [6, 1.5, -1.5], left: 'hubN', fwd: 'cabinet' },
+    desk: { label: 'Reading Desk', pos: [0, 1.75, 2.75], look: [0.1, 0.75, 0.75], back: 'hubN', line: 'A lamp, a clock, and a drawer with a small lock.' },
+    west: { label: 'West Shelves', pos: [-3.5, 1.45, -2], look: [-6, 1.25, -2], back: 'hubW', line: 'Every spine here has a title.' },
+    cabinet: { label: 'The Cabinet', pos: [2.5, 1.55, -2], look: [6, 1.35, -2], back: 'hubE', line: 'Carved oak, and a brass lock.' },
+    north: { label: 'North Shelves', pos: [1.2, 1.45, -5.4], look: [1.2, 1.25, -8], back: 'hubN', fwd: 'platform', line: 'One book here has no title at all.' },
+    platform: { label: 'The Platform', pos: [1.2, -1.4, -14.7], look: [1.2, -2.0, -19.6], back: 'north', locked: true, line: 'The train only goes one way.' }
   };
+  var CHIPS = [['hubN', 'Entrance'], ['desk', 'Desk'], ['west', 'Shelves'], ['cabinet', 'Cabinet'], ['north', 'North wall'], ['platform', 'Platform']];
   var cur = 'hubN', move = null;
   var tmpCam = new THREE.PerspectiveCamera();
   function poseOf(id) {
@@ -804,17 +781,18 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
     tmpCam.position.set(n.pos[0], n.pos[1], n.pos[2]); tmpCam.lookAt(n.look[0], n.look[1], n.look[2]);
     return { p: tmpCam.position.clone(), q: tmpCam.quaternion.clone() };
   }
-  function snap(id) { var t = poseOf(id); camera.position.copy(t.p); camera.quaternion.copy(t.q); cur = id; syncNav(); }
+  function travel(a, b) { return a === 'platform' || b === 'platform' ? 2.2 : (NODES[a].pos === NODES[b].pos ? 0.7 : 0.9); }
+  function snap(id) { var t = poseOf(id); camera.position.copy(t.p); camera.quaternion.copy(t.q); cur = id; buildNav(); }
   function goTo(id, dur) {
-    if (move || id === cur || !NODES[id]) return;
+    var n = NODES[id];
+    if (move || id === cur || !n || (n.locked && !n.unlocked)) return;
     var t = poseOf(id);
-    move = { fp: camera.position.clone(), fq: camera.quaternion.clone(), tp: t.p, tq: t.q, t: 0, dur: reduce ? 0.01 : (dur || 0.9) };
-    cur = id; syncNav();
+    move = { fp: camera.position.clone(), fq: camera.quaternion.clone(), tp: t.p, tq: t.q, t: 0, dur: reduce ? 0.01 : (dur || travel(cur, id)), line: n.line };
+    cur = id; buildNav();
   }
 
   /* ---------- UI ---------- */
-  var sayEl = document.getElementById('say'), sayT = 0;
-  var navL = document.getElementById('nav-left'), navR = document.getElementById('nav-right'), navB = document.getElementById('nav-back');
+  var placeEl = document.getElementById('place'), capEl = document.getElementById('caption'), navEl = document.getElementById('nav'), capTimer = 0;
   function objective() {
     if (!S.noteRead && !S.keys.brass) return 'A note has been left on the reading desk.';
     if (!S.keys.brass) return 'Volume I: gray and thin, west wall, between two red spines.';
@@ -826,18 +804,72 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
     if (cur !== 'platform') return 'A stairway leads down behind the shelf.';
     return 'The train only goes one way. Board it.';
   }
-  function say(msg, secs) { sayEl.textContent = msg; sayT = secs || 4.5; }
-  function syncNav() {
-    var n = NODES[cur];
-    navL.hidden = !n.left; navR.hidden = !n.right; navB.hidden = !n.back;
-    if (sayT <= 0) sayEl.textContent = objective();
+  /* captions fade in above the chips and clear themselves, as in the reading room */
+  function say(msg, secs) {
+    capEl.textContent = msg; capEl.classList.add('show');
+    clearTimeout(capTimer); capTimer = setTimeout(function () { capEl.classList.remove('show'); }, (secs || 4.5) * 1000);
   }
+  function navBtn(label, aria, cls, fn) {
+    var b = document.createElement('button'); b.type = 'button'; if (cls) b.className = cls; b.textContent = label;
+    if (aria) b.setAttribute('aria-label', aria);
+    b.addEventListener('click', function () { if (!blocked()) fn(); });
+    navEl.appendChild(b); return b;
+  }
+  function chipList() { return CHIPS.filter(function (c) { var n = NODES[c[0]]; return !n.locked || n.unlocked; }); }
+  function buildNav() {
+    var n = NODES[cur], home = n.home || cur;
+    placeEl.textContent = n.label || NODES[home].label;
+    navEl.innerHTML = '';
+    if (n.left) navBtn('◀', 'Turn left', 'step', function () { goTo(n.left); });
+    chipList().forEach(function (c) { navBtn(c[1], null, '', function () { goTo(c[0]); }).setAttribute('aria-current', c[0] === home ? 'true' : 'false'); });
+    if (n.right) navBtn('▶', 'Turn right', 'step', function () { goTo(n.right); });
+    if (n.back) navBtn('Step back', null, 'step', function () { goTo(n.back); });
+  }
+  function syncNav() { buildNav(); }
   function syncKeys() {
     Object.keys(S.keys).forEach(function (k) { document.querySelector('.slot[data-k="' + k + '"]').setAttribute('data-on', S.keys[k] ? 'true' : 'false'); });
   }
-  navL.addEventListener('click', function () { if (S.mode === 'play' && NODES[cur].left) goTo(NODES[cur].left, 0.7); });
-  navR.addEventListener('click', function () { if (S.mode === 'play' && NODES[cur].right) goTo(NODES[cur].right, 0.7); });
-  navB.addEventListener('click', function () { if (S.mode === 'play' && NODES[cur].back) goTo(NODES[cur].back, cur === 'platform' ? 2.2 : 0.9); });
+  document.getElementById('hint-btn').addEventListener('click', function () { if (S.started && S.mode === 'play' && !open) say(objective(), 6); });
+
+  /* ---------- sound: the reading room's synthesized set, same mute setting ---------- */
+  var actx = null, master = null, burst = null, muted = false, soundBtn = document.getElementById('sound-btn');
+  try { muted = localStorage.getItem('bleich-sound') === '0'; } catch (e) {}
+  soundBtn.setAttribute('aria-pressed', String(!muted));
+  function startAudio() {
+    if (actx) { if (actx.state === 'suspended') actx.resume(); return; }
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+      actx = new AC(); master = actx.createGain(); master.gain.value = muted ? 0 : 1; master.connect(actx.destination);
+      /* a quiet room tone under everything */
+      var bed = actx.createBuffer(1, actx.sampleRate * 3, actx.sampleRate), d = bed.getChannelData(0), last = 0;
+      for (var i = 0; i < d.length; i++) { last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02; d[i] = last * 3.5; }
+      var src = actx.createBufferSource(), lp = actx.createBiquadFilter(), g = actx.createGain();
+      src.buffer = bed; src.loop = true; lp.type = 'lowpass'; lp.frequency.value = 360; g.gain.value = 0.1; src.connect(lp); lp.connect(g); g.connect(master); src.start();
+      burst = actx.createBuffer(1, Math.floor(actx.sampleRate * 0.7), actx.sampleRate); d = burst.getChannelData(0);
+      for (i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    } catch (e) { actx = null; }
+  }
+  function tone(f0, f1, dur, vol, type) {
+    if (!actx || muted) return; var o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime;
+    o.type = type || 'sine'; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.02);
+  }
+  function noise(freq, type, peak, attack, dur) {
+    if (!actx || muted) return; var s = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain(), t = actx.currentTime;
+    s.buffer = burst; s.loop = true; f.type = type; f.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + attack); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(f); f.connect(g); g.connect(master); s.start(t); s.stop(t + dur + 0.1);
+  }
+  var snd = {
+    click: function () { tone(190, 80, 0.14, 0.22, 'triangle'); tone(2400, 1800, 0.03, 0.04, 'square'); },
+    page: function () { noise(2600, 'bandpass', 0.08, 0.05, 0.3); },
+    chime: function () { [523, 659, 784, 1047].forEach(function (f, i) { setTimeout(function () { tone(f, f * 0.998, 1.6, 0.12, 'sine'); }, i * 170); }); },
+    rumble: function (secs) { noise(130, 'lowpass', 0.7, 1, secs || 3.6); }
+  };
+  soundBtn.addEventListener('click', function () {
+    muted = !muted; soundBtn.setAttribute('aria-pressed', String(!muted)); startAudio(); if (master) master.gain.value = muted ? 0 : 1;
+    try { localStorage.setItem('bleich-sound', muted ? '0' : '1'); } catch (e) {}
+  });
 
   /* ---------- reading ---------- */
   var readerEl = document.getElementById('reader'), bookEl = document.getElementById('book');
@@ -854,7 +886,7 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
     bookEl.style.setProperty('--cover', b.cover || b.color);
     bookEl.classList.toggle('sheet', !!b.sheet);
     document.getElementById('book-title').textContent = b.title;
-    document.getElementById('book-pages').textContent = b.sheet ? '' : 'Pages ' + (spread * 2 + 1) + '–' + (spread * 2 + 2);
+    document.getElementById('book-pages').textContent = b.sheet ? '' : 'pp. ' + (spread * 2 + 1) + '–' + (spread * 2 + 2);
     leafR.hidden = !!b.sheet;
     if (b.sheet) leafL.innerHTML = leafHTML(b.pages[0]);
     else if (spread < total - 1) {
@@ -869,7 +901,7 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
         : KEY_SVG + '<button class="btn" id="take" type="button">Take the ' + KEY_NAME[b.key] + ' key</button>') + '</div><span class="folio">' + (spread * 2 + 2) + '</span>';
       var take = document.getElementById('take');
       if (take) take.addEventListener('click', function () {
-        S.keys[b.key] = true; syncKeys(); renderBook();
+        S.keys[b.key] = true; syncKeys(); renderBook(); snd.click();
         say('You take the ' + KEY_NAME[b.key] + ' key.');
         try { document.getElementById('book-close').focus({ preventScroll: true }); } catch (e) {}
       });
@@ -878,17 +910,17 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
     pgPrev.hidden = pgNext.hidden = !!b.sheet;
   }
   function openBook(id) {
-    open = id; spread = 0; renderBook();
+    open = id; spread = 0; renderBook(); snd.page();
     readerEl.hidden = false;
     setTimeout(function () { try { (BOOKS[id].sheet ? document.getElementById('book-close') : pgNext).focus({ preventScroll: true }); } catch (e) {} }, 30);
   }
   function closeBook() {
     if (!open) return;
     if (open === 'note') S.noteRead = true;
-    open = null; readerEl.hidden = true; sayT = Math.min(sayT, 2.5); syncNav();
+    open = null; readerEl.hidden = true;
     try { canvas.focus({ preventScroll: true }); } catch (e) {}
   }
-  function turn(d) { if (!open) return; spread = clamp(spread + d, 0, spreads(BOOKS[open]) - 1); renderBook(); }
+  function turn(d) { if (!open) return; var was = spread; spread = clamp(spread + d, 0, spreads(BOOKS[open]) - 1); if (spread !== was) snd.page(); renderBook(); }
   pgPrev.addEventListener('click', function () { turn(-1); });
   pgNext.addEventListener('click', function () { turn(1); });
   document.getElementById('book-close').addEventListener('click', closeBook);
@@ -897,8 +929,8 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
   var fadeEl = document.getElementById('fade');
   function board() {
     if (S.mode !== 'play') return;
-    S.mode = 'boarding'; say('The doors close behind you.', 8);
-    navL.hidden = navR.hidden = navB.hidden = true;
+    S.mode = 'boarding'; say('The doors close behind you.', 5); snd.rumble(9);
+    frame.setAttribute('data-mode', 'ride');
     fadeEl.style.opacity = 1;
     setTimeout(function () {
       placeOnRide(0);
@@ -923,7 +955,7 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
     window.BW.complete({
       note: 'Three volumes · three keys · one train',
       stayLabel: 'Back to the library',
-      onClose: function () { S.mode = 'play'; rideMood(false); snap('platform'); fadeEl.style.opacity = 0; setTimeout(function () { fadeEl.style.background = ''; }, 600); try { canvas.focus({ preventScroll: true }); } catch (e) {} }
+      onClose: function () { S.mode = 'play'; frame.removeAttribute('data-mode'); rideMood(false); snap('platform'); fadeEl.style.opacity = 0; setTimeout(function () { fadeEl.style.background = ''; }, 600); try { canvas.focus({ preventScroll: true }); } catch (e) {} }
     });
   }
 
@@ -936,11 +968,10 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
     ray.setFromCamera(ndc, camera);
     return ray.intersectObjects(clickables, false).filter(function (h) { return h.object.visible; });
   }
-  function atHub() { return cur.indexOf('hub') === 0; }
   function here(node) { return node === cur; }
-  function blocked() { return splat.on || !S.started || move || open || S.mode !== 'play' || (window.BW && window.BW.isOpen()); }
+  function blocked() { return !S.started || move || open || S.mode !== 'play' || (window.BW && window.BW.isOpen()); }
   var down = null;
-  canvas.addEventListener('pointerdown', function (e) { down = { x: e.clientX, y: e.clientY }; });
+  canvas.addEventListener('pointerdown', function (e) { down = { x: e.clientX, y: e.clientY }; startAudio(); });
   canvas.addEventListener('pointerup', function (e) {
     if (!down || Math.abs(e.clientX - down.x) + Math.abs(e.clientY - down.y) > 10) { down = null; return; }
     down = null;
@@ -948,7 +979,7 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
     var hits = pick(e);
     for (var i = 0; i < hits.length; i++) {
       var u = hits[i].object.userData;
-      if (!here(u.node)) { goTo(u.node, cur === 'platform' || u.node === 'platform' ? 2.2 : 0.9); return; }
+      if (!here(u.node)) { goTo(u.node); return; }
       if (u.act) { u.act(); return; }
     }
   });
@@ -978,14 +1009,20 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
       return;
     }
     if (blocked()) return;
+    startAudio();
+    /* the same keys as the reading room: left and right turn, up steps toward what you
+       face, down or Escape steps back, 1-6 jump to a place, H asks for a hint */
     var n = NODES[cur];
-    if (e.code === 'ArrowLeft' && n.left) { e.preventDefault(); goTo(n.left, 0.7); }
-    else if (e.code === 'ArrowRight' && n.right) { e.preventDefault(); goTo(n.right, 0.7); }
-    else if ((e.code === 'ArrowDown' || e.code === 'Escape' || e.code === 'Backspace') && n.back) { e.preventDefault(); goTo(n.back, cur === 'platform' ? 2.2 : 0.9); }
-    else if (e.code === 'ArrowUp' && atHub()) { e.preventDefault(); goTo(cur === 'hubW' ? 'west' : cur === 'hubE' ? 'cabinet' : 'desk'); }
+    if (e.code === 'ArrowLeft' && n.left) { e.preventDefault(); goTo(n.left); }
+    else if (e.code === 'ArrowRight' && n.right) { e.preventDefault(); goTo(n.right); }
+    else if (e.code === 'ArrowUp' && cur === 'platform') { e.preventDefault(); board(); }
+    else if (e.code === 'ArrowUp' && n.fwd) { e.preventDefault(); goTo(n.fwd); }
+    else if ((e.code === 'ArrowDown' || e.code === 'Escape' || e.code === 'Backspace') && n.back) { e.preventDefault(); goTo(n.back); }
+    else if (/^Digit[1-9]$/.test(e.code)) { var c = chipList()[+e.code.slice(5) - 1]; if (c) { e.preventDefault(); goTo(c[0]); } }
+    else if (e.code === 'KeyH') { e.preventDefault(); say(objective(), 6); }
   });
   document.getElementById('start-btn').addEventListener('click', function () {
-    document.getElementById('start').hidden = true; S.started = true;
+    document.getElementById('start').hidden = true; S.started = true; startAudio();
     try { canvas.focus({ preventScroll: true }); } catch (e) {}
   });
 
@@ -998,20 +1035,20 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
       var k = ease(Math.min(1, move.t));
       camera.position.lerpVectors(move.fp, move.tp, k);
       camera.quaternion.slerpQuaternions(move.fq, move.tq, k);
-      if (move.t >= 1) { move = null; syncNav(); }
+      if (move.t >= 1) { var ln = move.line; move = null; buildNav(); if (ln && S.mode === 'play') say(ln); }
     }
     if (S.cabOpen > 0 && S.cabOpen < 1) {
       S.cabOpen = Math.min(1, S.cabOpen + dt / 0.9);
-      var c = ease(S.cabOpen); doorL.rotation.y = -1.85 * c; doorR.rotation.y = 1.85 * c;
+      var c = ease(S.cabOpen); doorL.rotation.y = -1.85 * c; doorR.rotation.y = 1.85 * c; shadowDirty = 2;
     }
     if (S.drawerOpen > 0 && S.drawerOpen < 1) {
       S.drawerOpen = Math.min(1, S.drawerOpen + dt / 0.8);
-      drawer.position.z = 0.5 + 0.46 * ease(S.drawerOpen);
+      drawer.position.z = 0.5 + 0.46 * ease(S.drawerOpen); shadowDirty = 2;
     }
     if (S.shelfOpen > 0 && S.shelfOpen < 1) {
       S.shelfOpen = Math.min(1, S.shelfOpen + dt / 2.2);
-      hinge.rotation.y = -1.9 * ease(S.shelfOpen);
-      if (S.shelfOpen >= 1) { doorway.visible = true; syncNav(); }
+      hinge.rotation.y = -1.9 * ease(S.shelfOpen); shadowDirty = 2;
+      if (S.shelfOpen >= 1) { doorway.visible = true; NODES.platform.unlocked = true; buildNav(); say('A stairway leads down behind the shelf.', 6); }
     }
     if (S.mode === 'ride') {
       S.rideT += dt;
@@ -1029,7 +1066,6 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
       if (rp > 0.72) { fadeEl.style.background = '#ffe9e2'; fadeEl.style.opacity = String((rp - 0.72) / 0.28); }
       if (S.rideT >= total) arrive();
     }
-    if (sayT > 0) { sayT -= dt; if (sayT <= 0) sayEl.textContent = objective(); }
   }
 
   /* ---------- shadows + post ---------- */
@@ -1041,70 +1077,13 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
   });
   var composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(2, 2, { type: THREE.HalfFloatType, samples: 4 }));
   composer.addPass(new RenderPass(scene, camera));
-  var gtao = new GTAOPass(scene, camera, 2, 2);
+  gtao = new GTAOPass(scene, camera, 2, 2);
   gtao.updateGtaoMaterial({ radius: 0.35, distanceExponent: 1.2, thickness: 1, scale: 1.1, samples: 12 });
   gtao.blendIntensity = 0.9;
   composer.addPass(gtao);
   var bloom = new UnrealBloomPass(new THREE.Vector2(2, 2), 0.38, 0.7, 1.0);
   composer.addPass(bloom);
   composer.addPass(new OutputPass());
-
-  /* ---------- splat sample ---------- */
-  var SPLAT_URL = 'https://sparkjs.dev/assets/splats/fireplace.spz';
-  var frameEl = frame, viewBtn = document.getElementById('view-btn'), statsEl = document.getElementById('stats'), noteEl = document.getElementById('proto-note');
-  /* start at the angle the sample was captured from; it smears when you stray far from it */
-  var splat = { on: false, scene: null, cam: null, mesh: null, yaw: Math.PI / 2, pitch: -0.04, pos: new THREE.Vector3(0.9, 0.75, 0.1), info: '', keys: {} };
-  function initSplat() {
-    splat.scene = new THREE.Scene();
-    splat.scene.background = new THREE.Color(C.bg);
-    splat.cam = new THREE.PerspectiveCamera(62, camera.aspect, 0.05, 200);
-    splat.scene.add(new SparkRenderer({ renderer: renderer }));
-    var t0 = performance.now();
-    splat.mesh = new SplatMesh({ url: SPLAT_URL });
-    splat.mesh.quaternion.set(1, 0, 0, 0);   /* the capture is y-down */
-    splat.scene.add(splat.mesh);
-    splat.mesh.initialized.then(function () {
-      var n = splat.mesh.packedSplats && splat.mesh.packedSplats.numSplats;
-      splat.info = (n ? n.toLocaleString() + ' splats · ' : '') + '4.4 MB · loaded in ' + ((performance.now() - t0) / 1000).toFixed(1) + ' s';
-      noteEl.textContent = 'Spark sample “fireplace”. ' + splat.info + '. Drag to look, W A S D or scroll to move. The spinning book is a regular mesh inside the splat.';
-    }, function () { noteEl.textContent = 'The sample splat failed to load.'; });
-    /* hybrid check: a lit mesh sitting inside the splat */
-    splat.scene.add(new THREE.HemisphereLight(0xffe7c2, 0x1a120c, 1.4));
-    var pl = new THREE.PointLight(0xffc878, 3, 0, 2); pl.position.set(0.3, 1.1, 0.2); splat.scene.add(pl);
-    var side = lam(BOOKS.v1.color), b = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.24, 0.035), [side, side, lam(C.paper), side, lam(0xffffff, { map: spineTex(BOOKS.v1.spine, BOOKS.v1.color) }), side]);
-    b.position.set(-0.25, 0.62, 0.5); splat.book = b; splat.scene.add(b);
-  }
-  function setView(on) {
-    splat.on = on;
-    frameEl.setAttribute('data-view', on ? 'splat' : 'mesh');
-    viewBtn.textContent = on ? 'Back to the mesh room' : 'View splat sample';
-    if (on && !splat.scene) initSplat();
-    resize();
-  }
-  viewBtn.addEventListener('click', function () { setView(!splat.on); });
-  var sdrag = null;
-  canvas.addEventListener('pointerdown', function (e) { if (splat.on) { sdrag = { x: e.clientX, y: e.clientY }; try { canvas.setPointerCapture(e.pointerId); } catch (err) {} } });
-  canvas.addEventListener('pointermove', function (e) {
-    if (!splat.on || !sdrag) return;
-    splat.yaw -= (e.clientX - sdrag.x) * 0.004; splat.pitch = clamp(splat.pitch - (e.clientY - sdrag.y) * 0.004, -1.2, 1.2);
-    sdrag.x = e.clientX; sdrag.y = e.clientY;
-  });
-  canvas.addEventListener('pointerup', function () { sdrag = null; });
-  canvas.addEventListener('wheel', function (e) { if (!splat.on) return; e.preventDefault(); moveSplat(0, -e.deltaY * 0.002); }, { passive: false });
-  var SKEYS = { KeyW: 'f', ArrowUp: 'f', KeyS: 'b', ArrowDown: 'b', KeyA: 'l', ArrowLeft: 'l', KeyD: 'r', ArrowRight: 'r' };
-  window.addEventListener('keydown', function (e) { if (splat.on && SKEYS[e.code]) { e.preventDefault(); splat.keys[SKEYS[e.code]] = 1; } });
-  window.addEventListener('keyup', function (e) { if (SKEYS[e.code]) splat.keys[SKEYS[e.code]] = 0; });
-  function moveSplat(side, fwd) {
-    splat.pos.x += -Math.sin(splat.yaw) * fwd + Math.cos(splat.yaw) * side;
-    splat.pos.z += -Math.cos(splat.yaw) * fwd - Math.sin(splat.yaw) * side;
-  }
-  function updateSplat(dt) {
-    var k = splat.keys;
-    moveSplat(((k.r || 0) - (k.l || 0)) * dt * 1.2, ((k.f || 0) - (k.b || 0)) * dt * 1.2);
-    splat.cam.position.copy(splat.pos);
-    splat.cam.rotation.set(splat.pitch, splat.yaw, 0, 'YXZ');
-    if (splat.book) splat.book.rotation.y += dt * 0.6;
-  }
 
   /* ---------- sizing + loop ---------- */
   function resize() {
@@ -1117,16 +1096,16 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
     /* keep roughly the same width of room in view on tall screens */
     camera.fov = clamp(2 * Math.atan(Math.tan(0.54) * Math.max(1, 1.25 / camera.aspect)) * 180 / Math.PI, 62, 92);
     camera.updateProjectionMatrix();
-    if (splat.cam) { splat.cam.aspect = w / h; splat.cam.updateProjectionMatrix(); }
   }
-  function draw() { if (splat.on) renderer.render(splat.scene, splat.cam); else composer.render(); }
-  var last = performance.now(), fpsN = 0, fpsT = 0;
+  function draw() {
+    if (shadowDirty > 0 && S.mode !== 'ride') { renderer.shadowMap.needsUpdate = true; shadowDirty--; }
+    composer.render();
+  }
+  var last = performance.now();
   function loop(now) {
-    var raw = (now - last) / 1000, dt = Math.min(raw, 0.05); last = now;
-    if (splat.on) updateSplat(dt); else update(dt);
+    var dt = Math.min((now - last) / 1000, 0.05); last = now;
+    update(dt);
     draw();
-    fpsN++; fpsT += raw;
-    if (fpsT >= 1) { statsEl.textContent = Math.round(fpsN / fpsT) + ' fps'; fpsN = 0; fpsT = 0; }
     requestAnimationFrame(loop);
   }
   resize();
@@ -1135,17 +1114,19 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
   draw();
   if (window.ResizeObserver) new ResizeObserver(function () { resize(); draw(); }).observe(frame); else addEventListener('resize', resize);
   if (document.fonts && document.fonts.load) {
-    document.fonts.load('600 22px "Cormorant Garamond"').then(function () {
+    document.fonts.load('600 22px "IM Fell English"').then(function () {
       fontTexs.forEach(function (t) { var c = t.userData.canvas; t.userData.draw(c.getContext('2d'), c.width, c.height); t.needsUpdate = true; });
     }, function () {});
   }
   /* prototype shortcut: add ?ride to the address to jump straight to the train */
-  if (/[?&]ride\b/.test(location.search)) { startBtn.click(); snap('platform'); board(); }
+  if (/[?&]ride\b/.test(location.search)) { startBtn.click(); NODES.platform.unlocked = true; snap('platform'); board(); }
   if (arrived) {
     startBtn.click();
     arriveText.textContent = '';
     arriveEl.classList.add('gone');
     say('The stair comes out in an archive.', 6);
+  } else {
+    arriveEl.hidden = true;
   }
   requestAnimationFrame(function (t) { last = t; requestAnimationFrame(loop); });
 })();
