@@ -1,6 +1,6 @@
 # Bleich Worlds
 
-Justin Bleich's career as five small browser games, served from `public/worlds/`
+Justin Bleich's career as six small browser games, served from `public/worlds/`
 at `/worlds`. Each world is a different genre and console era, and each one
 unlocks **one** stop in the career when it is cleared:
 
@@ -10,7 +10,8 @@ unlocks **one** stop in the career when it is cleared:
 | 2 · The Gallery | `world-2/` | N64-style hall (three.js) | 2021–2024 → NFTX | Three star paintings open the door; jump into the last painting. |
 | 3 · The Diorama | `world-3/` | Isometric puzzle (three.js, orthographic) | 2024–2026 → OKX | Light plinths I–III, then reach the TOP plinth. |
 | 4 · Grand Prix | `world-4/` | Kart race, 2 laps, 3 AI rivals (three.js) | Current → OnePay | Cross the finish line. |
-| 5 · The Lab | `world-5/` | First-person portal facility (three.js) | Finale: FRAX, Paste, contact | Clear chamber 4. |
+| 5 · The Lab | `world-5/` | First-person portal facility (three.js) | Also → FRAX, Paste | Clear chamber 4. |
+| 6 · The Library | `world-6/` | Point-and-click archive (three.js) | Finale: contact | Three books, three keys, then board the train. |
 
 `index.html` is the world select. It shows which stops have been unlocked.
 
@@ -22,7 +23,7 @@ unlocks **one** stop in the career when it is cleared:
   hides the old page chrome (header, title, experience list, contact, footer).
   Each world's `resize()` reads `frame.clientHeight`.
 - **Persistent exit.** `shell.js` injects the pill at the top centre: `✕ Exit`
-  goes to `/`, `World N/5` goes to the world select.
+  goes to `/`, `World N/6` goes to the world select.
 - **Reveal card.** Each world calls `window.BW.complete({ note, stayLabel, onClose })`
   at its finish line. The shell shows the stop, the link to the next world, and
   records the clear in `localStorage` (`bleich-worlds-cleared`).
@@ -46,6 +47,20 @@ npm run dev
 `vite.config.js` maps `/worlds` and `/worlds/world-N` to their `index.html` in
 dev and preview. On Vercel, `cleanUrls` does the same, which is why every link
 between worlds is absolute (`/worlds/world-2`) rather than relative.
+
+## World 6 walkthrough
+
+The library is a chain of three books. Each has two spreads of reading and then
+a hollow with a key in it; the last page before the hollow says where the next
+book is. All of it is data in `world-6/index.html`: the `BOOKS` object (text,
+spine, colour, key), `DECOYS_WEST` (the other titles on the shelf), `NODES`
+(camera viewpoints) and `objective()` (the hint bar).
+
+1. Note on the desk → Volume I is gray, on the west wall between two red spines.
+2. Volume I → brass key → opens the glass cabinet on the east wall.
+3. Volume II (in the cabinet) → silver key → opens the desk drawer.
+4. Volume III (in the drawer) → iron key → the untitled book on the north wall is a keyhole.
+5. The shelf swings out, stairs lead to the platform, and the train rides to the finish.
 
 ## Tuning knobs
 

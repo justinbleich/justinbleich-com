@@ -49,7 +49,7 @@ const socials = [
 export default function App() {
   return (
     <main className="site-shell" aria-label="Justin Bleich portfolio">
-      <a className="world-link" href="/worlds" aria-label="Play the game worlds">
+      <a className="world-link" href="/worlds/world-1" aria-label="Play the game worlds">
         <svg
           className="pixel-guy"
           viewBox="0 0 10 14"
