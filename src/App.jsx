@@ -49,6 +49,31 @@ const socials = [
 export default function App() {
   return (
     <main className="site-shell" aria-label="Justin Bleich portfolio">
+      <a className="world-link" href="/worlds" aria-label="Play the game worlds">
+        <svg
+          className="pixel-guy"
+          viewBox="0 0 10 14"
+          shapeRendering="crispEdges"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <rect className="px-hair" x="1" y="0" width="8" height="2" />
+          <rect className="px-ink" x="1" y="2" width="8" height="4" />
+          <rect className="px-eye" x="3" y="3" width="1" height="2" />
+          <rect className="px-body" x="1" y="6" width="8" height="5" />
+          <rect className="px-ink" x="1" y="7" width="2" height="2" />
+          <g className="px-ink px-step-a">
+            <rect x="2" y="11" width="2" height="3" />
+            <rect x="6" y="11" width="2" height="2" />
+          </g>
+          <g className="px-ink px-step-b">
+            <rect x="2" y="11" width="2" height="2" />
+            <rect x="6" y="11" width="2" height="3" />
+          </g>
+        </svg>
+        <span className="world-link-label">Play</span>
+      </a>
+
       <section className="intro" aria-labelledby="page-title">
         <div className="identity">
           <h1 id="page-title">Justin Bleich</h1>

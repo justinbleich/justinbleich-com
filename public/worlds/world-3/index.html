@@ -1,0 +1,814 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>html, body { margin: 0; } img { max-width: 100%; } [hidden] { display: none !important; }</style>
+<title>Bleich Diorama</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400;600&family=Manrope:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a floating isometric diorama is the hero. Paths rise from the past (back left) to the present (summit). Hint bar under the scene, then the plain list and contact. Single light dusk palette by choice. */
+:root {
+  --bg: #f3ebe3;
+  --surface: #fbf6f0;
+  --fg: #2b2440;
+  --muted: #6d6582;
+  --rule: rgba(43, 36, 64, 0.14);
+  --coral: #e2735c;
+  --teal: #4f9e98;
+  --sky-top: #f7dfcd;
+  --sky-bot: #d7c3e3;
+
+  /* world palette */
+  --w-col: #e6d9cb;
+  --w-top: #fbf6ef;
+  --w-rot: #e2735c;
+  --w-rot-top: #f2a08c;
+  --w-lift: #4f9e98;
+  --w-lift-top: #86c9c1;
+  --w-stair: #cdb9de;
+  --w-stair-top: #ebe1f4;
+  --w-sprinklr: #f2c84b;
+  --w-nftx: #8d9bff;
+  --w-okx: #2b2a33;
+  --w-onepay: #3dbf8e;
+  --w-hero: #ffffff;
+  --w-cap: #3c3c44;
+  --w-cloud: #ffffff;
+
+  --f-display: "Josefin Sans", "Futura", "Century Gothic", sans-serif;
+  --f-body: "Manrope", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --gutter: 1rem;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--f-body);
+  font-size: 1rem;
+  line-height: 1.6;
+  padding-inline: var(--gutter);
+  padding-block: 1.25rem 3rem;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration-color: var(--coral); text-underline-offset: 0.22em; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--coral); outline-offset: 3px; }
+::selection { background: var(--coral); color: var(--surface); }
+
+.page { max-width: 64rem; margin-inline: auto; }
+.mono { font-family: var(--f-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.bar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 1.5rem; color: var(--muted); }
+
+.top { padding-block: clamp(1.75rem, 5vw, 3rem) 1.5rem; display: grid; gap: 0.5rem; text-align: center; justify-items: center; }
+.eyebrow { margin: 0; color: var(--coral); }
+h1 {
+  margin: 0;
+  font-family: var(--f-display);
+  font-weight: 300;
+  font-size: clamp(2.25rem, 7.5vw, 4.5rem);
+  line-height: 1;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding-left: 0.18em;
+  text-wrap: balance;
+}
+.sub { margin: 0.5rem 0 0; color: var(--muted); font-size: clamp(1.0625rem, 2vw, 1.1875rem); max-width: 34rem; text-wrap: balance; }
+
+/* Scene */
+.frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  background: linear-gradient(180deg, var(--sky-top), var(--sky-bot));
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: 520px;
+  outline: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.progress {
+  position: absolute;
+  top: auto;
+  bottom: 0.9rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.55rem;
+  pointer-events: none;
+}
+.dot {
+  width: 0.7rem; height: 0.7rem; border-radius: 50%;
+  border: 1.5px solid var(--fg);
+  background: transparent;
+  transition: background-color 0.4s ease, transform 0.4s ease;
+}
+.dot[data-on="true"] { background: var(--fg); transform: scale(1.15); }
+
+.card {
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  bottom: 1rem;
+  max-width: 26rem;
+  padding: 1.1rem 1.2rem 1.2rem;
+  background: var(--surface);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(43, 36, 64, 0.16);
+  display: grid;
+  gap: 0.35rem;
+  animation: rise 0.45s ease both;
+}
+@keyframes rise { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+.card p { margin: 0; }
+.card-eyebrow { display: flex; align-items: center; gap: 0.5rem; color: var(--muted); }
+.swatch { width: 0.65rem; height: 0.65rem; border-radius: 50%; display: inline-block; }
+.card-title { font-family: var(--f-display); font-weight: 600; font-size: clamp(1.25rem, 3vw, 1.6rem); line-height: 1.2; letter-spacing: 0.02em; }
+.card-desc { color: var(--muted); text-wrap: pretty; }
+.card-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+.close {
+  position: absolute; top: 0.55rem; right: 0.6rem;
+  width: 2rem; height: 2rem; border: 0; border-radius: 50%;
+  background: transparent; cursor: pointer; color: var(--muted); font-size: 1.1rem; line-height: 1;
+}
+.close:hover { background: var(--bg); color: var(--fg); }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.5rem 0.95rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--fg);
+  background: transparent;
+  font-family: var(--f-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase;
+  text-decoration: none; cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.pill:hover { background: var(--fg); color: var(--surface); }
+.pill.solid { background: var(--fg); color: var(--surface); }
+.pill.solid:hover { background: var(--coral); border-color: var(--coral); }
+.pill.coral { border-color: var(--coral); color: var(--coral); }
+.pill.coral:hover { background: var(--coral); color: var(--surface); }
+.pill.teal { border-color: var(--teal); color: var(--teal); }
+.pill.teal:hover { background: var(--teal); color: var(--surface); }
+.pill[disabled] { opacity: 0.4; cursor: not-allowed; }
+
+.fail { position: absolute; inset: 0; display: grid; place-items: center; padding: 1.5rem; text-align: center; color: var(--muted); }
+
+.hintbar {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+  padding-block: 1rem;
+}
+.hint { margin: 0; display: flex; gap: 0.6rem; align-items: baseline; min-width: 0; flex: 1 1 18rem; }
+.hint-label { color: var(--coral); flex: none; }
+.hint-text { font-size: 1.0625rem; text-wrap: pretty; }
+.actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.keys { margin: 0; color: var(--muted); }
+.worlds { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem 1rem; padding-top: 0.25rem; border-top: 1px solid var(--rule); padding-block: 0.9rem 0; }
+.worlds a { font-family: var(--f-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.worlds a:hover { color: var(--fg); }
+
+.exp { margin-top: clamp(2.5rem, 7vw, 4.5rem); }
+.label { margin: 0 0 0.75rem; font-weight: 400; color: var(--muted); }
+.list { margin: 0; padding: 0; list-style: none; border-top: 1.5px solid var(--fg); }
+.row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0.25rem 1rem; align-items: center; padding-block: 1.2rem; border-bottom: 1px solid var(--rule); }
+.row .swatch { width: 0.8rem; height: 0.8rem; }
+.row-main { min-width: 0; display: grid; gap: 0.15rem; }
+.row-title { margin: 0; font-size: clamp(1.125rem, 2.4vw, 1.375rem); line-height: 1.3; }
+.row-desc { margin: 0; color: var(--muted); text-wrap: pretty; }
+.state { color: var(--muted); white-space: nowrap; }
+.row[data-on="true"] .state { color: var(--fg); }
+.also { margin: 1rem 0 0; color: var(--muted); }
+
+.contact { margin-top: clamp(2.5rem, 7vw, 4.5rem); padding-top: 1.25rem; border-top: 1.5px solid var(--fg); display: grid; gap: 1rem; }
+.contact h2 { margin: 0; font-weight: 400; color: var(--muted); }
+.email { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; min-width: 0; }
+.email-text { font-family: var(--f-display); font-size: clamp(1.25rem, 4vw, 2rem); font-weight: 400; letter-spacing: 0.02em; overflow-wrap: anywhere; user-select: all; }
+.links { display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; margin: 0; padding: 0; list-style: none; font-size: clamp(1.125rem, 3vw, 1.4rem); }
+.foot { margin-top: clamp(3rem, 8vw, 5rem); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 1.5rem; color: var(--muted); }
+
+@media (max-width: 30rem) { .row { grid-template-columns: auto minmax(0, 1fr); } .row .state { grid-column: 2; } }
+@media (min-width: 52rem) { :root { --gutter: 2rem; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+<link rel="stylesheet" href="/worlds/shell.css">
+<style>
+/* Fullscreen: hint and actions dock to the bottom, progress dots move up top. */
+.hintbar {
+  position: fixed; left: 50%; bottom: max(0.9rem, env(safe-area-inset-bottom)); z-index: 6;
+  transform: translateX(-50%);
+  width: min(46rem, calc(100vw - 1.8rem));
+  padding: 0.7rem 0.9rem;
+  border-radius: 14px;
+  background: rgba(251, 246, 240, 0.92);
+  box-shadow: 0 6px 24px rgba(43, 36, 64, 0.14);
+}
+.progress { top: 3.6rem; bottom: auto; }
+body[data-world] .keys { display: none; }
+</style>
+</head>
+<body data-world="3">
+<div class="page">
+  <header class="bar mono">
+    <span><a href="/">Justin Bleich</a> / <a href="/worlds">Worlds</a></span>
+    <span>World 3 of 5</span>
+  </header>
+
+  <section class="top" aria-label="Introduction">
+    <p class="eyebrow mono">World 3 · The Diorama</p>
+    <h1>Justin Bleich</h1>
+    <p class="sub">Senior Product Designer. Turn the bridge, ride the lift, and climb to the present.</p>
+  </section>
+
+  <main>
+    <section aria-label="Diorama puzzle">
+      <div class="frame" id="frame">
+        <canvas id="c" tabindex="0" aria-label="An isometric diorama. Tap a tile to walk there. Turn the coral crank to rotate the bridge and pull the teal lever to move the lift. Light each colored plinth and climb to the top to unlock this world's stop in Justin's career."></canvas>
+        <div class="progress" aria-hidden="true">
+          <span class="dot" data-id="sprinklr"></span><span class="dot" data-id="nftx"></span><span class="dot" data-id="okx"></span><span class="dot" data-id="onepay"></span>
+        </div>
+        <div class="card" id="card" hidden role="status">
+          <button class="close" id="card-close" type="button" aria-label="Close">×</button>
+          <p class="card-eyebrow mono" id="card-eyebrow"></p>
+          <p class="card-title" id="card-title"></p>
+          <p class="card-desc" id="card-desc"></p>
+          <div class="card-actions" id="card-actions"></div>
+        </div>
+        <div class="fail" id="fail" hidden><p>This world needs WebGL, which this browser has turned off. Every role is listed below.</p></div>
+      </div>
+
+      <div class="hintbar">
+        <p class="hint" aria-live="polite"><span class="hint-label mono">Hint</span><span class="hint-text" id="hint">Tap the coral crank to swing the bridge.</span></p>
+        <div class="actions">
+          <button class="pill coral" id="btn-turn" type="button">Turn bridge <span aria-hidden="true">· R</span></button>
+          <button class="pill teal" id="btn-lift" type="button">Move lift <span aria-hidden="true">· L</span></button>
+          <button class="pill" id="btn-reset" type="button">Reset</button>
+        </div>
+      </div>
+      <p class="keys mono">Tap tiles to walk · Arrow keys step · R turns the bridge · L moves the lift</p>
+      <nav class="worlds" aria-label="Other worlds">
+        <a href="/worlds/world-2">← World 2 · The Gallery</a>
+        <a href="/worlds/world-4">World 4 · Grand Prix →</a>
+      </nav>
+    </section>
+
+    <section class="exp" aria-labelledby="exp-label">
+      <h2 class="label mono" id="exp-label">Experience</h2>
+      <ol class="list">
+        <li class="row" data-id="onepay"><span class="swatch" style="background: var(--w-onepay)"></span><div class="row-main"><p class="row-title">Current → OnePay</p><p class="row-desc">Leading OnePay Crypto design</p></div><span class="state mono">Not visited</span></li>
+        <li class="row" data-id="okx"><span class="swatch" style="background: var(--w-okx)"></span><div class="row-main"><p class="row-title">2024–2026 → <a href="https://www.okx.com" target="_blank" rel="noopener">OKX</a></p><p class="row-desc">Built global payments experiences to bridge consumers and web3</p></div><span class="state mono">Not visited</span></li>
+        <li class="row" data-id="nftx"><span class="swatch" style="background: var(--w-nftx)"></span><div class="row-main"><p class="row-title">2021–2024 → <a href="https://v2.nftx.io" target="_blank" rel="noopener">NFTX</a></p><p class="row-desc">The first NFT liquidity protocol in web3, creating tradable pools for collections</p></div><span class="state mono">Not visited</span></li>
+        <li class="row" data-id="sprinklr"><span class="swatch" style="background: var(--w-sprinklr)"></span><div class="row-main"><p class="row-title">Previously → <a href="https://www.sprinklr.com" target="_blank" rel="noopener">Sprinklr</a></p><p class="row-desc">Designed universal search and a new self-serve dashboard experience</p></div><span class="state mono">Not visited</span></li>
+      </ol>
+      <p class="also">Also → <a href="https://app.frax.finance" target="_blank" rel="noopener">FRAX</a>, <a href="https://paste.so" target="_blank" rel="noopener">Paste</a></p>
+    </section>
+
+    <section class="contact" aria-labelledby="contact-label">
+      <h2 class="mono" id="contact-label">Contact</h2>
+      <div class="email">
+        <span class="email-text" id="email-text">justin.bleich@gmail.com</span>
+        <button class="pill" id="copy-btn" type="button">Copy</button>
+      </div>
+      <ul class="links">
+        <li><a href="https://linkedin.com/in/justinbleich" target="_blank" rel="noopener">LinkedIn</a></li>
+        <li><a href="https://farcaster.xyz/jtb" target="_blank" rel="noopener">Farcaster</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="foot mono">
+    <span>© 2026 Justin Bleich</span>
+    <span>San Francisco, CA</span>
+  </footer>
+</div>
+
+<script src="/worlds/shell.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+  'use strict';
+  var WORLD1 = '/worlds/world-1';
+  var WORLD2 = '/worlds/world-2';
+  var WORLD4 = '/worlds/world-4';
+
+  /* ---------- copy email ---------- */
+  (function () {
+    var btn = document.getElementById('copy-btn'), txt = document.getElementById('email-text'), tm;
+    function flash(m) { btn.textContent = m; clearTimeout(tm); tm = setTimeout(function () { btn.textContent = 'Copy'; }, 1600); }
+    function sel() { try { var r = document.createRange(); r.selectNodeContents(txt); var s = getSelection(); s.removeAllRanges(); s.addRange(r); } catch (e) {} }
+    btn.addEventListener('click', function () {
+      var v = txt.textContent.trim();
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(function () { flash('Copied'); }, function () { sel(); flash('Selected'); });
+      else { sel(); flash('Selected'); }
+    });
+  })();
+
+  var frame = document.getElementById('frame'), canvas = document.getElementById('c');
+  if (!window.THREE) { document.getElementById('fail').hidden = false; return; }
+  var renderer;
+  try { renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true }); }
+  catch (e) { document.getElementById('fail').hidden = false; return; }
+  renderer.setClearColor(0x000000, 0);
+
+  var reduce = false;
+  try { reduce = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+  var css = getComputedStyle(document.documentElement);
+  function tok(n) { return css.getPropertyValue(n).trim(); }
+  var C = {
+    col: tok('--w-col'), top: tok('--w-top'), rot: tok('--w-rot'), rotTop: tok('--w-rot-top'), lift: tok('--w-lift'), liftTop: tok('--w-lift-top'),
+    stair: tok('--w-stair'), stairTop: tok('--w-stair-top'), hero: tok('--w-hero'), cap: tok('--w-cap'), cloud: tok('--w-cloud'), fg: tok('--fg'),
+    sprinklr: tok('--w-sprinklr'), nftx: tok('--w-nftx'), okx: tok('--w-okx'), onepay: tok('--w-onepay')
+  };
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function ease(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+
+  var ROLES = {
+    sprinklr: { name: 'Sprinklr', eyebrow: 'Previously', title: 'Previously → Sprinklr', desc: 'Designed universal search and a new self-serve dashboard experience.', url: 'https://www.sprinklr.com' },
+    nftx: { name: 'NFTX', eyebrow: '2021–2024', title: '2021–2024 → NFTX', desc: 'The first NFT liquidity protocol in web3, creating tradable pools for collections.', url: 'https://v2.nftx.io' },
+    okx: { name: 'OKX', eyebrow: '2024–2026', title: '2024–2026 → OKX', desc: 'Built global payments experiences to bridge consumers and web3. A staircase is rising toward the present.', url: 'https://www.okx.com' },
+    onepay: { name: 'OnePay', eyebrow: 'Current', title: 'Current → OnePay', desc: 'Leading OnePay Crypto design. You reached the present, and a race is waiting in World 4. Say hi at <a href="mailto:justin.bleich@gmail.com">justin.bleich@gmail.com</a>.' }
+  };
+  var ORDER = ['sprinklr', 'nftx', 'okx', 'onepay'];
+  /* plinths are waypoints; only the last one, at the top, reveals the role */
+  var PLINTH = { sprinklr: 'I', nftx: 'II', okx: 'III', onepay: 'TOP' };
+
+  /* ---------- scene ---------- */
+  var scene = new THREE.Scene();
+  var camera = new THREE.OrthographicCamera(-6, 6, 6, -6, 0.1, 200);
+  camera.position.set(20, 20, 20);
+  camera.lookAt(0, 0, 0);
+  var LOOK = new THREE.Vector3(0, 1.5, 0);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.58));
+  var dl = new THREE.DirectionalLight(0xfff3e6, 0.62);
+  dl.position.set(4, 10, 7);
+  scene.add(dl);
+
+  var CX = 3.5, CZ = 4;
+  var BASE = -1.4;
+  function wx(x) { return x - CX; }
+  function wz(z) { return z - CZ; }
+  function lam(c) { return new THREE.MeshLambertMaterial({ color: c }); }
+  function colMats(side, top) { var s = lam(side), t = lam(top); return [s, s, t, s, s, s]; }
+
+  /* unit column: bottom at 0, height 1, scaled */
+  var unitBox = new THREE.BoxGeometry(1, 1, 1); unitBox.translate(0, 0.5, 0);
+  var clickables = [];
+
+  function column(x, z, h, side, top, tag) {
+    var m = new THREE.Mesh(unitBox, colMats(side, top));
+    m.position.set(wx(x), BASE, wz(z));
+    m.scale.y = h - BASE;
+    m.userData = tag || { x: x, z: z };
+    scene.add(m);
+    clickables.push(m);
+    return m;
+  }
+
+  /* ---------- tiles ---------- */
+  var TILES = {};
+  function key(x, z) { return x + ',' + z; }
+  function tile(x, z, h, opt) {
+    opt = opt || {};
+    var t = { x: x, z: z, h: h, role: opt.role || null, hidden: !!opt.hidden };
+    t.mesh = column(x, z, h, opt.side || C.col, opt.top || C.top);
+    TILES[key(x, z)] = t;
+    return t;
+  }
+  tile(0, 4, 0); tile(1, 4, 0);                               /* start */
+  var hub = tile(3, 4, 0, { side: C.rot, top: C.rotTop });     /* bridge hub */
+  tile(3, 6, 0); tile(3, 7, 0, { role: 'sprinklr' });         /* sprinklr island */
+  tile(5, 4, 0); tile(6, 4, 0); tile(6, 5, 0, { role: 'nftx' }); /* nftx island */
+  tile(6, 2, 2); tile(6, 1, 2, { role: 'okx' });              /* okx tower */
+  var STAIRS = [tile(5, 1, 2.5, { hidden: true, side: C.stair, top: C.stairTop }), tile(4, 1, 3, { hidden: true, side: C.stair, top: C.stairTop }), tile(3, 1, 3.5, { hidden: true, side: C.stair, top: C.stairTop })];
+  tile(2, 1, 4); tile(1, 1, 4, { role: 'onepay' });           /* summit */
+  STAIRS.forEach(function (s, i) { s.mesh.position.y = BASE - 7; s.mesh.visible = false; s.rise = 0; s.delay = i * 0.25; });
+
+  /* decorative under-island tapers (floating feel) */
+  function taper(x, z, w, d, depth) {
+    var g = new THREE.ConeGeometry(Math.max(w, d) * 0.62, depth, 4, 1);
+    g.rotateY(Math.PI / 4); g.rotateX(Math.PI);
+    var m = new THREE.Mesh(g, lam(C.col));
+    m.scale.set(w / Math.max(w, d), 1, d / Math.max(w, d));
+    m.position.set(wx(x), BASE - depth / 2, wz(z));
+    scene.add(m);
+  }
+  taper(0.5, 4, 2, 1, 1.4); taper(3, 6.5, 1, 2, 1.6); taper(5.6, 4.4, 2, 2, 1.8); taper(6, 1.5, 1, 2, 1.2); taper(1.5, 1, 2, 1, 1.4);
+
+  /* plinth discs + labels */
+  var BEACONS = {};
+  function labelSprite(text) {
+    var c = document.createElement('canvas'); c.width = 256; c.height = 64;
+    var t = new THREE.CanvasTexture(c);
+    function draw() {
+      var g = c.getContext('2d'); g.clearRect(0, 0, 256, 64);
+      g.fillStyle = 'rgba(251,246,240,0.92)';
+      var w = 0;
+      g.font = '600 26px "Josefin Sans", Futura, sans-serif';
+      w = g.measureText(text).width + 34;
+      var x0 = (256 - w) / 2;
+      g.beginPath();
+      if (g.roundRect) g.roundRect(x0, 12, w, 40, 20); else g.rect(x0, 12, w, 40);
+      g.fill();
+      g.fillStyle = C.fg; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText(text, 128, 34);
+      t.needsUpdate = true;
+    }
+    draw();
+    var s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false }));
+    s.scale.set(1.6, 0.4, 1);
+    s.userData.redraw = draw;
+    return s;
+  }
+  var labels = [];
+  Object.keys(TILES).forEach(function (k) {
+    var t = TILES[k];
+    if (!t.role) return;
+    var disc = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.06, 24), lam(C[t.role]));
+    disc.position.set(wx(t.x), t.h + 0.03, wz(t.z));
+    scene.add(disc);
+    var beacon = new THREE.Mesh(new THREE.OctahedronGeometry(0.17, 0), new THREE.MeshLambertMaterial({ color: C[t.role], emissive: C[t.role], emissiveIntensity: 0.25 }));
+    beacon.position.set(wx(t.x), t.h + 1.05, wz(t.z));
+    beacon.visible = false;
+    scene.add(beacon);
+    BEACONS[t.role] = beacon;
+    var lab = labelSprite(PLINTH[t.role]);
+    lab.position.set(wx(t.x), t.h + 1.55, wz(t.z));
+    scene.add(lab); labels.push(lab);
+  });
+
+  /* ---------- rotating bridge ---------- */
+  var rot = { k: 2, anim: 0, from: 0, to: 0 };
+  var rotGroup = new THREE.Group();
+  rotGroup.position.set(wx(3), 0, wz(4));
+  scene.add(rotGroup);
+  var ARM_BASE = [[-1, 0], [0, 1]];
+  var armMeshes = ARM_BASE.map(function (d) {
+    var g = new THREE.BoxGeometry(1, 0.32, 0.86); g.translate(0, -0.16, 0);
+    var m = new THREE.Mesh(g, colMats(C.rot, C.rotTop));
+    m.position.set(d[0], 0, d[1]);
+    if (d[0] === 0) m.rotation.y = Math.PI / 2;
+    m.userData = { arm: true };
+    rotGroup.add(m); clickables.push(m);
+    return m;
+  });
+  rotGroup.rotation.y = rot.k * Math.PI / 2;
+  function rotDir(d, k) { var x = d[0], z = d[1]; for (var i = 0; i < k; i++) { var nx = z, nz = -x; x = nx; z = nz; } return [x, z]; }
+  function armTiles() {
+    if (rot.anim > 0) return [];
+    return ARM_BASE.map(function (d) { var r = rotDir(d, rot.k); return [3 + r[0], 4 + r[1]]; });
+  }
+
+  /* crank on its own pedestal */
+  var crankPed = column(4, 5, -0.2, C.rot, C.rotTop, { act: 'turn' });
+  var crank = new THREE.Group();
+  crank.position.set(wx(4), -0.2 + 0.05, wz(5));
+  var wheel = new THREE.Mesh(new THREE.TorusGeometry(0.26, 0.05, 6, 16), lam(C.rot));
+  wheel.rotation.x = Math.PI / 2; wheel.position.y = 0.35;
+  var spoke1 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 0.05), lam(C.rot)); spoke1.position.y = 0.35;
+  var spoke2 = spoke1.clone(); spoke2.rotation.y = Math.PI / 2;
+  var axle = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.35, 8), lam(C.rot)); axle.position.y = 0.17;
+  var knob = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.2, 8), lam(C.fg)); knob.position.set(0.26, 0.45, 0);
+  [wheel, spoke1, spoke2, axle, knob].forEach(function (m) { m.userData = { act: 'turn' }; crank.add(m); clickables.push(m); });
+  scene.add(crank);
+
+  /* ---------- lift ---------- */
+  var lift = { h: 2, anim: 0, from: 2, to: 2 };
+  var liftMesh = column(6, 3, lift.h, C.lift, C.liftTop, { x: 6, z: 3 });
+  var liftTile = { x: 6, z: 3 };
+  var leverPed = column(7, 3, -0.2, C.lift, C.liftTop, { act: 'lift' });
+  var lever = new THREE.Group();
+  lever.position.set(wx(7), -0.2, wz(3));
+  var leverBase = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.12, 0.2), lam(C.lift)); leverBase.position.y = 0.06;
+  var leverArm = new THREE.Group(); leverArm.position.y = 0.1;
+  var leverStick = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.55, 8), lam(C.fg)); leverStick.position.y = 0.27;
+  var leverBall = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), lam(C.lift)); leverBall.position.y = 0.56;
+  leverArm.add(leverStick); leverArm.add(leverBall);
+  leverArm.rotation.x = 0.5;
+  lever.add(leverBase); lever.add(leverArm);
+  [leverBase, leverStick, leverBall].forEach(function (m) { m.userData = { act: 'lift' }; clickables.push(m); });
+  scene.add(lever);
+
+  /* ---------- clouds ---------- */
+  var clouds = [];
+  [[-7, -2.5, -6, 1.6], [6, -3.2, 5, 1.2], [-3, 4.6, -9, 1.0], [8, 3.2, -4, 1.4]].forEach(function (c, i) {
+    var g = new THREE.Group();
+    [[0, 0, 0, 0.9], [0.8, -0.1, 0.1, 0.65], [-0.75, -0.15, 0, 0.6]].forEach(function (b) {
+      var m = new THREE.Mesh(new THREE.BoxGeometry(b[3] * 1.4, b[3] * 0.7, b[3]), new THREE.MeshLambertMaterial({ color: C.cloud, transparent: true, opacity: 0.85 }));
+      m.position.set(b[0], b[1], b[2]); g.add(m);
+    });
+    g.position.set(c[0], c[1], c[2]); g.scale.setScalar(c[3]);
+    g.userData.base = c[0]; g.userData.ph = i * 1.7;
+    scene.add(g); clouds.push(g);
+  });
+
+  /* ---------- hero ---------- */
+  var hero = new THREE.Group();
+  var bodyM = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.2, 0.42, 10), lam(C.hero)); bodyM.position.y = 0.21;
+  var headM = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 10), lam(C.hero)); headM.position.y = 0.55;
+  var capM = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.07, 12), lam(C.cap)); capM.position.y = 0.66;
+  var brimM = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.03, 0.12), lam(C.cap)); brimM.position.set(0, 0.635, -0.15);
+  var eyeM = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.03, 0.02), lam(C.cap)); eyeM.position.set(0, 0.56, -0.125);
+  [bodyM, headM, capM, brimM, eyeM].forEach(function (m) { hero.add(m); });
+  scene.add(hero);
+  var ring = new THREE.Mesh(new THREE.RingGeometry(0.3, 0.38, 24), new THREE.MeshBasicMaterial({ color: C.fg, transparent: true, opacity: 0, depthWrite: false }));
+  ring.rotation.x = -Math.PI / 2;
+  scene.add(ring);
+  var ringT = 0;
+
+  var H = { x: 0, z: 4, wx: 0, wy: 0, wz: 0, face: Math.PI / 2, path: [], stepT: 0, from: null, to: null };
+
+  /* ---------- graph ---------- */
+  function cellAt(x, z) {
+    if (x === liftTile.x && z === liftTile.z) return lift.anim > 0 ? null : { h: lift.h };
+    var arms = armTiles();
+    for (var i = 0; i < arms.length; i++) if (arms[i][0] === x && arms[i][1] === z) return { h: 0 };
+    var t = TILES[key(x, z)];
+    if (!t) return null;
+    if (t === hub && rot.anim > 0) return null;
+    if (t.hidden && t.rise < 1) return null;
+    return t;
+  }
+  function linked(a, b) { return Math.abs(a.h - b.h) <= 0.51; }
+  var DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  function findPath(sx, sz, tx, tz) {
+    var start = key(sx, sz), goal = key(tx, tz);
+    if (start === goal) return [];
+    var prev = {}; prev[start] = null;
+    var q = [[sx, sz]];
+    while (q.length) {
+      var c = q.shift(), cc = cellAt(c[0], c[1]);
+      if (!cc) continue;
+      for (var i = 0; i < 4; i++) {
+        var nx = c[0] + DIRS[i][0], nz = c[1] + DIRS[i][1], k = key(nx, nz);
+        if (k in prev) continue;
+        var nc = cellAt(nx, nz);
+        if (!nc || !linked(cc, nc)) continue;
+        prev[k] = c;
+        if (k === goal) {
+          var path = [[nx, nz]], p = c;
+          while (p && key(p[0], p[1]) !== start) { path.unshift(p); p = prev[key(p[0], p[1])]; }
+          return path;
+        }
+        q.push([nx, nz]);
+      }
+    }
+    return null;
+  }
+
+  /* ---------- UI ---------- */
+  var cardEl = document.getElementById('card'), cardE = document.getElementById('card-eyebrow'), cardT = document.getElementById('card-title'), cardD = document.getElementById('card-desc'), cardA = document.getElementById('card-actions');
+  var hintEl = document.getElementById('hint');
+  var visited = { sprinklr: false, nftx: false, okx: false, onepay: false };
+  document.getElementById('card-close').addEventListener('click', function () { cardEl.hidden = true; try { canvas.focus({ preventScroll: true }); } catch (e) {} });
+
+  function showRole(id) {
+    var r = ROLES[id];
+    var n = ORDER.indexOf(id) + 1;
+    cardE.innerHTML = '<span class="swatch" style="background:' + C[id] + '"></span>Plinth ' + n + ' of 4 · ' + r.eyebrow;
+    cardT.textContent = r.title;
+    cardD.innerHTML = r.desc;
+    cardA.innerHTML = '';
+    if (r.url) {
+      var a = document.createElement('a'); a.className = 'pill'; a.href = r.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Visit ' + r.name + ' ↗';
+      cardA.appendChild(a);
+    }
+    if (id === 'onepay') {
+      var w1 = document.createElement('a'); w1.className = 'pill solid'; w1.href = WORLD4;  w1.textContent = 'Enter World 4 →';
+      var li = document.createElement('a'); li.className = 'pill'; li.href = 'https://linkedin.com/in/justinbleich'; li.target = '_blank'; li.rel = 'noopener'; li.textContent = 'LinkedIn ↗';
+      cardA.appendChild(w1); cardA.appendChild(li);
+    }
+    cardEl.hidden = false;
+    cardEl.style.animation = 'none'; void cardEl.offsetWidth; cardEl.style.animation = '';
+  }
+  function visit(id) {
+    var first = !visited[id];
+    visited[id] = true;
+    BEACONS[id].visible = true;
+    if (id === 'onepay') window.BW.complete({ note: 'All four plinths lit', onClose: function () { try { canvas.focus({ preventScroll: true }); } catch (e) {} } });
+    if (first && id === 'okx') raiseStairs();
+    syncUI();
+  }
+  function raiseStairs() { STAIRS.forEach(function (s) { s.mesh.visible = true; s.rising = true; }); }
+  function syncUI() {
+    ORDER.forEach(function (id) {
+      var d = document.querySelector('.dot[data-id="' + id + '"]'); if (d) d.setAttribute('data-on', visited[id] ? 'true' : 'false');
+      var row = document.querySelector('.row[data-id="' + id + '"]');
+      if (row) { row.setAttribute('data-on', visited[id] ? 'true' : 'false'); row.querySelector('.state').textContent = visited[id] ? 'Visited' : 'Not visited'; }
+    });
+    hintEl.textContent = hint();
+  }
+  function onLift() { return H.x === liftTile.x && H.z === liftTile.z; }
+  function onArm() { var a = ARM_BASE.map(function (d) { var r = rotDir(d, rot.k); return [3 + r[0], 4 + r[1]]; }); return a.some(function (t) { return t[0] === H.x && t[1] === H.z; }); }
+  function hint() {
+    if (!visited.sprinklr) return rot.k !== 0 ? 'Tap the coral crank to swing the bridge toward you.' : 'Walk across the bridge to the yellow plinth.';
+    if (!visited.nftx) return rot.k !== 1 ? 'Turn the bridge again to reach the blue plinth.' : 'Cross over to the blue plinth.';
+    if (!visited.okx) {
+      if (onLift()) return lift.h === 0 ? 'Pull the teal lever to ride up.' : 'Step onto the dark plinth.';
+      return lift.h === 2 ? 'Pull the teal lever to bring the lift down.' : 'Step onto the teal lift, then pull the lever.';
+    }
+    if (!visited.onepay) return 'The stairs have risen. Climb to the green plinth at the top.';
+    return 'You reached the top. Every plinth is lit, and World 4 is next.';
+  }
+
+  /* ---------- actions ---------- */
+  function busy() { return H.path.length > 0 || H.to || rot.anim > 0 || lift.anim > 0; }
+  function nudge(msg) { hintEl.textContent = msg; }
+  function turnBridge() {
+    if (busy()) return;
+    if (onArm()) { nudge('Step off the bridge before turning it.'); return; }
+    rot.anim = 0.0001; rot.from = rot.k * Math.PI / 2; rot.to = rot.from + Math.PI / 2;
+  }
+  function moveLift() {
+    if (busy()) return;
+    lift.anim = 0.0001; lift.from = lift.h; lift.to = lift.h === 2 ? 0 : 2;
+  }
+  function walkTo(x, z) {
+    if (rot.anim > 0 || lift.anim > 0) return;
+    var p = findPath(H.x, H.z, x, z);
+    var target = cellAt(x, z);
+    ringT = 1; ring.material.color.set(p ? C.fg : C.rot);
+    ring.position.set(wx(x), (target ? target.h : 0) + 0.02, wz(z));
+    if (!p) { if (!(H.x === x && H.z === z)) nudge('No path there yet. ' + hint()); return; }
+    if (H.to) { H.path = p; return; }
+    H.path = p;
+  }
+  document.getElementById('btn-turn').addEventListener('click', turnBridge);
+  document.getElementById('btn-lift').addEventListener('click', moveLift);
+  document.getElementById('btn-reset').addEventListener('click', resetAll);
+
+  function resetAll() {
+    rot.k = 2; rot.anim = 0; rotGroup.rotation.y = rot.k * Math.PI / 2;
+    lift.h = 2; lift.anim = 0; liftMesh.scale.y = lift.h - BASE;
+    STAIRS.forEach(function (s) { s.rise = 0; s.rising = false; s.mesh.visible = false; s.mesh.position.y = BASE - 7; });
+    ORDER.forEach(function (id) { visited[id] = false; BEACONS[id].visible = false; });
+    H.x = 0; H.z = 4; H.path = []; H.to = null; placeHero();
+    cardEl.hidden = true;
+    syncUI();
+  }
+
+  /* ---------- input ---------- */
+  var ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), tmp = new THREE.Vector3();
+  var down = null;
+  canvas.addEventListener('pointerdown', function (e) { down = { x: e.clientX, y: e.clientY }; });
+  canvas.addEventListener('pointerup', function (e) {
+    if (!down || Math.abs(e.clientX - down.x) + Math.abs(e.clientY - down.y) > 10) { down = null; return; }
+    down = null;
+    var r = canvas.getBoundingClientRect();
+    ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    var hits = ray.intersectObjects(clickables, false);
+    for (var i = 0; i < hits.length; i++) {
+      var o = hits[i].object, u = o.userData;
+      if (!o.visible) continue;
+      if (u.act === 'turn') { turnBridge(); return; }
+      if (u.act === 'lift') { moveLift(); return; }
+      if (u.arm) { o.getWorldPosition(tmp); walkTo(Math.round(tmp.x + CX), Math.round(tmp.z + CZ)); return; }
+      if (u.x !== undefined) { walkTo(u.x, u.z); return; }
+    }
+  });
+  var hoverRaf = 0;
+  canvas.addEventListener('pointermove', function (e) {
+    if (hoverRaf) return;
+    hoverRaf = requestAnimationFrame(function () {
+      hoverRaf = 0;
+      var r = canvas.getBoundingClientRect();
+      ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+      ray.setFromCamera(ndc, camera);
+      var h = ray.intersectObjects(clickables, false).filter(function (x) { return x.object.visible; })[0];
+      canvas.style.cursor = h ? 'pointer' : 'default';
+    });
+  });
+  var KEYDIR = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
+  window.addEventListener('keydown', function (e) {
+    var t = e.target;
+    if (t && t !== canvas && t !== document.body && /^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/.test(t.tagName)) return;
+    var r = frame.getBoundingClientRect();
+    if (t !== canvas && !(r.bottom > 60 && r.top < innerHeight - 60)) return;
+    if (KEYDIR[e.code]) {
+      e.preventDefault();
+      if (busy()) return;
+      var d = KEYDIR[e.code], nx = H.x + d[0], nz = H.z + d[1];
+      var a = cellAt(H.x, H.z), b = cellAt(nx, nz);
+      if (a && b && linked(a, b)) H.path = [[nx, nz]];
+    } else if (e.code === 'KeyR') { e.preventDefault(); turnBridge(); }
+    else if (e.code === 'KeyL') { e.preventDefault(); moveLift(); }
+  });
+
+  /* ---------- update ---------- */
+  function heightAt(x, z) {
+    if (x === liftTile.x && z === liftTile.z) return liftMesh.scale.y + BASE;
+    var c = cellAt(x, z);
+    if (c) return c.h;
+    var t = TILES[key(x, z)];
+    return t ? t.h : 0;
+  }
+  function placeHero() {
+    H.wx = wx(H.x); H.wz = wz(H.z); H.wy = heightAt(H.x, H.z);
+  }
+  var time = 0;
+  function update(dt) {
+    time += dt;
+    /* walking */
+    if (!H.to && H.path.length) {
+      var n = H.path.shift();
+      var a = cellAt(H.x, H.z), b = cellAt(n[0], n[1]);
+      if (!a || !b || !linked(a, b)) { H.path = []; }
+      else {
+        H.from = { x: H.wx, y: H.wy, z: H.wz }; H.to = { x: wx(n[0]), y: b.h, z: wz(n[1]), gx: n[0], gz: n[1] }; H.stepT = 0;
+        H.face = Math.atan2(-(n[0] - H.x), -(n[1] - H.z));
+      }
+    }
+    if (H.to) {
+      H.stepT += dt / 0.24;
+      var k = Math.min(1, H.stepT);
+      H.wx = H.from.x + (H.to.x - H.from.x) * k;
+      H.wz = H.from.z + (H.to.z - H.from.z) * k;
+      H.wy = H.from.y + (H.to.y - H.from.y) * k;
+      if (k >= 1) {
+        H.x = H.to.gx; H.z = H.to.gz; H.to = null;
+        var t = TILES[key(H.x, H.z)];
+        if (t && t.role && !H.path.length) visit(t.role);
+        syncUI();
+      }
+    }
+    /* bridge */
+    if (rot.anim > 0) {
+      rot.anim += dt / 0.7;
+      var e = ease(Math.min(1, rot.anim));
+      rotGroup.rotation.y = rot.from + (rot.to - rot.from) * e;
+      crank.rotation.y = -e * Math.PI;
+      if (H.x === 3 && H.z === 4) H.face += 0;
+      if (rot.anim >= 1) { rot.anim = 0; rot.k = (rot.k + 1) % 4; rotGroup.rotation.y = rot.k * Math.PI / 2; crank.rotation.y = 0; syncUI(); }
+    }
+    /* lift */
+    if (lift.anim > 0) {
+      lift.anim += dt / 1.1;
+      var le = ease(Math.min(1, lift.anim));
+      var lh = lift.from + (lift.to - lift.from) * le;
+      liftMesh.scale.y = lh - BASE;
+      leverArm.rotation.x = (lift.to === 0 ? 0.5 - le : -0.5 + le);
+      if (onLift() && !H.to) H.wy = lh;
+      if (lift.anim >= 1) { lift.anim = 0; lift.h = lift.to; syncUI(); }
+    }
+    /* stairs */
+    STAIRS.forEach(function (s) {
+      if (!s.rising || s.rise >= 1) return;
+      if (s.delay > 0) { s.delay -= dt; return; }
+      s.rise = Math.min(1, s.rise + dt / 0.9);
+      s.mesh.position.y = BASE - 7 * (1 - ease(s.rise));
+      if (s.rise >= 1) syncUI();
+    });
+    /* ambience */
+    var bob = H.to ? Math.abs(Math.sin(H.stepT * Math.PI)) * 0.07 : 0;
+    hero.position.set(H.wx, H.wy + bob, H.wz);
+    hero.rotation.y += ((((H.face - hero.rotation.y) + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 14);
+    Object.keys(BEACONS).forEach(function (id, i) { var b = BEACONS[id]; if (b.visible) { b.rotation.y += dt * 1.6; b.position.y = TILES[Object.keys(TILES).filter(function (k) { return TILES[k].role === id; })[0]].h + 1.05 + Math.sin(time * 2 + i) * 0.06; } });
+    if (!reduce) clouds.forEach(function (c) { c.position.x = c.userData.base + Math.sin(time * 0.15 + c.userData.ph) * 0.8; });
+    if (ringT > 0) { ringT = Math.max(0, ringT - dt * 1.8); ring.material.opacity = ringT * 0.6; ring.scale.setScalar(1 + (1 - ringT) * 0.4); }
+  }
+
+  /* ---------- sizing + loop ---------- */
+  function resize() {
+    var w = frame.clientWidth || 360;
+    var h = frame.clientHeight || Math.round(clamp(w * 0.68, 380, 600));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(w, h, false);
+    var a = w / h;
+    var vh = Math.max(7.6, 8.4 / a);   /* room for the exit pill above and the hint bar below */
+    camera.left = -vh * a; camera.right = vh * a; camera.top = vh; camera.bottom = -vh;
+    camera.position.set(20 + LOOK.x, 20 + LOOK.y, 20 + LOOK.z);
+    camera.lookAt(LOOK);
+    camera.updateProjectionMatrix();
+    var ls = clamp(640 / w, 1, 2.2);
+    labels.forEach(function (l) { l.scale.set(1.6 * ls, 0.4 * ls, 1); });
+  }
+  var last = performance.now();
+  function loop(now) {
+    var dt = Math.min((now - last) / 1000, 0.05); last = now;
+    update(dt);
+    renderer.render(scene, camera);
+    requestAnimationFrame(loop);
+  }
+
+  resize();
+  placeHero();
+  hero.rotation.y = H.face;
+  update(0);
+  renderer.render(scene, camera);
+  syncUI();
+  if (window.ResizeObserver) new ResizeObserver(function () { resize(); renderer.render(scene, camera); }).observe(frame); else addEventListener('resize', resize);
+  if (document.fonts && document.fonts.load) document.fonts.load('600 26px "Josefin Sans"').then(function () { labels.forEach(function (l) { l.userData.redraw(); }); }, function () {});
+  requestAnimationFrame(function (t) { last = t; requestAnimationFrame(loop); });
+
+})();
+</script>
+</body>
+</html>
