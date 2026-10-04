@@ -62,7 +62,7 @@
     WORLDS.forEach(function (w) {
       var slot = document.querySelector('[data-unlock="' + w.n + '"]');
       if (!slot) return;
-      if (got.indexOf(w.n) < 0) { slot.textContent = 'Locked'; return; }
+      if (got.indexOf(w.n) < 0) return;
       slot.textContent = w.role ? w.role.period + ' → ' + w.role.name : 'Cleared';
       slot.setAttribute('data-on', 'true');
     });

@@ -3,152 +3,166 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Justin Bleich – Product Designer</title>
-<meta name="description" content="Justin Bleich, Senior Product Designer. Play through six game worlds, each one a different way to see the same career.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<title>Worlds – Justin Bleich</title>
+<meta name="description" content="Justin Bleich's career as six small game worlds. Clearing each one unlocks a stop along the way.">
+<link rel="icon" href="/favicon.png" type="image/png">
 <style>
-/* Layout: a world-select screen. Five rows, each carrying its world's own palette as a swatch strip, then the plain-text way out. */
+/* World select. Same type, colour and rhythm as the portfolio home (src/styles.css);
+   each world keeps its own palette as a small colour band. */
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;700&display=swap");
+
 :root {
-  --bg: #0e0e10;
-  --surface: #17171a;
-  --fg: #f2f1ee;
-  --muted: #8f8f96;
-  --rule: rgba(242, 241, 238, 0.12);
-  --hi: #f2c14e;
-  --f-body: "Geist", "Helvetica Neue", Arial, sans-serif;
-  --f-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
   color-scheme: dark;
+  --background: #0e1112;
+  --text: #fff7f7;
+  --muted: #848b91;
+  --focus: #d94560;
+  --hover: #11bf5e;
+  --content-width: 30rem;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
 }
+
 * { box-sizing: border-box; }
-html, body { margin: 0; }
-body {
-  background: var(--bg);
-  color: var(--fg);
-  font-family: var(--f-body);
-  line-height: 1.55;
-  padding-inline: 1rem;
-  padding-block: 1.25rem 3rem;
+
+html {
+  min-height: 100%;
+  background: var(--background);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
-a { color: inherit; }
-:focus-visible { outline: 2px solid var(--hi); outline-offset: 3px; }
-.page { max-width: 56rem; margin-inline: auto; }
-.mono { font-family: var(--f-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; }
-.bar { display: none; } /* the shell's exit pill replaces the header */
-.top { padding-block: clamp(3rem, 7vw, 4.5rem) clamp(1.5rem, 4vw, 2.5rem); }
-h1 { margin: 0; font-weight: 600; font-size: clamp(2.4rem, 8vw, 4.75rem); line-height: 1; letter-spacing: -0.03em; text-wrap: balance; }
-.sub { margin: 1rem 0 0; color: var(--muted); font-size: clamp(1.0625rem, 2.2vw, 1.3rem); max-width: 36rem; text-wrap: pretty; }
-.sub b { color: var(--fg); font-weight: 500; }
 
-.worlds { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
-.world a {
-  display: grid;
-  grid-template-columns: 3.2rem minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.5rem 1.25rem;
-  padding: 1.1rem 1.2rem;
-  background: var(--surface);
-  border-radius: 10px;
+body {
+  min-width: 320px;
+  min-height: 100svh;
+  margin: 0;
+  background: var(--background);
+  color: var(--text);
+  font-family: "Instrument Sans", Arial, Helvetica, sans-serif;
+  font-size: 16px;
+}
+
+h1, p { margin: 0; }
+
+a {
+  position: relative;
+  color: inherit;
   text-decoration: none;
-  border: 1px solid transparent;
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  transition: color 140ms var(--ease-out);
 }
-.world a:hover { border-color: var(--rule); transform: translateX(3px); }
-.num { font-family: var(--f-mono); font-size: 1.5rem; color: var(--muted); }
-.world a:hover .num { color: var(--fg); }
-.info { min-width: 0; display: grid; gap: 0.2rem; }
-.name { font-size: clamp(1.15rem, 2.6vw, 1.4rem); font-weight: 500; letter-spacing: -0.01em; }
-.desc { color: var(--muted); text-wrap: pretty; }
-.unlock { margin-top: 0.25rem; color: var(--muted); }
-.unlock::before { content: "□ "; }
-.unlock[data-on="true"] { color: var(--hi); }
-.unlock[data-on="true"]::before { content: "■ "; }
-.swatch { display: flex; height: 0.5rem; width: 6.5rem; border-radius: 3px; overflow: hidden; }
-.swatch i { flex: 1; }
-.era { color: var(--muted); text-align: right; }
-.side { display: grid; gap: 0.45rem; justify-items: end; }
-.start { margin-top: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem 1.5rem; align-items: center; }
-.btn {
-  display: inline-flex; align-items: center; gap: 0.4rem;
-  padding: 0.7rem 1.2rem; border-radius: 999px;
-  background: var(--fg); color: var(--bg); text-decoration: none;
-  font-family: var(--f-mono); font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase;
+.work-heading a::after {
+  position: absolute;
+  right: 0;
+  bottom: 0.02em;
+  left: 0;
+  height: 1px;
+  background: currentColor;
+  content: "";
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 160ms var(--ease-out);
 }
-.btn:hover { background: var(--hi); }
-.plain { color: var(--muted); }
-.plain a { color: var(--fg); text-decoration-color: var(--muted); text-underline-offset: 0.2em; }
+a:hover { color: var(--hover); }
+.work-heading a:hover::after { transform: scaleX(1); transform-origin: left; }
+a:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
 
-.foot { margin-top: clamp(3rem, 8vw, 5rem); padding-top: 1.25rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem 1.5rem; color: var(--muted); }
-.foot a { color: var(--fg); text-underline-offset: 0.2em; }
-
-@media (max-width: 36rem) {
-  .world a { grid-template-columns: 2.4rem minmax(0, 1fr); }
-  .side { grid-column: 2; justify-items: start; }
-  .era { text-align: left; }
+.site-shell {
+  display: flex;
+  min-height: 100svh;
+  width: 100%;
+  max-width: calc(var(--content-width) + (clamp(28px, 6.8vw, 88px) * 2));
+  margin: 0 auto;
+  padding: clamp(72px, 9vh, 96px) clamp(28px, 6.8vw, 88px) clamp(32px, 5vh, 56px);
+  flex-direction: column;
+  justify-content: center;
+  gap: 40px;
 }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+.identity { animation: rise-in 900ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+h1, .identity p { font-size: 28px; line-height: 32px; font-weight: 400; text-wrap: balance; }
+.identity p, .work-summary { color: var(--muted); }
+
+.work-list {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  animation: rise-in 900ms 90ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.work-heading { display: flex; align-items: center; font-size: 16px; line-height: 24px; white-space: pre; }
+.work-summary { font-size: 16px; line-height: 24px; text-wrap: pretty; }
+
+.band { display: flex; width: 72px; height: 6px; margin-left: auto; border-radius: 2px; overflow: hidden; }
+.band i { flex: 1; }
+
+/* filled in by shell.js once a world is cleared */
+.unlock:not(:empty) { color: var(--text); }
+.unlock:not(:empty)::before { content: " · "; color: var(--muted); }
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 560px) {
+  .site-shell { padding: 72px 24px 32px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; }
+}
 </style>
 <link rel="stylesheet" href="/worlds/shell.css">
 </head>
 <body>
-<div class="page">
-  <header class="bar mono">
-    <span><a href="/">Justin Bleich</a> / Worlds</span>
-    <span>San Francisco, CA</span>
-  </header>
-
-  <section class="top">
+<main class="site-shell" aria-label="Justin Bleich worlds">
+  <div class="identity">
     <h1>Justin Bleich</h1>
-    <p class="sub">Senior Product Designer. <b>Six worlds, one career.</b> Each world is a different kind of game, and clearing it unlocks one stop along the way.</p>
-  </section>
+    <p>Worlds</p>
+  </div>
 
-  <main>
-    <ol class="worlds">
-      <li class="world"><a href="/worlds/world-1">
-        <span class="num">01</span>
-        <span class="info"><span class="name">The Run</span><span class="desc">A gray 2D platformer. Run to the flag.</span><span class="unlock mono" data-unlock="1">Locked</span></span>
-        <span class="side"><span class="swatch"><i style="background:#101012"></i><i style="background:#29292e"></i><i style="background:#6c6c72"></i><i style="background:#f1f1ef"></i><i style="background:#f2c14e"></i></span><span class="era mono">8-bit</span></span>
-      </a></li>
-      <li class="world"><a href="/worlds/world-2">
-        <span class="num">02</span>
-        <span class="info"><span class="name">The Gallery</span><span class="desc">A low-poly hall. Collect three stars to open the last painting.</span><span class="unlock mono" data-unlock="2">Locked</span></span>
-        <span class="side"><span class="swatch"><i style="background:#2f3d73"></i><i style="background:#e9dfc6"></i><i style="background:#b3302c"></i><i style="background:#f2c14e"></i><i style="background:#231c45"></i></span><span class="era mono">64-bit</span></span>
-      </a></li>
-      <li class="world"><a href="/worlds/world-3">
-        <span class="num">03</span>
-        <span class="info"><span class="name">The Diorama</span><span class="desc">An isometric puzzle. Turn the bridge, ride the lift, climb to the top.</span><span class="unlock mono" data-unlock="3">Locked</span></span>
-        <span class="side"><span class="swatch"><i style="background:#f7dfcd"></i><i style="background:#d7c3e3"></i><i style="background:#e2735c"></i><i style="background:#4f9e98"></i><i style="background:#fbf6ef"></i></span><span class="era mono">Mobile</span></span>
-      </a></li>
-      <li class="world"><a href="/worlds/world-4">
-        <span class="num">04</span>
-        <span class="info"><span class="name">Grand Prix</span><span class="desc">A kart race. Four gates, two laps, and rivals from the earlier worlds.</span><span class="unlock mono" data-unlock="4">Locked</span></span>
-        <span class="side"><span class="swatch"><i style="background:#4fa8ff"></i><i style="background:#5cb94a"></i><i style="background:#4b4e59"></i><i style="background:#e8453c"></i><i style="background:#ff6a2f"></i></span><span class="era mono">Console</span></span>
-      </a></li>
-      <li class="world"><a href="/worlds/world-5">
-        <span class="num">05</span>
-        <span class="info"><span class="name">The Lab</span><span class="desc">A first-person portal facility. Four test chambers, linked by portals.</span><span class="unlock mono" data-unlock="5">Locked</span></span>
-        <span class="side"><span class="swatch"><i style="background:#3a3d44"></i><i style="background:#eef0f2"></i><i style="background:#8d6bff"></i><i style="background:#c6f04a"></i><i style="background:#16181d"></i></span><span class="era mono">Modern</span></span>
-      </a></li>
-      <li class="world"><a href="/worlds/world-6">
-        <span class="num">06</span>
-        <span class="info"><span class="name">The Library</span><span class="desc">A point-and-click archive. Find the books, read for the keys, take the train.</span><span class="unlock mono" data-unlock="6">Locked</span></span>
-        <span class="side"><span class="swatch"><i style="background:#24352f"></i><i style="background:#4a3222"></i><i style="background:#6b2a2a"></i><i style="background:#c9a24a"></i><i style="background:#ece2c8"></i></span><span class="era mono">Adventure</span></span>
-      </a></li>
-    </ol>
-
-    <div class="start">
-      <a class="btn" href="/worlds/world-1">Start at World 1 →</a>
-      <p class="plain">Prefer reading? The <a href="/">plain portfolio</a> has the whole career on one page.</p>
-    </div>
-  </main>
-
-  <footer class="foot mono">
-    <span>justin.bleich@gmail.com</span>
-    <span><a href="https://linkedin.com/in/justinbleich">LinkedIn</a> · <a href="https://farcaster.xyz/jtb">Farcaster</a></span>
-  </footer>
-</div>
+  <div class="work-list" aria-label="Worlds">
+    <article class="work-item">
+      <p class="work-heading">
+        <span>01 → </span><a href="/worlds/world-1">The Run</a>
+        <span class="band" aria-hidden="true"><i style="background:#101012"></i><i style="background:#29292e"></i><i style="background:#6c6c72"></i><i style="background:#f1f1ef"></i><i style="background:#f2c14e"></i></span>
+      </p>
+      <p class="work-summary">A gray 2D platformer<span class="unlock" data-unlock="1"></span></p>
+    </article>
+    <article class="work-item">
+      <p class="work-heading">
+        <span>02 → </span><a href="/worlds/world-2">The Gallery</a>
+        <span class="band" aria-hidden="true"><i style="background:#2f3d73"></i><i style="background:#e9dfc6"></i><i style="background:#b3302c"></i><i style="background:#f2c14e"></i><i style="background:#231c45"></i></span>
+      </p>
+      <p class="work-summary">A low-poly hall of paintings<span class="unlock" data-unlock="2"></span></p>
+    </article>
+    <article class="work-item">
+      <p class="work-heading">
+        <span>03 → </span><a href="/worlds/world-3">The Diorama</a>
+        <span class="band" aria-hidden="true"><i style="background:#f7dfcd"></i><i style="background:#d7c3e3"></i><i style="background:#e2735c"></i><i style="background:#4f9e98"></i><i style="background:#fbf6ef"></i></span>
+      </p>
+      <p class="work-summary">An isometric puzzle<span class="unlock" data-unlock="3"></span></p>
+    </article>
+    <article class="work-item">
+      <p class="work-heading">
+        <span>04 → </span><a href="/worlds/world-4">Grand Prix</a>
+        <span class="band" aria-hidden="true"><i style="background:#4fa8ff"></i><i style="background:#5cb94a"></i><i style="background:#4b4e59"></i><i style="background:#e8453c"></i><i style="background:#ff6a2f"></i></span>
+      </p>
+      <p class="work-summary">A kart race<span class="unlock" data-unlock="4"></span></p>
+    </article>
+    <article class="work-item">
+      <p class="work-heading">
+        <span>05 → </span><a href="/worlds/world-5">The Lab</a>
+        <span class="band" aria-hidden="true"><i style="background:#3a3d44"></i><i style="background:#eef0f2"></i><i style="background:#8d6bff"></i><i style="background:#c6f04a"></i><i style="background:#16181d"></i></span>
+      </p>
+      <p class="work-summary">A first-person portal facility<span class="unlock" data-unlock="5"></span></p>
+    </article>
+    <article class="work-item">
+      <p class="work-heading">
+        <span>06 → </span><a href="/worlds/world-6">The Library</a>
+        <span class="band" aria-hidden="true"><i style="background:#24352f"></i><i style="background:#4a3222"></i><i style="background:#6b2a2a"></i><i style="background:#c9a24a"></i><i style="background:#ece2c8"></i></span>
+      </p>
+      <p class="work-summary">A point-and-click archive<span class="unlock" data-unlock="6"></span></p>
+    </article>
+  </div>
+</main>
 <script src="/worlds/shell.js"></script>
 </body>
 </html>
