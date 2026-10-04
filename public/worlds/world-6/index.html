@@ -1,0 +1,836 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>html, body { margin: 0; } [hidden] { display: none !important; }</style>
+<title>Bleich Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a point-and-click library. The room fills the screen; you move between
+   fixed viewpoints by clicking what you want to look at. Keys sit top left, the
+   hint bar and navigation dock to the bottom, and an open book takes over the middle. */
+:root {
+  --bg: #120d0a;
+  --fg: #efe6d2;
+  --muted: #a89a82;
+  --rule: rgba(239, 230, 210, 0.16);
+  --brass: #c9a24a;
+  --silver: #c3c9d1;
+  --iron: #6f7780;
+  --paper: #ece2c8;
+  --ink: #2a2118;
+
+  /* room palette */
+  --w-wall: #24352f;
+  --w-wall-line: #1d2b26;
+  --w-wood: #4a3222;
+  --w-wood-dark: #2e1f15;
+  --w-wood-light: #6b4a31;
+  --w-floor: #3a281b;
+  --w-rug: #6b2a2a;
+  --w-ceil: #17110d;
+  --w-stone: #3b3d42;
+  --w-train: #7a2f2a;
+  --w-cream: #e7dcc0;
+  --w-lamp: #ffd88a;
+
+  --f-book: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+  --f-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-book); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--brass); outline-offset: 3px; }
+.mono { font-family: var(--f-mono); font-size: 0.6875rem; letter-spacing: 0.08em; text-transform: uppercase; }
+
+.frame { position: relative; overflow: hidden; background: var(--bg); }
+canvas { display: block; width: 100%; height: 520px; outline: none; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.fade { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }
+.fail { position: absolute; inset: 0; display: grid; place-items: center; padding: 1.5rem; text-align: center; color: var(--muted); }
+
+/* keys */
+.inv { position: absolute; top: 1rem; left: 1.1rem; display: flex; gap: 0.4rem; pointer-events: none; }
+.slot {
+  width: 2.3rem; height: 2.3rem; display: grid; place-items: center;
+  border: 1px dashed var(--rule); border-radius: 8px; background: rgba(18, 13, 10, 0.55); color: transparent;
+}
+.slot svg { width: 1.5rem; height: 1.5rem; }
+.slot[data-on="true"] { border-style: solid; border-color: currentColor; }
+.slot[data-on="true"][data-k="brass"] { color: var(--brass); }
+.slot[data-on="true"][data-k="silver"] { color: var(--silver); }
+.slot[data-on="true"][data-k="iron"] { color: var(--iron); }
+
+/* hint bar + navigation */
+.dock {
+  position: absolute; left: 50%; bottom: max(0.9rem, env(safe-area-inset-bottom)); transform: translateX(-50%);
+  width: min(44rem, calc(100% - 1.8rem));
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem 1rem;
+  padding: 0.65rem 0.8rem 0.65rem 1rem;
+  border: 1px solid var(--rule); border-radius: 12px;
+  background: rgba(18, 13, 10, 0.82);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.say { margin: 0; flex: 1 1 16rem; min-width: 0; display: flex; gap: 0.6rem; align-items: baseline; }
+.say-label { color: var(--brass); flex: none; }
+.say-text { font-size: 1.1875rem; line-height: 1.3; text-wrap: pretty; }
+.nav { display: flex; gap: 0.4rem; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 2.4rem;
+  padding: 0.5rem 0.85rem; border: 1px solid var(--rule); border-radius: 999px;
+  background: transparent; cursor: pointer;
+  font-family: var(--f-mono); font-size: 0.6875rem; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.btn:hover { border-color: var(--brass); color: var(--brass); }
+.btn.go { background: var(--fg); border-color: var(--fg); color: var(--bg); }
+.btn.go:hover { background: var(--brass); border-color: var(--brass); color: var(--bg); }
+
+/* overlays */
+.overlay { position: absolute; inset: 0; display: grid; place-items: center; padding: 1rem; background: rgba(8, 6, 4, 0.66); overflow: auto; }
+.panel { width: min(100%, 30rem); display: grid; gap: 0.6rem; padding: 1.5rem; border: 1px solid var(--rule); border-top: 3px solid var(--brass); border-radius: 10px; background: #1a130e; }
+.panel p { margin: 0; }
+.panel .eyebrow { color: var(--brass); }
+.panel-title { font-size: clamp(1.9rem, 6vw, 2.6rem); font-weight: 600; line-height: 1.05; }
+.panel-desc { font-size: 1.1875rem; color: var(--muted); text-wrap: pretty; }
+.panel-actions { margin-top: 0.5rem; }
+
+/* open book */
+.book {
+  --cover: #555;
+  width: min(100%, 50rem); display: grid; gap: 0.7rem;
+  padding: 0.9rem; border-radius: 10px; background: var(--cover);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+.book-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding-inline: 0.3rem; color: rgba(255, 255, 255, 0.85); }
+.book-head p { margin: 0; }
+.spread { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: #b9ad8f; border-radius: 4px; overflow: hidden; }
+.leaf {
+  position: relative; min-height: 19rem; display: flex; flex-direction: column; gap: 0.8rem;
+  padding: 1.5rem 1.6rem 2.4rem;
+  background: var(--paper); color: var(--ink);
+  font-size: 1.25rem; line-height: 1.45;
+}
+.leaf.left { box-shadow: inset -18px 0 22px -18px rgba(0, 0, 0, 0.35); }
+.leaf.right { box-shadow: inset 18px 0 22px -18px rgba(0, 0, 0, 0.35); }
+.leaf p { margin: 0; text-wrap: pretty; }
+.leaf .head { font-style: italic; color: #6b5a3c; }
+.leaf .folio { position: absolute; bottom: 0.8rem; left: 0; right: 0; text-align: center; color: #8a7a5c; font-family: var(--f-mono); font-size: 0.6875rem; }
+.hollow {
+  margin-top: auto; display: grid; place-items: center; gap: 0.7rem; padding: 1.2rem 1rem;
+  border-radius: 6px; background: #cfc3a4; box-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.45);
+  text-align: center;
+}
+.hollow svg { width: 4.5rem; height: 4.5rem; }
+.hollow .btn { border-color: var(--ink); color: var(--ink); }
+.hollow .btn:hover { background: var(--ink); color: var(--paper); }
+.book-nav { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem; }
+.book-nav .btn { border-color: rgba(255, 255, 255, 0.4); color: #fff; background: rgba(0, 0, 0, 0.25); }
+.book-nav .btn:hover { background: #fff; color: #111; border-color: #fff; }
+.book-nav .btn[disabled] { opacity: 0.35; cursor: default; pointer-events: none; }
+.book.sheet .spread { grid-template-columns: 1fr; }
+.book.sheet { width: min(100%, 28rem); }
+
+@media (max-width: 40rem) {
+  .inv { top: 3.5rem; left: 0.9rem; }
+  .spread { grid-template-columns: 1fr; }
+  .leaf { min-height: 0; padding: 1.1rem 1.2rem 2.2rem; font-size: 1.125rem; }
+  .leaf.left, .leaf.right { box-shadow: none; }
+  .say-text { font-size: 1.0625rem; }
+}
+@media (prefers-reduced-motion: reduce) { .fade { transition: none; } }
+</style>
+<link rel="stylesheet" href="/worlds/shell.css">
+</head>
+<body data-world="6">
+<div class="page">
+  <main>
+    <section aria-label="Library">
+      <div class="frame" id="frame">
+        <canvas id="c" tabindex="0" aria-label="A library. Click shelves, the cabinet and the desk to look closer. Find each volume, read a couple of pages to find the key inside, and use the last key to open the way down to the train."></canvas>
+        <div class="inv" aria-label="Keys">
+          <span class="slot" data-k="brass" title="Brass key"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M11 12h10M17 12v4M20.5 12v3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span>
+          <span class="slot" data-k="silver" title="Silver key"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M11 12h10M17 12v4M20.5 12v3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span>
+          <span class="slot" data-k="iron" title="Iron key"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M11 12h10M17 12v4M20.5 12v3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span>
+        </div>
+        <div class="dock">
+          <p class="say" aria-live="polite"><span class="say-label mono">Hint</span><span class="say-text" id="say">A note has been left on the reading desk.</span></p>
+          <div class="nav">
+            <button class="btn" id="nav-left" type="button" aria-label="Turn left">◀</button>
+            <button class="btn" id="nav-right" type="button" aria-label="Turn right">▶</button>
+            <button class="btn" id="nav-back" type="button" hidden>Step back</button>
+          </div>
+        </div>
+        <div class="fade" id="fade"></div>
+        <div class="overlay" id="reader" hidden role="dialog" aria-modal="true" aria-labelledby="book-title">
+          <div class="book" id="book">
+            <div class="book-head"><p class="mono" id="book-title"></p><p class="mono" id="book-pages"></p></div>
+            <div class="spread"><div class="leaf left" id="leaf-l"></div><div class="leaf right" id="leaf-r"></div></div>
+            <div class="book-nav">
+              <button class="btn" id="pg-prev" type="button">← Back</button>
+              <button class="btn" id="pg-next" type="button">Turn the page →</button>
+              <button class="btn" id="book-close" type="button">Close</button>
+            </div>
+          </div>
+        </div>
+        <div class="overlay" id="start">
+          <div class="panel">
+            <p class="eyebrow mono">World 6 · The Library</p>
+            <p class="panel-title">The archive</p>
+            <p class="panel-desc">Every world has a volume here. Find one, read a couple of pages, and take what is hidden inside. Click anything to look closer.</p>
+            <div class="panel-actions"><button class="btn go" id="start-btn" type="button">Step inside</button></div>
+          </div>
+        </div>
+        <div class="fail" id="fail" hidden><p>This world needs WebGL, which this browser has turned off.</p></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="/worlds/shell.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var frame = document.getElementById('frame'), canvas = document.getElementById('c');
+  if (!window.THREE) { document.getElementById('fail').hidden = false; return; }
+  var renderer;
+  try { renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true }); }
+  catch (e) { document.getElementById('fail').hidden = false; return; }
+
+  var reduce = false;
+  try { reduce = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+  var css = getComputedStyle(document.documentElement);
+  function tok(n) { return css.getPropertyValue(n).trim(); }
+  var C = {
+    bg: tok('--bg'), wall: tok('--w-wall'), wallLine: tok('--w-wall-line'), wood: tok('--w-wood'), woodDark: tok('--w-wood-dark'), woodLight: tok('--w-wood-light'),
+    floor: tok('--w-floor'), rug: tok('--w-rug'), ceil: tok('--w-ceil'), stone: tok('--w-stone'), train: tok('--w-train'), cream: tok('--w-cream'),
+    lamp: tok('--w-lamp'), brass: tok('--brass'), silver: tok('--silver'), iron: tok('--iron'), paper: tok('--paper'), ink: tok('--ink')
+  };
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function ease(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+  var seed = 11;
+  function rnd() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }
+
+  /* ---------- the three volumes ---------- */
+  /* Each book is two spreads of reading, then a hollow with a key in it.
+     The last page before the hollow says where the next volume is. */
+  var BOOKS = {
+    note: {
+      sheet: true, title: 'A note, left on the desk', cover: '#5a4a36',
+      pages: [[
+        'To whoever keeps the archive after me.',
+        'Every world gets a volume. I have shelved them badly on purpose.',
+        'Begin with Volume I. It is gray and thin, and it is misfiled on the west wall between two red spines.',
+        'Read past the first couple of pages. I never hide anything on page one.'
+      ]]
+    },
+    v1: {
+      title: 'Volume I · Of Flags and Stars', spine: 'OF FLAGS AND STARS', color: '#77777c', key: 'brass',
+      pages: [
+        ['The first world was gray, and it only went one direction.', 'I ran right because there was nothing to the left. There were blocks to strike and small squares to collect, and neither mattered as much as the flag at the far end.'],
+        ['The second world had depth. A hall, a carpet, paintings you could fall into.', 'Three of them held stars. The fourth was behind a door that counted.'],
+        ['I learned something in that hall. The thing you want is usually behind glass, and the glass is usually locked.'],
+        ['Volume II is kept that way.', 'East wall, in the cabinet. The lock is brass.']
+      ]
+    },
+    v2: {
+      title: 'Volume II · Of Bridges and Laps', spine: 'OF BRIDGES AND LAPS', color: '#2f3d73', key: 'silver',
+      pages: [
+        ['The third world floated.', 'A bridge that turned, a lift that rose, and four plinths that wanted visiting in order. Nothing in it could be rushed.'],
+        ['The fourth world was the opposite. Two laps, four gates, and three rivals who had each been the hero of an earlier book.', 'I did not always win.'],
+        ['Somewhere between the puzzle and the race I stopped trusting shelves. A shelf is where you put a thing you have finished with.'],
+        ['Volume III is not finished.', 'I keep it in the desk drawer, under a small silver lock.']
+      ]
+    },
+    v3: {
+      title: 'Volume III · Of Portals', spine: 'OF PORTALS', color: '#27503f', key: 'iron',
+      pages: [
+        ['The fifth world was a laboratory.', 'Two openings, linked: step into one and you leave by the other. It taught me that a wall is only a wall until you put a door in it.'],
+        ['This library has a wall like that. North side.', 'I have walked through it more times than I have used the front door.'],
+        ['Look for the book with no title. Its spine is not a spine. It takes iron.'],
+        ['What is behind it runs on rails, and it only goes one way.', 'Take it when you are done reading.']
+      ]
+    }
+  };
+  var DECOYS_WEST = [
+    ['A FIELD GUIDE TO EDGE CASES', '#27503f'], ['KERNING FOR SAILORS', '#2f3d73'], ['THE UNABRIDGED CHANGELOG', '#6b4a31'], ['MARGINS AND GUTTERS', '#b08a3a'],
+    ['ON ROUNDED CORNERS', '#8f2f2a'], null, ['A HISTORY OF THE HAMBURGER MENU', '#8f2f2a'], ['GRIDS, VOL. 12', '#3d6b6b'], ['THE PIXEL ALMANAC', '#4b3a66']
+  ];
+  var KEY_NAME = { brass: 'brass', silver: 'silver', iron: 'iron' };
+
+  /* ---------- state ---------- */
+  var S = { started: false, noteRead: false, keys: { brass: false, silver: false, iron: false }, cabOpen: 0, drawerOpen: 0, shelfOpen: 0, mode: 'play', rideT: 0 };
+
+  /* ---------- scene ---------- */
+  var scene = new THREE.Scene();
+  scene.background = new THREE.Color(C.bg);
+  scene.fog = new THREE.Fog(C.bg, 12, 36);
+  var camera = new THREE.PerspectiveCamera(62, 16 / 9, 0.1, 140);
+  scene.add(new THREE.HemisphereLight(0xffe7c2, 0x1a120c, 0.62));
+  function lamp(x, y, z, i, d) { var l = new THREE.PointLight(0xffc878, i, d, 1.6); l.position.set(x, y, z); scene.add(l); return l; }
+  lamp(0, 4.2, -3.5, 0.95, 16); lamp(0, 4.2, 3.5, 0.8, 16);
+  lamp(-0.8, 1.35, 0.9, 0.9, 6);       /* desk lamp */
+  lamp(1.2, 3.4, -11, 0.7, 10);        /* stairs */
+  lamp(1.2, 0.2, -16.5, 1.2, 16);      /* platform */
+
+  function lam(c, extra) { var o = extra || {}; o.color = c; return new THREE.MeshLambertMaterial(o); }
+  function glow(c) { return new THREE.MeshBasicMaterial({ color: c }); }
+  function box(parent, w, h, d, mat, x, y, z) { var m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); parent.add(m); return m; }
+  function plane(w, h, mat, x, y, z, ry, rx) { var m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat); m.position.set(x, y, z); if (ry) m.rotation.y = ry; if (rx) m.rotation.x = rx; scene.add(m); return m; }
+  function tex(w, h, draw, rep) {
+    var c = document.createElement('canvas'); c.width = w; c.height = h;
+    draw(c.getContext('2d'), w, h);
+    var t = new THREE.CanvasTexture(c);
+    if (rep) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep[0], rep[1]); }
+    t.userData = { canvas: c, draw: draw };
+    return t;
+  }
+  var fontTexs = [];
+
+  /* ---------- room shell ---------- */
+  function wallTex(rx, ry) {
+    return tex(64, 64, function (g) {
+      g.fillStyle = C.wall; g.fillRect(0, 0, 64, 64);
+      g.fillStyle = C.wallLine; for (var x = 0; x < 64; x += 16) g.fillRect(x, 0, 3, 64);
+      g.fillStyle = 'rgba(201,162,74,0.16)'; for (x = 8; x < 64; x += 16) for (var y = 8; y < 64; y += 16) g.fillRect(x, y, 2, 2);
+    }, [rx, ry]);
+  }
+  var floorT = tex(64, 64, function (g) {
+    g.fillStyle = C.floor; g.fillRect(0, 0, 64, 64);
+    g.fillStyle = 'rgba(0,0,0,0.28)'; for (var x = 0; x < 64; x += 16) g.fillRect(x, 0, 1, 64);
+    g.fillRect(0, 20, 16, 1); g.fillRect(16, 44, 16, 1); g.fillRect(32, 8, 16, 1); g.fillRect(48, 34, 16, 1);
+  }, [6, 8]);
+  var rugT = tex(64, 96, function (g, w, h) {
+    g.fillStyle = C.rug; g.fillRect(0, 0, w, h);
+    g.strokeStyle = C.brass; g.lineWidth = 2; g.strokeRect(5, 5, w - 10, h - 10); g.strokeRect(10, 10, w - 20, h - 20);
+    g.fillStyle = 'rgba(201,162,74,0.5)'; g.beginPath(); g.moveTo(w / 2, 28); g.lineTo(w - 20, h / 2); g.lineTo(w / 2, h - 28); g.lineTo(20, h / 2); g.closePath(); g.fill();
+  });
+  plane(12, 16, lam(0xffffff, { map: floorT }), 0, 0, 0, 0, -Math.PI / 2);
+  plane(4.4, 6.6, lam(0xffffff, { map: rugT }), 0, 0.012, 1.4, 0, -Math.PI / 2);
+  plane(12, 16, lam(C.ceil), 0, 5, 0, 0, Math.PI / 2);
+  plane(12, 5, lam(0xffffff, { map: wallTex(12, 5) }), 0, 2.5, 8, Math.PI);
+  plane(16, 5, lam(0xffffff, { map: wallTex(16, 5) }), -6, 2.5, 0, Math.PI / 2);
+  plane(16, 5, lam(0xffffff, { map: wallTex(16, 5) }), 6, 2.5, 0, -Math.PI / 2);
+  /* north wall, with the doorway the secret shelf covers (x 0..2.4, up to 4.2) */
+  plane(6, 5, lam(0xffffff, { map: wallTex(6, 5) }), -3, 2.5, -8);
+  plane(3.6, 5, lam(0xffffff, { map: wallTex(3.6, 5) }), 4.2, 2.5, -8);
+  plane(2.4, 0.8, lam(C.wall), 1.2, 4.6, -8);
+  box(scene, 1.5, 2.6, 0.1, lam(C.woodDark), 0, 1.3, 7.96);   /* front door */
+  for (var bz = -6; bz <= 6; bz += 4) box(scene, 12, 0.3, 0.3, lam(C.woodDark), 0, 4.85, bz);
+
+  /* ---------- clickable registry ---------- */
+  var clickables = [];
+  function hot(mesh, node, label, act) { mesh.userData = { node: node, label: label, act: act || null }; clickables.push(mesh); return mesh; }
+  var ghost = new THREE.MeshBasicMaterial({ visible: false });
+
+  /* ---------- bookcases ---------- */
+  var BOOK_COLORS = ['#6b2a2a', '#27503f', '#2f3d73', '#6b4a31', '#b08a3a', '#3d6b6b', '#4b3a66', '#8a7a5c', '#3a3a40', '#7a4a2a'];
+  var unit = new THREE.BoxGeometry(1, 1, 1);
+  var BAY_W = 2.4, BAY_H = 4.2, BAY_D = 0.42;
+  function rowY(i) { return i === 0 ? 0.15 : 0.15 + i * 0.8 + 0.025; }
+  function bay(parent, x, y, z, ry, featureRow) {
+    var g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry; parent.add(g);
+    var dark = lam(C.woodDark), wood = lam(C.wood);
+    box(g, BAY_W, BAY_H, 0.04, dark, 0, BAY_H / 2, 0.02);
+    box(g, 0.07, BAY_H, BAY_D, wood, -BAY_W / 2 + 0.035, BAY_H / 2, BAY_D / 2);
+    box(g, 0.07, BAY_H, BAY_D, wood, BAY_W / 2 - 0.035, BAY_H / 2, BAY_D / 2);
+    box(g, BAY_W, 0.09, BAY_D + 0.04, wood, 0, BAY_H - 0.045, BAY_D / 2);
+    box(g, BAY_W, 0.15, BAY_D, wood, 0, 0.075, BAY_D / 2);
+    for (var i = 1; i <= 4; i++) box(g, BAY_W - 0.14, 0.05, BAY_D - 0.04, wood, 0, 0.15 + i * 0.8, BAY_D / 2);
+    var mats = [], cols = [];
+    function fill(row, x0, x1) {
+      var xx = x0, ys = rowY(row);
+      while (xx < x1 - 0.05) {
+        var w = 0.045 + rnd() * 0.06, h = 0.42 + rnd() * 0.22;
+        if (xx + w > x1) break;
+        if (rnd() < 0.07) { xx += 0.06 + rnd() * 0.1; continue; }
+        var m = new THREE.Matrix4();
+        m.compose(new THREE.Vector3(xx + w / 2, ys + h / 2, 0.19 + rnd() * 0.03), new THREE.Quaternion(), new THREE.Vector3(w, h, 0.26));
+        mats.push(m); cols.push(BOOK_COLORS[Math.floor(rnd() * BOOK_COLORS.length)]);
+        xx += w + 0.004;
+      }
+    }
+    var lim = BAY_W / 2 - 0.09;
+    for (i = 0; i <= 4; i++) {
+      if (i === 1 && featureRow) { fill(1, -lim, featureRow[0]); fill(1, featureRow[1], lim); }
+      else fill(i, -lim, lim);
+    }
+    var inst = new THREE.InstancedMesh(unit, new THREE.MeshLambertMaterial({ color: 0xffffff }), mats.length);
+    var col = new THREE.Color();
+    for (i = 0; i < mats.length; i++) { inst.setMatrixAt(i, mats[i]); col.set(cols[i]).multiplyScalar(0.75 + rnd() * 0.4); inst.setColorAt(i, col); }
+    g.add(inst);
+    return g;
+  }
+  /* a book with a lettered spine, standing on a shelf */
+  function spineTex(title, color, keyhole) {
+    var t = tex(64, 256, function (g, w, h) {
+      g.fillStyle = color; g.fillRect(0, 0, w, h);
+      g.fillStyle = 'rgba(0,0,0,0.22)'; g.fillRect(0, 0, 5, h); g.fillRect(w - 5, 0, 5, h);
+      g.fillStyle = C.brass; g.fillRect(8, 22, w - 16, 3); g.fillRect(8, h - 25, w - 16, 3);
+      if (keyhole) {
+        g.beginPath(); g.arc(w / 2, h / 2 - 8, 12, 0, Math.PI * 2); g.fill();
+        g.fillStyle = '#0b0806'; g.beginPath(); g.arc(w / 2, h / 2 - 10, 5, 0, Math.PI * 2); g.fill(); g.fillRect(w / 2 - 2.5, h / 2 - 8, 5, 12);
+        return;
+      }
+      g.save(); g.translate(w / 2, h / 2); g.rotate(Math.PI / 2);
+      g.fillStyle = '#f1e7cf'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      var size = 22; g.font = '600 ' + size + 'px "Cormorant Garamond", Georgia, serif';
+      while (g.measureText(title).width > h - 70 && size > 9) { size--; g.font = '600 ' + size + 'px "Cormorant Garamond", Georgia, serif'; }
+      g.fillText(title, 0, 1);
+      g.restore();
+    });
+    fontTexs.push(t);
+    return t;
+  }
+  function spineBook(parent, x, ys, w, h, title, color, keyhole) {
+    var side = lam(color), top = lam(C.paper), spine = lam(0xffffff, { map: spineTex(title, color, keyhole) });
+    var m = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.27), [side, side, top, side, spine, side]);
+    m.position.set(x, ys + h / 2, 0.215);
+    parent.add(m);
+    return m;
+  }
+
+  /* west wall: Volume I is misfiled here */
+  var westBay = bay(scene, -6, 0, -2, Math.PI / 2, [-0.62, 0.62]);
+  bay(scene, -6, 0, -5.2, Math.PI / 2); bay(scene, -6, 0, 1.2, Math.PI / 2); bay(scene, -6, 0, 4.4, Math.PI / 2);
+  (function () {
+    var x = -0.6;
+    DECOYS_WEST.forEach(function (d) {
+      if (!d) {
+        var v = spineBook(westBay, x + 0.04, rowY(1), 0.08, 0.5, BOOKS.v1.spine, BOOKS.v1.color);
+        hot(v, 'west', 'A thin gray volume', function () { openBook('v1'); });
+        x += 0.085; return;
+      }
+      var w = 0.12 + rnd() * 0.03, m = spineBook(westBay, x + w / 2, rowY(1), w, 0.5 + rnd() * 0.1, d[0], d[1]);
+      var title = d[0].charAt(0) + d[0].slice(1).toLowerCase();
+      hot(m, 'west', '“' + title + '”', function () { say('“' + title + '”. Nothing is tucked inside.'); });
+      x += w + 0.005;
+    });
+  })();
+  hot(box(scene, 0.2, 3, 2.6, ghost, -5.5, 1.6, -2), 'west', 'The west shelves');
+
+  /* east wall: shelves either side of the glass cabinet */
+  bay(scene, 6, 0, -5.2, -Math.PI / 2); bay(scene, 6, 0, 1.2, -Math.PI / 2); bay(scene, 6, 0, 4.4, -Math.PI / 2);
+  var cab = new THREE.Group(); cab.position.set(6, 0, -2); cab.rotation.y = -Math.PI / 2; scene.add(cab);
+  var doorL = new THREE.Group(), doorR = new THREE.Group(), v2Mesh;
+  (function () {
+    var wood = lam(C.wood), dark = lam(C.woodDark), brass = lam(C.brass);
+    box(cab, 1.9, 0.9, 0.56, wood, 0, 0.45, 0.28);
+    box(cab, 1.9, 1.7, 0.04, dark, 0, 1.75, 0.02);
+    box(cab, 0.07, 1.7, 0.52, wood, -0.915, 1.75, 0.26); box(cab, 0.07, 1.7, 0.52, wood, 0.915, 1.75, 0.26);
+    box(cab, 1.98, 0.1, 0.6, wood, 0, 2.65, 0.28);
+    box(cab, 0.5, 0.05, 0.05, brass, -0.45, 0.5, 0.58); box(cab, 0.5, 0.05, 0.05, brass, 0.45, 0.5, 0.58);
+    var ys = 0.9;
+    var a = spineBook(cab, -0.6, ys, 0.13, 0.56, 'THE COLLECTED RELEASE NOTES', '#6b4a31');
+    v2Mesh = spineBook(cab, -0.44, ys, 0.15, 0.6, BOOKS.v2.spine, BOOKS.v2.color);
+    var b = spineBook(cab, -0.27, ys, 0.14, 0.52, 'DARK MODE, A MEMOIR', '#3a3a40');
+    /* a stack lying flat on the right, for balance */
+    box(cab, 0.42, 0.07, 0.3, lam('#6b2a2a'), 0.45, ys + 0.035, 0.27); box(cab, 0.38, 0.06, 0.28, lam('#27503f'), 0.47, ys + 0.1, 0.27); box(cab, 0.34, 0.05, 0.26, lam('#b08a3a'), 0.44, ys + 0.155, 0.27);
+    [a, v2Mesh, b].forEach(function (m) { m.position.z = 0.26; });
+    hot(a, 'cabinet', '“The collected release notes”', function () { if (cabGate()) say('“The collected release notes”. Nothing is tucked inside.'); });
+    hot(b, 'cabinet', '“Dark mode, a memoir”', function () { if (cabGate()) say('“Dark mode, a memoir”. Nothing is tucked inside.'); });
+    hot(v2Mesh, 'cabinet', 'A navy volume', function () { if (cabGate()) openBook('v2'); });
+    var glass = new THREE.MeshLambertMaterial({ color: 0xbfe0e6, transparent: true, opacity: 0.18, depthWrite: false });
+    [[doorL, -0.88, 1], [doorR, 0.88, -1]].forEach(function (d) {
+      var p = d[0], dir = d[2];
+      p.position.set(d[1], 0, 0.53); cab.add(p);
+      box(p, 0.88, 0.06, 0.04, wood, dir * 0.44, 0.95, 0); box(p, 0.88, 0.06, 0.04, wood, dir * 0.44, 2.55, 0);
+      box(p, 0.06, 1.66, 0.04, wood, dir * 0.03, 1.75, 0); box(p, 0.06, 1.66, 0.04, wood, dir * 0.85, 1.75, 0);
+      var gl = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 1.56), glass); gl.position.set(dir * 0.44, 1.75, 0); p.add(gl);
+      /* the whole door is the target, frame included */
+      hot(box(p, 0.9, 1.68, 0.05, ghost, dir * 0.44, 1.75, 0.01), 'cabinet', 'The glass cabinet', function () { cabGate(); });
+    });
+    box(doorL, 0.08, 0.14, 0.05, brass, 0.84, 1.75, 0.03);
+  })();
+  function cabGate() {
+    if (S.cabOpen) return true;
+    if (!S.keys.brass) { say('The cabinet is locked. The lock is brass.'); return false; }
+    S.cabOpen = 0.0001; say('The brass key turns. The doors swing open.');
+    return false;
+  }
+  hot(box(scene, 0.2, 2.8, 2.2, ghost, 5.3, 1.5, -2), 'cabinet', 'The glass cabinet');
+
+  /* north wall: the third bay from the left is the door */
+  bay(scene, -3.6, 0, -8, 0); bay(scene, -1.2, 0, -8, 0); bay(scene, 3.6, 0, -8, 0);
+  var hinge = new THREE.Group(); hinge.position.set(0, 0, -8); scene.add(hinge);
+  var secret = bay(hinge, 1.2, 0, 0, 0, [-0.12, 0.12]);
+  var keyBook = spineBook(secret, 0, rowY(1), 0.16, 0.58, '', '#17120e', true);
+  hot(keyBook, 'north', 'A book with no title', function () {
+    if (S.shelfOpen) return;
+    if (!S.keys.iron) { say('This spine has a keyhole in it. Iron, by the look of it.'); return; }
+    S.shelfOpen = 0.0001; say('The iron key turns. The whole shelf swings out.');
+  });
+  hot(box(scene, 2.6, 3, 0.2, ghost, 1.2, 1.6, -7.5), 'north', 'The north shelves');
+  var doorway = hot(plane(2.4, 4.2, ghost, 1.2, 2.1, -8.05), 'north', 'A stairway down', function () { if (S.shelfOpen >= 1) goTo('platform', 2.2); });
+  doorway.visible = false;
+  /* library ladder */
+  (function () {
+    var g = new THREE.Group(); g.position.set(-2.6, 0, -7.25); g.rotation.x = -0.16; scene.add(g);
+    var m = lam(C.woodLight);
+    box(g, 0.05, 3.9, 0.05, m, -0.24, 1.95, 0); box(g, 0.05, 3.9, 0.05, m, 0.24, 1.95, 0);
+    for (var i = 0; i < 9; i++) box(g, 0.48, 0.035, 0.05, m, 0, 0.4 + i * 0.4, 0);
+  })();
+
+  /* ---------- desk ---------- */
+  var desk = new THREE.Group(); desk.position.set(0, 0, 0.6); scene.add(desk);
+  var drawer = new THREE.Group(), v3Mesh;
+  (function () {
+    var wood = lam(C.woodLight), dark = lam(C.woodDark);
+    box(desk, 2.3, 0.07, 1.15, wood, 0, 0.8, 0);
+    box(desk, 2.1, 0.22, 1.0, dark, -0, 0.655, -0.03);
+    [[-1.05, -0.48], [1.05, -0.48], [-1.05, 0.48], [1.05, 0.48]].forEach(function (p) { box(desk, 0.09, 0.77, 0.09, wood, p[0], 0.385, p[1]); });
+    /* drawer */
+    drawer.position.set(0.5, 0.655, 0.5); desk.add(drawer);
+    var front = box(drawer, 0.74, 0.18, 0.03, wood, 0, 0, 0);
+    box(drawer, 0.7, 0.02, 0.5, dark, 0, -0.07, -0.26);
+    box(drawer, 0.02, 0.14, 0.5, dark, -0.34, -0.01, -0.26); box(drawer, 0.02, 0.14, 0.5, dark, 0.34, -0.01, -0.26);
+    box(drawer, 0.07, 0.07, 0.03, lam(C.silver), 0, 0, 0.025);
+    hot(front, 'desk', 'The desk drawer', drawerGate);
+    var coverT = tex(128, 180, function (g, w, h) {
+      g.fillStyle = BOOKS.v3.color; g.fillRect(0, 0, w, h);
+      g.strokeStyle = C.brass; g.lineWidth = 3; g.strokeRect(9, 9, w - 18, h - 18);
+      g.fillStyle = '#f1e7cf'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.font = '600 20px "Cormorant Garamond", Georgia, serif'; g.fillText('OF', w / 2, h / 2 - 14); g.fillText('PORTALS', w / 2, h / 2 + 12);
+    });
+    fontTexs.push(coverT);
+    var side = lam(BOOKS.v3.color);
+    v3Mesh = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.06, 0.42), [side, side, lam(0xffffff, { map: coverT }), side, side, side]);
+    v3Mesh.position.set(0, -0.03, -0.26); v3Mesh.visible = false; drawer.add(v3Mesh);
+    hot(v3Mesh, 'desk', 'A green volume', function () { if (S.drawerOpen >= 1) openBook('v3'); else drawerGate(); });
+    /* note */
+    var noteT = tex(96, 128, function (g, w, h) {
+      g.fillStyle = C.paper; g.fillRect(0, 0, w, h);
+      g.fillStyle = 'rgba(42,33,24,0.55)'; for (var y = 18; y < h - 12; y += 11) g.fillRect(10, y, w - 20 - ((y * 7) % 30), 2);
+    });
+    var note = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.45), lam(0xffffff, { map: noteT }));
+    note.rotation.x = -Math.PI / 2; note.rotation.z = 0.18; note.position.set(-0.05, 0.842, 0.2); desk.add(note);
+    hot(note, 'desk', 'A handwritten note', function () { openBook('note'); });
+    /* lamp + a stack of books */
+    box(desk, 0.22, 0.04, 0.22, dark, -0.8, 0.855, 0.05);
+    box(desk, 0.035, 0.42, 0.035, lam(C.brass), -0.8, 1.06, 0.05);
+    var shade = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.2, 0.18, 14, 1, true), new THREE.MeshBasicMaterial({ color: C.lamp, side: THREE.DoubleSide }));
+    shade.position.set(-0.8, 1.32, 0.05); desk.add(shade);
+    box(desk, 0.34, 0.06, 0.26, lam('#6b2a2a'), 0.75, 0.865, -0.2); box(desk, 0.3, 0.05, 0.24, lam('#2f3d73'), 0.77, 0.92, -0.19);
+  })();
+  function drawerGate() {
+    if (S.drawerOpen) return;
+    if (!S.keys.silver) { say('The drawer is locked. The lock is small, and silver.'); return; }
+    S.drawerOpen = 0.0001; v3Mesh.visible = true; say('The silver key fits. The drawer slides out.');
+  }
+  hot(box(scene, 2.4, 1.2, 1.3, ghost, 0, 0.7, 0.6), 'desk', 'The reading desk');
+
+  /* ---------- the way down ---------- */
+  var stone = lam(C.stone), stoneDark = lam('#26282c');
+  plane(6, 7.2, stone, 0, 0.6, -11, Math.PI / 2);
+  plane(6, 7.2, stone, 2.4, 0.6, -11, -Math.PI / 2);
+  plane(2.4, 6, stoneDark, 1.2, 4.2, -11, 0, Math.PI / 2);
+  plane(2.4, 3.4, stone, 1.2, 2.5, -14);
+  for (var k = 0; k < 15; k++) { var topY = -k * 0.2; box(scene, 2.4, topY + 3.2, 0.4, stoneDark, 1.2, (topY - 3.2) / 2, -8.2 - k * 0.4); }
+  /* platform hall */
+  plane(18, 4.5, stone, 1, -3, -16.25, 0, -Math.PI / 2);
+  plane(18, 2.5, stoneDark, 1, -3.8, -19.75, 0, -Math.PI / 2);
+  plane(18, 0.8, stoneDark, 1, -3.4, -18.5);
+  plane(18, 0.18, glow(C.brass), 1, -2.995, -18.3, 0, -Math.PI / 2);
+  plane(18, 7, stoneDark, 1, 0.8, -17.5, 0, Math.PI / 2);
+  plane(8, 3.8, stone, -4, -1.1, -14, Math.PI); plane(7.6, 3.8, stone, 6.2, -1.1, -14, Math.PI);
+  plane(18, 4.6, stone, 1, -1.5, -21);
+  plane(7, 4.6, stone, -8, -1.5, -17.5, Math.PI / 2); plane(7, 4.6, stone, 10, -1.5, -17.5, -Math.PI / 2);
+  plane(2.4, 3.4, glow('#050403'), -7.98, -2.1, -19.75, Math.PI / 2); plane(2.4, 3.4, glow('#050403'), 9.98, -2.1, -19.75, -Math.PI / 2);
+  box(scene, 18, 0.08, 0.1, lam('#8a8f96'), 1, -3.75, -19.2); box(scene, 18, 0.08, 0.1, lam('#8a8f96'), 1, -3.75, -20.3);
+  /* the train */
+  var train = new THREE.Group(); train.position.set(2, -3.8, -19.75); scene.add(train);
+  (function () {
+    var body = lam(C.train);
+    box(train, 7, 2.2, 2.1, body, 0, 1.6, 0);
+    box(train, 7.1, 0.2, 2.2, lam('#3a1614'), 0, 2.78, 0);
+    box(train, 6.6, 0.3, 1.9, lam('#1b1b1e'), 0, 0.3, 0);
+    var bandT = tex(512, 48, function (g, w, h) {
+      g.fillStyle = C.cream; g.fillRect(0, 0, w, h);
+      g.fillStyle = '#3a1614'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.font = '600 30px "Cormorant Garamond", Georgia, serif'; g.fillText('TO THE FINISH  →', w / 2, h / 2 + 2);
+    });
+    fontTexs.push(bandT);
+    var band = new THREE.Mesh(new THREE.PlaneGeometry(7, 0.42), new THREE.MeshBasicMaterial({ map: bandT })); band.position.set(0, 2.42, 1.056); train.add(band);
+    [-2.7, -1.9, 0.3, 1.1, 1.9, 2.7].forEach(function (x) { var w = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.8), glow(C.lamp)); w.position.set(x, 1.75, 1.056); train.add(w); });
+    var door = box(train, 1.1, 1.66, 0.06, lam('#4a1c19'), -0.8, 1.36, 1.07);
+    var dw = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.7), glow(C.lamp)); dw.position.set(-0.8, 1.75, 1.105); train.add(dw);
+    hot(door, 'platform', 'Board the train', board); hot(dw, 'platform', 'Board the train', board);
+    hot(box(train, 7, 2.6, 0.2, ghost, 0, 1.6, 1.2), 'platform', 'Board the train', board);
+    var hl = new THREE.Mesh(new THREE.CircleGeometry(0.22, 16), glow('#fff3cf')); hl.rotation.y = Math.PI / 2; hl.position.set(3.51, 1.2, 0); train.add(hl);
+  })();
+
+  /* the ride: a separate straight tunnel, far below, that loops past the camera */
+  var RIDE_Y = -60, rings = [];
+  (function () {
+    var dark = lam('#141518');
+    plane(4, 240, dark, 0, RIDE_Y - 1.6, -100, 0, -Math.PI / 2); plane(4, 240, dark, 0, RIDE_Y + 1.8, -100, 0, Math.PI / 2);
+    plane(240, 3.4, dark, -2, RIDE_Y + 0.1, -100, Math.PI / 2); plane(240, 3.4, dark, 2, RIDE_Y + 0.1, -100, -Math.PI / 2);
+    box(scene, 0.08, 0.06, 240, lam('#8a8f96'), -0.55, RIDE_Y - 1.56, -100); box(scene, 0.08, 0.06, 240, lam('#8a8f96'), 0.55, RIDE_Y - 1.56, -100);
+    for (var i = 0; i < 16; i++) {
+      var g = new THREE.Group(), m = glow(C.lamp);
+      box(g, 3.9, 0.06, 0.06, m, 0, 1.72, 0); box(g, 0.06, 3.3, 0.06, m, -1.94, 0.1, 0); box(g, 0.06, 3.3, 0.06, m, 1.94, 0.1, 0);
+      g.position.set(0, RIDE_Y, -i * 7); scene.add(g); rings.push(g);
+    }
+  })();
+
+  /* ---------- viewpoints ---------- */
+  var HUB = [0, 1.6, 6.4];
+  var NODES = {
+    hubN: { pos: HUB, look: [0, 1.5, -8], left: 'hubW', right: 'hubE' },
+    hubW: { pos: HUB, look: [-6, 1.5, -1.5], right: 'hubN' },
+    hubE: { pos: HUB, look: [6, 1.5, -1.5], left: 'hubN' },
+    desk: { pos: [0, 1.75, 2.75], look: [0.1, 0.75, 0.75], back: 'hubN' },
+    west: { pos: [-3.5, 1.45, -2], look: [-6, 1.25, -2], back: 'hubW' },
+    cabinet: { pos: [3.1, 1.6, -2], look: [6, 1.5, -2], back: 'hubE' },
+    north: { pos: [1.2, 1.45, -5.4], look: [1.2, 1.25, -8], back: 'hubN' },
+    platform: { pos: [1.2, -1.4, -14.7], look: [1.2, -2.0, -19.6], back: 'north' }
+  };
+  var cur = 'hubN', move = null;
+  var tmpCam = new THREE.PerspectiveCamera();
+  function poseOf(id) {
+    var n = NODES[id];
+    tmpCam.position.set(n.pos[0], n.pos[1], n.pos[2]); tmpCam.lookAt(n.look[0], n.look[1], n.look[2]);
+    return { p: tmpCam.position.clone(), q: tmpCam.quaternion.clone() };
+  }
+  function snap(id) { var t = poseOf(id); camera.position.copy(t.p); camera.quaternion.copy(t.q); cur = id; syncNav(); }
+  function goTo(id, dur) {
+    if (move || id === cur || !NODES[id]) return;
+    var t = poseOf(id);
+    move = { fp: camera.position.clone(), fq: camera.quaternion.clone(), tp: t.p, tq: t.q, t: 0, dur: reduce ? 0.01 : (dur || 0.9) };
+    cur = id; syncNav();
+  }
+
+  /* ---------- UI ---------- */
+  var sayEl = document.getElementById('say'), sayT = 0;
+  var navL = document.getElementById('nav-left'), navR = document.getElementById('nav-right'), navB = document.getElementById('nav-back');
+  function objective() {
+    if (!S.noteRead && !S.keys.brass) return 'A note has been left on the reading desk.';
+    if (!S.keys.brass) return 'Volume I: gray and thin, west wall, between two red spines.';
+    if (!S.cabOpen) return 'Brass opens glass. East wall.';
+    if (!S.keys.silver) return 'Volume II is in the cabinet.';
+    if (!S.drawerOpen) return 'Silver is for the small lock on the desk drawer.';
+    if (!S.keys.iron) return 'Volume III is in the drawer.';
+    if (!S.shelfOpen) return 'North wall. The book with no title takes iron.';
+    if (cur !== 'platform') return 'A stairway leads down behind the shelf.';
+    return 'The train only goes one way. Board it.';
+  }
+  function say(msg, secs) { sayEl.textContent = msg; sayT = secs || 4.5; }
+  function syncNav() {
+    var n = NODES[cur];
+    navL.hidden = !n.left; navR.hidden = !n.right; navB.hidden = !n.back;
+    if (sayT <= 0) sayEl.textContent = objective();
+  }
+  function syncKeys() {
+    Object.keys(S.keys).forEach(function (k) { document.querySelector('.slot[data-k="' + k + '"]').setAttribute('data-on', S.keys[k] ? 'true' : 'false'); });
+  }
+  navL.addEventListener('click', function () { if (S.mode === 'play' && NODES[cur].left) goTo(NODES[cur].left, 0.7); });
+  navR.addEventListener('click', function () { if (S.mode === 'play' && NODES[cur].right) goTo(NODES[cur].right, 0.7); });
+  navB.addEventListener('click', function () { if (S.mode === 'play' && NODES[cur].back) goTo(NODES[cur].back, cur === 'platform' ? 2.2 : 0.9); });
+
+  /* ---------- reading ---------- */
+  var readerEl = document.getElementById('reader'), bookEl = document.getElementById('book');
+  var leafL = document.getElementById('leaf-l'), leafR = document.getElementById('leaf-r');
+  var pgPrev = document.getElementById('pg-prev'), pgNext = document.getElementById('pg-next');
+  var open = null, spread = 0;
+  var KEY_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M11 12h10M17 12v4M20.5 12v3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
+  function leafHTML(paras, folio) {
+    return paras.map(function (p) { return '<p>' + p + '</p>'; }).join('') + (folio ? '<span class="folio">' + folio + '</span>' : '');
+  }
+  function spreads(b) { return b.sheet ? 1 : Math.ceil(b.pages.length / 2) + 1; }
+  function renderBook() {
+    var b = BOOKS[open], total = spreads(b);
+    bookEl.style.setProperty('--cover', b.cover || b.color);
+    bookEl.classList.toggle('sheet', !!b.sheet);
+    document.getElementById('book-title').textContent = b.title;
+    document.getElementById('book-pages').textContent = b.sheet ? '' : 'Pages ' + (spread * 2 + 1) + '–' + (spread * 2 + 2);
+    leafR.hidden = !!b.sheet;
+    if (b.sheet) leafL.innerHTML = leafHTML(b.pages[0]);
+    else if (spread < total - 1) {
+      leafL.innerHTML = leafHTML(b.pages[spread * 2], spread * 2 + 1);
+      leafR.innerHTML = leafHTML(b.pages[spread * 2 + 1] || [], spread * 2 + 2);
+    } else {
+      /* the hollow: the key is here once a couple of pages have been turned */
+      var has = S.keys[b.key];
+      leafL.innerHTML = leafHTML(['<span class="head">The rest of the pages have been cut away to make a hollow.</span>'], spread * 2 + 1);
+      leafR.innerHTML = '<div class="hollow" style="color:' + C[b.key] + '">' + (has
+        ? '<p style="color:' + C.ink + '">The hollow is empty. You have the ' + KEY_NAME[b.key] + ' key.</p>'
+        : KEY_SVG + '<button class="btn" id="take" type="button">Take the ' + KEY_NAME[b.key] + ' key</button>') + '</div><span class="folio">' + (spread * 2 + 2) + '</span>';
+      var take = document.getElementById('take');
+      if (take) take.addEventListener('click', function () {
+        S.keys[b.key] = true; syncKeys(); renderBook();
+        say('You take the ' + KEY_NAME[b.key] + ' key.');
+        try { document.getElementById('book-close').focus({ preventScroll: true }); } catch (e) {}
+      });
+    }
+    pgPrev.disabled = spread === 0; pgNext.disabled = spread >= total - 1;
+    pgPrev.hidden = pgNext.hidden = !!b.sheet;
+  }
+  function openBook(id) {
+    open = id; spread = 0; renderBook();
+    readerEl.hidden = false;
+    setTimeout(function () { try { (BOOKS[id].sheet ? document.getElementById('book-close') : pgNext).focus({ preventScroll: true }); } catch (e) {} }, 30);
+  }
+  function closeBook() {
+    if (!open) return;
+    if (open === 'note') S.noteRead = true;
+    open = null; readerEl.hidden = true; sayT = Math.min(sayT, 2.5); syncNav();
+    try { canvas.focus({ preventScroll: true }); } catch (e) {}
+  }
+  function turn(d) { if (!open) return; spread = clamp(spread + d, 0, spreads(BOOKS[open]) - 1); renderBook(); }
+  pgPrev.addEventListener('click', function () { turn(-1); });
+  pgNext.addEventListener('click', function () { turn(1); });
+  document.getElementById('book-close').addEventListener('click', closeBook);
+
+  /* ---------- the train ---------- */
+  var fadeEl = document.getElementById('fade');
+  function board() {
+    if (S.mode !== 'play') return;
+    S.mode = 'boarding'; say('The doors close behind you.', 8);
+    navL.hidden = navR.hidden = navB.hidden = true;
+    fadeEl.style.opacity = 1;
+    setTimeout(function () {
+      camera.position.set(0, RIDE_Y, 2); camera.rotation.set(0, 0, 0);
+      S.mode = 'ride'; S.rideT = 0; fadeEl.style.opacity = 0;
+    }, reduce ? 50 : 650);
+  }
+  function arrive() {
+    S.mode = 'done'; fadeEl.style.opacity = 1;
+    window.BW.complete({
+      note: 'Three volumes · three keys · one train',
+      stayLabel: 'Back to the library',
+      onClose: function () { S.mode = 'play'; snap('platform'); fadeEl.style.opacity = 0; try { canvas.focus({ preventScroll: true }); } catch (e) {} }
+    });
+  }
+
+  /* ---------- input ---------- */
+  var ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  function pick(e) {
+    var r = canvas.getBoundingClientRect();
+    ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    return ray.intersectObjects(clickables, false).filter(function (h) { return h.object.visible; });
+  }
+  function atHub() { return cur.indexOf('hub') === 0; }
+  function here(node) { return node === cur; }
+  function blocked() { return !S.started || move || open || S.mode !== 'play' || (window.BW && window.BW.isOpen()); }
+  var down = null;
+  canvas.addEventListener('pointerdown', function (e) { down = { x: e.clientX, y: e.clientY }; });
+  canvas.addEventListener('pointerup', function (e) {
+    if (!down || Math.abs(e.clientX - down.x) + Math.abs(e.clientY - down.y) > 10) { down = null; return; }
+    down = null;
+    if (blocked()) return;
+    var hits = pick(e);
+    for (var i = 0; i < hits.length; i++) {
+      var u = hits[i].object.userData;
+      if (!here(u.node)) { goTo(u.node, cur === 'platform' || u.node === 'platform' ? 2.2 : 0.9); return; }
+      if (u.act) { u.act(); return; }
+    }
+  });
+  var hoverRaf = 0;
+  canvas.addEventListener('pointermove', function (e) {
+    if (hoverRaf || e.pointerType === 'touch') return;
+    hoverRaf = requestAnimationFrame(function () {
+      hoverRaf = 0;
+      if (blocked()) { canvas.style.cursor = 'default'; return; }
+      var hits = pick(e), label = '';
+      for (var i = 0; i < hits.length; i++) {
+        var u = hits[i].object.userData;
+        if (!here(u.node) || u.act) { label = u.label; break; }
+      }
+      canvas.style.cursor = label ? 'pointer' : 'default';
+      canvas.title = label;
+    });
+  });
+  window.addEventListener('keydown', function (e) {
+    var t = e.target;
+    if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
+    if (window.BW && window.BW.isOpen()) return;
+    if (open) {
+      if (e.code === 'ArrowRight') { e.preventDefault(); turn(1); }
+      else if (e.code === 'ArrowLeft') { e.preventDefault(); turn(-1); }
+      else if (e.code === 'Escape') { e.preventDefault(); closeBook(); }
+      return;
+    }
+    if (blocked()) return;
+    var n = NODES[cur];
+    if (e.code === 'ArrowLeft' && n.left) { e.preventDefault(); goTo(n.left, 0.7); }
+    else if (e.code === 'ArrowRight' && n.right) { e.preventDefault(); goTo(n.right, 0.7); }
+    else if ((e.code === 'ArrowDown' || e.code === 'Escape' || e.code === 'Backspace') && n.back) { e.preventDefault(); goTo(n.back, cur === 'platform' ? 2.2 : 0.9); }
+    else if (e.code === 'ArrowUp' && atHub()) { e.preventDefault(); goTo(cur === 'hubW' ? 'west' : cur === 'hubE' ? 'cabinet' : 'desk'); }
+  });
+  document.getElementById('start-btn').addEventListener('click', function () {
+    document.getElementById('start').hidden = true; S.started = true;
+    try { canvas.focus({ preventScroll: true }); } catch (e) {}
+  });
+
+  /* ---------- update ---------- */
+  var time = 0;
+  function update(dt) {
+    time += dt;
+    if (move) {
+      move.t += dt / move.dur;
+      var k = ease(Math.min(1, move.t));
+      camera.position.lerpVectors(move.fp, move.tp, k);
+      THREE.Quaternion.slerp(move.fq, move.tq, camera.quaternion, k);
+      if (move.t >= 1) { move = null; syncNav(); }
+    }
+    if (S.cabOpen > 0 && S.cabOpen < 1) {
+      S.cabOpen = Math.min(1, S.cabOpen + dt / 0.9);
+      var c = ease(S.cabOpen); doorL.rotation.y = -1.85 * c; doorR.rotation.y = 1.85 * c;
+    }
+    if (S.drawerOpen > 0 && S.drawerOpen < 1) {
+      S.drawerOpen = Math.min(1, S.drawerOpen + dt / 0.8);
+      drawer.position.z = 0.5 + 0.46 * ease(S.drawerOpen);
+    }
+    if (S.shelfOpen > 0 && S.shelfOpen < 1) {
+      S.shelfOpen = Math.min(1, S.shelfOpen + dt / 2.2);
+      hinge.rotation.y = -1.9 * ease(S.shelfOpen);
+      if (S.shelfOpen >= 1) { doorway.visible = true; syncNav(); }
+    }
+    if (S.mode === 'ride') {
+      S.rideT += dt;
+      var total = reduce ? 2 : 6.5;
+      var v = Math.min(46, 6 + S.rideT * 12);
+      rings.forEach(function (r) { r.position.z += v * dt; if (r.position.z > 3) r.position.z -= 16 * 7; });
+      if (!reduce) { camera.position.x = Math.sin(time * 23) * 0.012; camera.position.y = RIDE_Y + Math.sin(time * 31) * 0.01; }
+      if (S.rideT >= total) arrive();
+    }
+    if (sayT > 0) { sayT -= dt; if (sayT <= 0) sayEl.textContent = objective(); }
+  }
+
+  /* ---------- sizing + loop ---------- */
+  function resize() {
+    var w = frame.clientWidth || 360, h = frame.clientHeight || 520;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    /* keep roughly the same width of room in view on tall screens */
+    camera.fov = clamp(2 * Math.atan(Math.tan(0.54) * Math.max(1, 1.25 / camera.aspect)) * 180 / Math.PI, 62, 92);
+    camera.updateProjectionMatrix();
+  }
+  var last = performance.now();
+  function loop(now) {
+    var dt = Math.min((now - last) / 1000, 0.05); last = now;
+    update(dt);
+    renderer.render(scene, camera);
+    requestAnimationFrame(loop);
+  }
+  resize();
+  snap('hubN');
+  syncKeys();
+  renderer.render(scene, camera);
+  if (window.ResizeObserver) new ResizeObserver(function () { resize(); renderer.render(scene, camera); }).observe(frame); else addEventListener('resize', resize);
+  if (document.fonts && document.fonts.load) {
+    document.fonts.load('600 22px "Cormorant Garamond"').then(function () {
+      fontTexs.forEach(function (t) { var c = t.userData.canvas; t.userData.draw(c.getContext('2d'), c.width, c.height); t.needsUpdate = true; });
+    }, function () {});
+  }
+  requestAnimationFrame(function (t) { last = t; requestAnimationFrame(loop); });
+})();
+</script>
+</body>
+</html>

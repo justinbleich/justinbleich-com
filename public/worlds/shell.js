@@ -8,18 +8,18 @@
   var SELECT = '/worlds';
   var STORE = 'bleich-worlds-cleared';
 
-  /* One stop per world, oldest first. World 5 is the finale. */
+  /* One stop per world, oldest first. The last world is the finale. */
   var WORLDS = [
     { n: 1, name: 'The Run', role: { period: 'Previously', name: 'Sprinklr', desc: 'Designed universal search and a new self-serve dashboard experience.', url: 'https://www.sprinklr.com' } },
     { n: 2, name: 'The Gallery', role: { period: '2021–2024', name: 'NFTX', desc: 'The first NFT liquidity protocol in web3, creating tradable pools for collections.', url: 'https://v2.nftx.io' } },
     { n: 3, name: 'The Diorama', role: { period: '2024–2026', name: 'OKX', desc: 'Built global payments experiences to bridge consumers and web3.', url: 'https://www.okx.com' } },
     { n: 4, name: 'Grand Prix', role: { period: 'Current', name: 'OnePay', desc: 'Leading OnePay Crypto design.', url: 'https://www.onepay.com' } },
-    { n: 5, name: 'The Lab', role: null }
+    { n: 5, name: 'The Lab', role: { period: 'Also', name: 'FRAX, Paste', desc: 'Two more stops along the way: <a href="https://app.frax.finance" target="_blank" rel="noopener">FRAX</a> and <a href="https://paste.so" target="_blank" rel="noopener">Paste</a>.' } },
+    { n: 6, name: 'The Library', role: null }
   ];
   var FINALE = {
     title: 'That’s the whole career so far.',
-    desc: 'Also → <a href="https://app.frax.finance" target="_blank" rel="noopener">FRAX</a>, <a href="https://paste.so" target="_blank" rel="noopener">Paste</a>. ' +
-      'Say hi at <a href="mailto:justin.bleich@gmail.com">justin.bleich@gmail.com</a> or on ' +
+    desc: 'Say hi at <a href="mailto:justin.bleich@gmail.com">justin.bleich@gmail.com</a> or on ' +
       '<a href="https://linkedin.com/in/justinbleich" target="_blank" rel="noopener">LinkedIn</a>.'
   };
 
@@ -98,7 +98,7 @@
     var role = world.role;
     var next = WORLDS[n] || null;
     var card = el('div', 'bw-card');
-    card.appendChild(el('p', 'bw-eyebrow', 'World ' + n + ' clear · ' + (role ? 'Experience unlocked' : 'All five worlds')));
+    card.appendChild(el('p', 'bw-eyebrow', 'World ' + n + ' clear · ' + (role ? 'Experience unlocked' : 'All ' + WORLDS.length + ' worlds')));
     var title = el('p', 'bw-title', role ? role.period + ' → ' + role.name : FINALE.title);
     title.id = 'bw-title';
     card.appendChild(title);
