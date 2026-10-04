@@ -6,7 +6,7 @@ import { defineConfig } from "vite";
 function worldsIndex() {
   const rewrite = (req, _res, next) => {
     const [path, query] = req.url.split("?");
-    if (/^\/worlds(\/world-[1-6])?\/?$/.test(path)) {
+    if (/^\/worlds(\/[\w-]+)*\/?$/.test(path)) {
       req.url =
         path.replace(/\/?$/, "/index.html") + (query ? `?${query}` : "");
     }
