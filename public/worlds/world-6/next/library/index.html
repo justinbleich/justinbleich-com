@@ -223,6 +223,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
 
 (async function () {
@@ -312,6 +313,7 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
   var manager = new THREE.LoadingManager();
   manager.onProgress = function (url, n, total) { var pc = Math.round(n / total * 100) + '%'; startBtn.textContent = 'Loading ' + pc; arriveText.textContent = 'Climbing the stair… ' + pc; };
   var gltfLoader = new GLTFLoader(manager), texLoader = new THREE.TextureLoader(manager);
+  gltfLoader.setDRACOLoader(new DRACOLoader(manager).setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/libs/draco/gltf/'));
   var MODEL_IDS = ['book_encyclopedia_set_01', 'GothicCabinet_01', 'ArmChair_01', 'Chandelier_03', 'vintage_oil_lamp', 'wooden_ladder', 'vintage_grandfather_clock_01', 'fancy_picture_frame_01', 'mantel_clock_01'];
   var TEX_IDS = ['herringbone_parquet', 'dark_wood', 'plastered_wall_04'];
   var MODELS = {}, TEX = {}, envHDR;
@@ -326,6 +328,13 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
           (TEX[id] = TEX[id] || {})[k] = t;
         });
       }));
+    })).concat([
+      gltfLoader.loadAsync(ASSETS + 'models/subway/subway.glb').then(function (g) { MODELS.subway = g.scene; }),
+      fetch(ASSETS + 'models/subway/path.json').then(function (r) { return r.json(); }).then(function (pts) { MODELS.subwayPath = pts; })
+    ]).concat(['concrete_wall', 'concrete_floor', 'leaks', 'rust'].map(function (id) {
+      return texLoader.loadAsync(ASSETS + 'models/subway/' + id + '.jpg').then(function (t) {
+        t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; t.flipY = false; TEX[id] = t;
+      });
     })).concat([new HDRLoader(manager).loadAsync(ASSETS + 'hdri/fireplace_1k.hdr').then(function (t) { envHDR = t; })]));
   } catch (e) { document.getElementById('fail').hidden = false; return; }
   startBtn.disabled = false; startBtn.textContent = 'Step inside';
@@ -352,7 +361,8 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
   scene.background = new THREE.Color(C.bg);
   scene.fog = new THREE.Fog(C.bg, 12, 36);
   var camera = new THREE.PerspectiveCamera(62, 16 / 9, 0.1, 140);
-  scene.add(new THREE.HemisphereLight(0xffe7c2, 0x1a120c, 0.75));
+  var hemi = new THREE.HemisphereLight(0xffe7c2, 0x1a120c, 0.75);
+  scene.add(hemi);
   envHDR.mapping = THREE.EquirectangularReflectionMapping;
   scene.environment = new THREE.PMREMGenerator(renderer).fromEquirectangular(envHDR).texture;
   scene.environmentIntensity = 0.45;
@@ -697,19 +707,83 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
     var hl = new THREE.Mesh(new THREE.CircleGeometry(0.22, 16), glow('#fff3cf')); hl.rotation.y = Math.PI / 2; hl.position.set(3.51, 1.2, 0); train.add(hl);
   })();
 
-  /* the ride: a separate straight tunnel, far below, that loops past the camera */
-  var RIDE_Y = -60, rings = [];
+  /* the ride: emsiardy's "Underground Subway" (CC-BY 3.0), parked far below the library.
+     Everything here is rebuilt from the Blender file's own settings, read out of its old
+     Blender Internal data: which image each surface used and how often it repeats, the
+     base colours, what emits light, the mist, and the wall lamps, which the file
+     duplicates along the rail path (one pair every 4th of 100 path frames). The model is
+     about half real size, so it is scaled up to fit a train. */
+  var RIDE_Y = -60, RIDE_SCALE = 2.3, RIDE_EYE = 0.6, LAMP_STEP = 0.04;
+  var ridePath, rideRaw, rideGlass, rideLight, ridePool = [], rideTunnel;
+  var RIDE_GLASS = new THREE.Color().setRGB(1.0, 0.7, 0.76).multiplyScalar(2.6);   /* white glass, with the preview's pink glare */
+  var RIDE_MIST = new THREE.Color().setRGB(0.051, 0.051, 0.051), ROOM_BG = scene.background, ROOM_FOG = scene.fog;
+  var RIDE_FOG = new THREE.Fog(RIDE_MIST, 5 * RIDE_SCALE, 30 * RIDE_SCALE);
   (function () {
-    var dark = lam('#141518');
-    plane(4, 240, dark, 0, RIDE_Y - 1.6, -100, 0, -Math.PI / 2); plane(4, 240, dark, 0, RIDE_Y + 1.8, -100, 0, Math.PI / 2);
-    plane(240, 3.4, dark, -2, RIDE_Y + 0.1, -100, Math.PI / 2); plane(240, 3.4, dark, 2, RIDE_Y + 0.1, -100, -Math.PI / 2);
-    box(scene, 0.08, 0.06, 240, metal('#8a8f96'), -0.55, RIDE_Y - 1.56, -100); box(scene, 0.08, 0.06, 240, metal('#8a8f96'), 0.55, RIDE_Y - 1.56, -100);
-    for (var i = 0; i < 16; i++) {
-      var g = new THREE.Group(), m = glow(C.lamp);
-      box(g, 3.9, 0.06, 0.06, m, 0, 1.72, 0); box(g, 0.06, 3.3, 0.06, m, -1.94, 0.1, 0); box(g, 0.06, 3.3, 0.06, m, 1.94, 0.1, 0);
-      g.position.set(0, RIDE_Y, -i * 7); scene.add(g); rings.push(g);
+    var tunnel = rideTunnel = MODELS.subway;
+    tunnel.position.set(0, RIDE_Y, 0); tunnel.scale.setScalar(RIDE_SCALE);
+    function lin(r, g, b) { return new THREE.Color().setRGB(r, g, b); }
+    function img(id, rx, ry) { var t = TEX[id].clone(); t.repeat.set(rx, ry); return t; }
+    /* the floor's leak image drove its mirror: bright leaks are wet and shiny */
+    var wet = tex(256, 256, function (g, w, h) {
+      g.drawImage(TEX.leaks.image, 0, 0, w, h);
+      var im = g.getImageData(0, 0, w, h), a = im.data;
+      for (var i = 0; i < a.length; i += 4) { var v = 255 - (a[i] + a[i + 1] + a[i + 2]) / 3 * 0.8; a[i] = a[i + 1] = a[i + 2] = v; }
+      g.putImageData(im, 0, 0);
+    }, [1, 25]);
+    wet.colorSpace = THREE.NoColorSpace; wet.flipY = false;
+    var wallT = img('concrete_wall', 2, 25), floorT = img('concrete_floor', 1, 25), rustT = img('rust', 1, 60);
+    var wall = new THREE.MeshStandardMaterial({ map: wallT, bumpMap: wallT, bumpScale: 0.6, color: lin(0.8, 0.8, 0.8), roughness: 0.6, side: THREE.DoubleSide });
+    var floorM = new THREE.MeshStandardMaterial({ map: floorT, bumpMap: floorT, bumpScale: 2, roughnessMap: wet, color: lin(0.8, 0.8, 0.8), roughness: 1, side: THREE.DoubleSide });
+    var pipes = new THREE.MeshStandardMaterial({ map: rustT, bumpMap: rustT, bumpScale: 0.8, color: lin(0.8, 0.8, 0.8), roughness: 0.6, metalness: 0.2, side: THREE.DoubleSide });
+    function flat(c, rough, metal) { return new THREE.MeshStandardMaterial({ color: c, roughness: rough, metalness: metal || 0 }); }
+    rideGlass = new THREE.MeshBasicMaterial({ color: RIDE_GLASS.clone(), fog: false });
+    var BY_NAME = {
+      'Material.005': wall, 'Material.006': floorM, 'Material.009': pipes,
+      'Material.001': rideGlass,                                                             /* lamp glass, emit 1.0 */
+      'Material.003': new THREE.MeshBasicMaterial({ color: lin(0.279, 0.254, 0.288) }),      /* ceiling tray, emit 0.75 */
+      'Material.002': flat(lin(0.047, 0.047, 0.047), 0.6), 'Material.004': flat(lin(0.035, 0.035, 0.035), 0.4, 0.3),
+      'Material.007': flat(lin(0.157, 0.157, 0.157), 0.35, 0.5), 'Material.010': flat(lin(1, 0, 0.002), 0.4),
+      'Nuts': flat(lin(0.037, 0.037, 0.037), 0.7, 0.6), 'Rail Top': flat(lin(0.8, 0.8, 0.8), 0.3, 1),
+      'Rusty Rail': flat(lin(0.15, 0.05, 0.03), 0.7, 0.5)   /* the file's rust, darkened as its cloud texture did */
+    };
+    tunnel.traverse(function (o) {
+      if (!o.isMesh) return;
+      o.userData.noShadow = true;
+      o.material = BY_NAME[o.material.name] || BY_NAME['Material.004'];
+    });
+    scene.add(tunnel);
+    /* Blender is z-up. rideRaw is the rail path in the model's own space; ridePath is the
+       same line at world scale, lifted to the driver's eye. */
+    var raw = MODELS.subwayPath.map(function (q) { return new THREE.Vector3(q[0], q[2], -q[1]); });
+    rideRaw = new THREE.CatmullRomCurve3(raw);
+    ridePath = new THREE.CatmullRomCurve3(raw.map(function (v) { return new THREE.Vector3(v.x * RIDE_SCALE, (v.y + RIDE_EYE) * RIDE_SCALE + RIDE_Y, v.z * RIDE_SCALE); }));
+    /* the wall lamps: the file holds one pair and repeats it down the path */
+    var lamp = tunnel.getObjectByName('Cube'), up = new THREE.Vector3(0, 1, 0), P = new THREE.Vector3(), T = new THREE.Vector3();
+    function frameAt(u) {
+      rideRaw.getPointAt(u, P); rideRaw.getTangentAt(u, T);
+      var m = new THREE.Matrix4().lookAt(P, P.clone().add(T), up); m.setPosition(P); return m;
     }
+    if (lamp) {
+      lamp.updateMatrix();
+      var inv0 = frameAt(0).invert(), base = lamp.matrix.clone();
+      for (var k = 1; k * LAMP_STEP < 0.995; k++) {
+        var c = lamp.clone();
+        c.matrixAutoUpdate = false;
+        c.matrix.copy(frameAt(k * LAMP_STEP)).multiply(inv0).multiply(base);
+        lamp.parent.add(c);
+      }
+    }
+    /* the file hangs point lights at every lamp; a few of them follow the train instead */
+    for (var i = 0; i < 4; i++) { var pl = new THREE.PointLight(0xffd9e0, 0, 9 * RIDE_SCALE, 2); scene.add(pl); ridePool.push(pl); }
+    rideLight = new THREE.SpotLight(0xfff4ee, 0, 40, 0.7, 0.8, 1.8);
+    scene.add(rideLight); scene.add(rideLight.target);
   })();
+  function rideMood(on) {
+    hemi.intensity = on ? 0.05 : 0.75;
+    scene.environmentIntensity = on ? 0.04 : 0.45;
+    scene.fog = on ? RIDE_FOG : ROOM_FOG; scene.background = on ? RIDE_MIST : ROOM_BG;
+    if (!on) { rideLight.intensity = 0; ridePool.forEach(function (l) { l.intensity = 0; }); bloom.strength = 0.38; }
+  }
 
   /* ---------- viewpoints ---------- */
   var HUB = [0, 1.6, 6.4];
@@ -827,16 +901,29 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
     navL.hidden = navR.hidden = navB.hidden = true;
     fadeEl.style.opacity = 1;
     setTimeout(function () {
-      camera.position.set(0, RIDE_Y, 2); camera.rotation.set(0, 0, 0);
-      S.mode = 'ride'; S.rideT = 0; fadeEl.style.opacity = 0;
+      placeOnRide(0);
+      S.mode = 'ride'; S.rideT = 0; fadeEl.style.opacity = 0; rideMood(true);
     }, reduce ? 50 : 650);
   }
+  var rideAhead = new THREE.Vector3();
+  function placeOnRide(u) {
+    ridePath.getPointAt(u, camera.position);
+    ridePath.getPointAt(Math.min(1, u + 0.03), rideAhead);
+    camera.lookAt(rideAhead);
+    rideLight.position.copy(camera.position); rideLight.target.position.copy(rideAhead);
+    /* park the pooled lights at the lamp stations around the train */
+    var k0 = Math.floor(u / LAMP_STEP) - 1;
+    ridePool.forEach(function (l, i) {
+      var uk = Math.min(0.999, Math.max(0, (k0 + i) * LAMP_STEP));
+      ridePath.getPointAt(uk, l.position); l.position.y += 0.25 * RIDE_SCALE;
+    });
+  }
   function arrive() {
-    S.mode = 'done'; fadeEl.style.opacity = 1; bloom.strength = 0.38;
+    S.mode = 'done'; fadeEl.style.opacity = 1;
     window.BW.complete({
       note: 'Three volumes · three keys · one train',
       stayLabel: 'Back to the library',
-      onClose: function () { S.mode = 'play'; snap('platform'); fadeEl.style.opacity = 0; setTimeout(function () { fadeEl.style.background = ''; }, 600); try { canvas.focus({ preventScroll: true }); } catch (e) {} }
+      onClose: function () { S.mode = 'play'; rideMood(false); snap('platform'); fadeEl.style.opacity = 0; setTimeout(function () { fadeEl.style.background = ''; }, 600); try { canvas.focus({ preventScroll: true }); } catch (e) {} }
     });
   }
 
@@ -928,14 +1015,18 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
     }
     if (S.mode === 'ride') {
       S.rideT += dt;
-      var total = reduce ? 2 : 6.5;
-      var v = Math.min(46, 6 + S.rideT * 12);
-      /* the glow builds as the train picks up speed, and the ride ends in it */
+      var total = reduce ? 2.5 : 8;
+      /* slow out of the station, then faster and brighter all the way to the light */
       var rp = Math.min(1, S.rideT / total);
-      bloom.strength = 0.38 + rp * rp * 1.5;
-      if (rp > 0.72) { fadeEl.style.background = '#ffe8b0'; fadeEl.style.opacity = String((rp - 0.72) / 0.28); }
-      rings.forEach(function (r) { r.position.z += v * dt; if (r.position.z > 3) r.position.z -= 16 * 7; });
-      if (!reduce) { camera.position.x = Math.sin(time * 23) * 0.012; camera.position.y = RIDE_Y + Math.sin(time * 31) * 0.01; }
+      placeOnRide(0.02 + Math.pow(rp, 1.7) * 0.8);
+      if (!reduce) { camera.position.x += Math.sin(time * 23) * 0.012 * rp; camera.position.y += Math.sin(time * 31) * 0.01 * rp; }
+      /* the glow builds with speed: lamp glass, the light they throw, and the bloom */
+      var glowUp = 1 + rp * rp * 3;
+      rideGlass.color.copy(RIDE_GLASS).multiplyScalar(glowUp);
+      ridePool.forEach(function (l) { l.intensity = 3.2 * glowUp; });
+      rideLight.intensity = 1.2 + rp * 10;
+      bloom.strength = 0.75 + rp * rp * 1.4;
+      if (rp > 0.72) { fadeEl.style.background = '#ffe9e2'; fadeEl.style.opacity = String((rp - 0.72) / 0.28); }
       if (S.rideT >= total) arrive();
     }
     if (sayT > 0) { sayT -= dt; if (sayT <= 0) sayEl.textContent = objective(); }
@@ -1048,6 +1139,8 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
       fontTexs.forEach(function (t) { var c = t.userData.canvas; t.userData.draw(c.getContext('2d'), c.width, c.height); t.needsUpdate = true; });
     }, function () {});
   }
+  /* prototype shortcut: add ?ride to the address to jump straight to the train */
+  if (/[?&]ride\b/.test(location.search)) { startBtn.click(); snap('platform'); board(); }
   if (arrived) {
     startBtn.click();
     arriveText.textContent = '';
