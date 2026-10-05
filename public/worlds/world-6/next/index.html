@@ -456,22 +456,22 @@ function creaseNormals(src){
 }
 function loadWorld(){
   const base='/worlds/world-6/next/room/';
-  return Promise.all([fetch(base+'world.json').then(r=>r.json()),fetch(base+'world.b64.txt').then(r=>r.text()).then(function(t){const b=atob(t.trim()),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u.buffer;}),fetch(base+'lm_scales.json').then(r=>r.json())]).then(function(res){
+  return Promise.all([fetch(base+'world.json').then(r=>r.json()),fetch(base+'world.bin').then(r=>r.arrayBuffer()),fetch(base+'lm_scales.json').then(r=>r.json())]).then(function(res){
     const man=res[0],bin=res[1],scales=res[2];
     let pending=0;const wait=new Promise(function(ok){window.__texDone=ok;});
     const need=[];
     const lms={};
-    ['arch','furn','shelf','secret'].forEach(function(c){lms[c]=loadTex(base+'lm_'+c+'.jpg',true,false,function(){});lms[c].flipY=true;});
+    ['arch','furn','shelf','secret'].forEach(function(c){lms[c]=loadTex(base+'lm_'+c+'.webp',true,false,function(){});lms[c].flipY=true;});
     const mats={};
     function matFor(chunk,name){
       const key=chunk+'|'+name;if(mats[key])return mats[key];
       const d=man.mats[name];
       const o={color:new THREE.Color(d.color[0],d.color[1],d.color[2]),lightMap:lms[chunk],lightMapIntensity:scales[chunk]*LMX*BAKE,roughness:(SURF[name]||[.8,0])[0],metalness:(SURF[name]||[.8,0])[1]};
-      if(d.map)o.map=loadTex(base+'tex_'+d.map+'.jpg',true,true);
+      if(d.map&&name!=='floor')o.map=loadTex(base+'tex_'+d.map+'.webp',true,true);
       /* shared with the library: the same scanned parquet, under this room's baked light */
-      if(name==='floor'){o.map=loadTex(ASSETS+'textures/herringbone_parquet_diff.jpg',true,true);o.map.repeat.set(1.25,1.25);o.color=new THREE.Color(0xd9b596).convertSRGBToLinear();
-        o.normalMap=loadTex(ASSETS+'textures/herringbone_parquet_nor.jpg',false,true);o.normalMap.repeat.set(1.25,1.25);
-        o.roughnessMap=loadTex(ASSETS+'textures/herringbone_parquet_rough.jpg',false,true);o.roughnessMap.repeat.set(1.25,1.25);o.roughness=.9;}
+      if(name==='floor'){o.map=loadTex(ASSETS+'textures/herringbone_parquet_diff.webp',true,true);o.map.repeat.set(1.25,1.25);o.color=new THREE.Color(0xd9b596).convertSRGBToLinear();
+        o.normalMap=loadTex(ASSETS+'textures/herringbone_parquet_nor.webp',false,true);o.normalMap.repeat.set(1.25,1.25);
+        o.roughnessMap=loadTex(ASSETS+'textures/herringbone_parquet_rough.webp',false,true);o.roughnessMap.repeat.set(1.25,1.25);o.roughness=.9;}
       if(name==='fabric'||name==='paper'||name==='canvas')o.side=THREE.DoubleSide;
       if(name==='book')o.vertexColors=true;
       const m=new THREE.MeshStandardMaterial(o);
@@ -573,7 +573,7 @@ for(let i=0;i<8;i++){const a=i/8*TAU;candleGlows.push(glow(0xffa84a,0.22,Math.co
 
 /* ---------- desk: the library's desk, in the library's scanned wood ---------- */
 (function(){
-  const t=loadTex(ASSETS+'textures/dark_wood_diff.jpg',true,true);
+  const t=loadTex(ASSETS+'textures/dark_wood_diff.webp',true,true);
   const wood=c=>new THREE.MeshStandardMaterial({map:t,color:new THREE.Color(c).convertSRGBToLinear(),roughness:.55});
   const knob=new THREE.MeshStandardMaterial({color:C(0x8a6d2f),metalness:.3,roughness:.7});   /* dull, so it does not flare under the lamp */
   const light=wood(0xffeacc),dark=wood(0x8f7a68),dk=new THREE.Group();dk.position.set(-1.6,0,1.6);scene.add(dk);
@@ -860,7 +860,7 @@ function endDrag(e){
 canvasEl.addEventListener('pointerup',endDrag);canvasEl.addEventListener('pointercancel',endDrag);
 
 /* ---------- resize, loop ---------- */
-let ratio=Math.min(window.devicePixelRatio||1,2);
+let ratio=Math.min(window.devicePixelRatio||1,1.5);   /* above 1.5 the bloom pass costs more than the sharpness is worth */
 /* bloom, so the fire, candles and lamp glow as the library's lights do */
 const composer=new THREE.EffectComposer(renderer,renderer.capabilities.isWebGL2?new THREE.WebGLMultisampleRenderTarget(2,2,{format:THREE.RGBAFormat,type:THREE.HalfFloatType}):undefined);
 composer.addPass(new THREE.RenderPass(scene,camera));

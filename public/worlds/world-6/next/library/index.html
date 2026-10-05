@@ -275,10 +275,10 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
   var MODELS = {}, TEX = {}, envHDR;
   try {
     await Promise.all(MODEL_IDS.map(function (id) {
-      return gltfLoader.loadAsync(ASSETS + 'models/' + id + '/' + id + '.gltf').then(function (g) { MODELS[id] = g.scene; });
+      return gltfLoader.loadAsync(ASSETS + 'models/' + id + '/' + id + '.glb').then(function (g) { MODELS[id] = g.scene; });
     }).concat(TEX_IDS.map(function (id) {
       return Promise.all(['diff', 'nor', 'rough'].map(function (k) {
-        return texLoader.loadAsync(ASSETS + 'textures/' + id + '_' + k + '.jpg').then(function (t) {
+        return texLoader.loadAsync(ASSETS + 'textures/' + id + '_' + k + '.webp').then(function (t) {
           if (k === 'diff') t.colorSpace = THREE.SRGBColorSpace;
           t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8;
           (TEX[id] = TEX[id] || {})[k] = t;
@@ -288,7 +288,7 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
       gltfLoader.loadAsync(ASSETS + 'models/subway/subway.glb').then(function (g) { MODELS.subway = g.scene; }),
       fetch(ASSETS + 'models/subway/path.json').then(function (r) { return r.json(); }).then(function (pts) { MODELS.subwayPath = pts; })
     ]).concat(['concrete_wall', 'concrete_floor', 'leaks', 'rust'].map(function (id) {
-      return texLoader.loadAsync(ASSETS + 'models/subway/' + id + '.jpg').then(function (t) {
+      return texLoader.loadAsync(ASSETS + 'models/subway/' + id + '.webp').then(function (t) {
         t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; t.flipY = false; TEX[id] = t;
       });
     })).concat([new HDRLoader(manager).loadAsync(ASSETS + 'hdri/fireplace_1k.hdr').then(function (t) { envHDR = t; })]));
@@ -746,14 +746,18 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
     for (var i = 0; i < 4; i++) { var pl = new THREE.PointLight(0xffd9e0, 0, 9 * RIDE_SCALE, 2); scene.add(pl); ridePool.push(pl); }
     rideLight = new THREE.SpotLight(0xfff4ee, 0, 40, 0.7, 0.8, 1.8);
     scene.add(rideLight); scene.add(rideLight.target);
+    /* off until the ride: a light that is switched on costs every surface, even at zero strength */
+    ridePool.forEach(function (l) { l.visible = false; }); rideLight.visible = false;
   })();
   function rideMood(on) {
     /* on the ride the room, its lights, its shadows and the ambient occlusion pass are all off */
     ROOM_LIGHTS.forEach(function (l) { l.visible = !on; });
     ROOM_OBJS.forEach(function (o) { if (o.material !== ghost) o.visible = !on; });
     rideTunnel.visible = on;
-    if (gtao) gtao.enabled = !on;
+    if (gtao) gtao.enabled = !on && !aoOff;
     if (!on) shadowDirty = 4;
+    wake = 6;
+    ridePool.forEach(function (l) { l.visible = on; }); rideLight.visible = on;
     hemi.intensity = on ? 0.05 : 0.75;
     scene.environmentIntensity = on ? 0.04 : 0.45;
     scene.fog = on ? RIDE_FOG : ROOM_FOG; scene.background = on ? RIDE_MIST : ROOM_BG;
@@ -1086,26 +1090,42 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
   composer.addPass(new OutputPass());
 
   /* ---------- sizing + loop ---------- */
+  var maxRatio = Math.min(window.devicePixelRatio || 1, 1.5), ratio = maxRatio, wake = 8;
   function resize() {
     var w = frame.clientWidth || 360, h = frame.clientHeight || 520;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    renderer.setPixelRatio(ratio);
     renderer.setSize(w, h, false);
-    composer.setPixelRatio(renderer.getPixelRatio());
+    composer.setPixelRatio(ratio);
     composer.setSize(w, h);
     camera.aspect = w / h;
     /* keep roughly the same width of room in view on tall screens */
     camera.fov = clamp(2 * Math.atan(Math.tan(0.54) * Math.max(1, 1.25 / camera.aspect)) * 180 / Math.PI, 62, 92);
     camera.updateProjectionMatrix();
+    wake = 4;
   }
   function draw() {
     if (shadowDirty > 0 && S.mode !== 'ride') { renderer.shadowMap.needsUpdate = true; shadowDirty--; }
     composer.render();
   }
+  /* The room is still unless you are moving, something is opening, or the train is
+     running, so those are the only times a frame is drawn. */
+  function busy() {
+    return move || S.mode === 'ride' || shadowDirty > 0 || wake > 0 ||
+      (S.cabOpen > 0 && S.cabOpen < 1) || (S.drawerOpen > 0 && S.drawerOpen < 1) || (S.shelfOpen > 0 && S.shelfOpen < 1);
+  }
+  /* If frames run long while something is moving, step the resolution down once or twice. */
+  var slowT = 0, slowN = 0, aoOff = false;
+  function adapt(raw) {
+    slowT += raw; slowN++;
+    if (slowN < 45) return;
+    var avg = slowT / slowN; slowT = 0; slowN = 0;
+    if (avg > 1 / 40 && ratio > 0.8) { ratio = Math.max(0.8, ratio - 0.25); if (ratio <= 1 && gtao) { aoOff = true; if (S.mode !== 'ride') gtao.enabled = false; } resize(); }
+  }
   var last = performance.now();
   function loop(now) {
-    var dt = Math.min((now - last) / 1000, 0.05); last = now;
+    var raw = (now - last) / 1000, dt = Math.min(raw, 0.05); last = now;
     update(dt);
-    draw();
+    if (busy()) { draw(); if (wake > 0) wake--; if (raw < 0.25) adapt(raw); }
     requestAnimationFrame(loop);
   }
   resize();
@@ -1116,6 +1136,7 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
   if (document.fonts && document.fonts.load) {
     document.fonts.load('600 22px "IM Fell English"').then(function () {
       fontTexs.forEach(function (t) { var c = t.userData.canvas; t.userData.draw(c.getContext('2d'), c.width, c.height); t.needsUpdate = true; });
+      wake = 4;
     }, function () {});
   }
   /* prototype shortcut: add ?ride to the address to jump straight to the train */
