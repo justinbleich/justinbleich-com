@@ -201,11 +201,11 @@ canvas {
 </style>
 <link rel="stylesheet" href="/worlds/shell.css">
 <style>
-/* Fullscreen: hint and actions dock to the bottom, progress dots move up top. */
+/* Fullscreen: the three controls dock to the bottom, progress dots move up top. */
 .hintbar {
   position: fixed; left: 50%; bottom: max(0.9rem, env(safe-area-inset-bottom)); z-index: 6;
   transform: translateX(-50%);
-  width: min(46rem, calc(100vw - 1.8rem));
+  width: max-content; max-width: calc(100vw - 1.8rem);
   padding: 0.7rem 0.9rem;
   border-radius: 14px;
   background: rgba(251, 246, 240, 0.92);
@@ -235,7 +235,6 @@ body[data-world] .keys { display: none; }
       </div>
 
       <div class="hintbar">
-        <p class="hint" aria-live="polite"><span class="hint-label mono">Hint</span><span class="hint-text" id="hint">Tap the coral crank to swing the bridge.</span></p>
         <div class="actions">
           <button class="pill coral" id="btn-turn" type="button">Turn bridge <span aria-hidden="true">· R</span></button>
           <button class="pill teal" id="btn-lift" type="button">Move lift <span aria-hidden="true">· L</span></button>
@@ -510,7 +509,7 @@ body[data-world] .keys { display: none; }
 
   /* ---------- UI ---------- */
   var cardEl = document.getElementById('card'), cardE = document.getElementById('card-eyebrow'), cardT = document.getElementById('card-title'), cardD = document.getElementById('card-desc'), cardA = document.getElementById('card-actions');
-  var hintEl = document.getElementById('hint');
+  var hintEl = document.createElement('span');   /* hints are no longer shown */
   var visited = { one: false, two: false, three: false, four: false };
   document.getElementById('card-close').addEventListener('click', function () { cardEl.hidden = true; try { canvas.focus({ preventScroll: true }); } catch (e) {} });
 
