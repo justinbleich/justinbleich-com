@@ -56,6 +56,8 @@ canvas { display: block; width: 100%; height: 520px; outline: none; touch-action
 .ghost { font-family: var(--sc); font-size: 13px; letter-spacing: .1em; min-height: 40px; padding: 0 12px; color: var(--text);
   background: rgba(18,11,7,.62); border: 1px solid var(--brass-deep); border-radius: 2px; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 .ghost[aria-pressed="false"] { color: var(--muted); text-decoration: line-through; }
+.credit { position: absolute; left: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 14px); margin: 0; font-family: var(--sc); font-size: 12px; letter-spacing: .1em; color: var(--muted); text-shadow: 0 1px 6px #000; display: none; }
+.frame[data-mode="ride"] .credit { display: block; }
 .frame[data-mode="ride"] .bar-top, .frame[data-mode="ride"] .nav { display: none; }
 
 /* caption + place chips */
@@ -126,6 +128,7 @@ h1 { font-family: var(--display); font-weight: 400; margin: 0; line-height: 1.05
         </header>
         <p class="caption" id="caption" aria-live="polite"></p>
         <nav class="nav" id="nav" aria-label="Places in the room"></nav>
+        <p class="credit" id="credit">Tunnel: “Underground Subway” by emsiardy · CC BY 3.0</p>
         <div class="fade" id="fade"></div>
         <div class="arrive" id="arrive" hidden><span id="arrive-text">Climbing the stair…</span></div>
         <section class="veil" id="reader" hidden role="dialog" aria-modal="true" aria-labelledby="book-title">
@@ -259,12 +262,12 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
   var S = { started: false, noteRead: false, keys: { brass: false, silver: false, iron: false }, cabOpen: 0, drawerOpen: 0, shelfOpen: 0, mode: 'play', rideT: 0 };
 
   /* ---------- assets (Poly Haven, CC0) ---------- */
-  var ASSETS = '/worlds/world-6/next/assets/';
+  var ASSETS = '/worlds/world-6/assets/';
   var startBtn = document.getElementById('start-btn');
   startBtn.disabled = true;
   /* arriving from the reading room: skip the intro and fade in from the stair's light */
   var arrived = false, arriveEl = document.getElementById('arrive'), arriveText = document.getElementById('arrive-text');
-  try { arrived = sessionStorage.getItem('bleich-library-arrive') === '1'; sessionStorage.removeItem('bleich-library-arrive'); } catch (e) {}
+  try { arrived = sessionStorage.getItem('worlds-library-arrive') === '1'; sessionStorage.removeItem('worlds-library-arrive'); } catch (e) {}
   if (arrived) { arriveEl.hidden = false; document.getElementById('start').hidden = true; }
   var manager = new THREE.LoadingManager();
   manager.onProgress = function (url, n, total) { var pc = Math.round(n / total * 100) + '%'; startBtn.textContent = 'Lighting the room… ' + pc; arriveText.textContent = 'Climbing the stair… ' + pc; };
@@ -837,7 +840,7 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
   /* ---------- sound: the reading room's synthesized set, same mute setting ---------- */
   var actx = null, master = null, burst = null, muted = false, soundBtn = document.getElementById('sound-btn');
-  try { muted = localStorage.getItem('bleich-sound') === '0'; } catch (e) {}
+  try { muted = localStorage.getItem('worlds-sound') === '0'; } catch (e) {}
   soundBtn.setAttribute('aria-pressed', String(!muted));
   function startAudio() {
     if (actx) { if (actx.state === 'suspended') actx.resume(); return; }
@@ -872,7 +875,7 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
   };
   soundBtn.addEventListener('click', function () {
     muted = !muted; soundBtn.setAttribute('aria-pressed', String(!muted)); startAudio(); if (master) master.gain.value = muted ? 0 : 1;
-    try { localStorage.setItem('bleich-sound', muted ? '0' : '1'); } catch (e) {}
+    try { localStorage.setItem('worlds-sound', muted ? '0' : '1'); } catch (e) {}
   });
 
   /* ---------- reading ---------- */

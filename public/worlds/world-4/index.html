@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>html, body { margin: 0; } img { max-width: 100%; } [hidden] { display: none !important; }</style>
-<title>Bleich GP</title>
+<title>Grand Prix</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Russo+One&family=Barlow:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap">
@@ -37,10 +37,10 @@
   --k-iso: #b29fc6;
   --k-skin: #f4efe2;
   --k-tire: #22232a;
-  --k-sprinklr: #f2c84b;
-  --k-nftx: #8d9bff;
-  --k-okx: #2b2a33;
-  --k-onepay: #3dbf8e;
+  --k-one: #f2c84b;
+  --k-two: #8d9bff;
+  --k-three: #2b2a33;
+  --k-four: #3dbf8e;
   --k-spark-1: #5fb4ff;
 
   --f-display: "Russo One", "Arial Black", Impact, sans-serif;
@@ -247,22 +247,10 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
 </head>
 <body data-world="4">
 <div class="page">
-  <header class="bar mono">
-    <span><a href="/">Justin Bleich</a> / <a href="/worlds">Worlds</a></span>
-    <span>World 4 of 5</span>
-  </header>
-
-  <section class="top" aria-label="Introduction">
-    <p class="eyebrow mono">World 4 · Bleich Grand Prix</p>
-    <h1>Justin <span>Bleich</span></h1>
-    <p class="sub">Senior Product Designer. <b>Two laps, four gates.</b> Each gate is a stop in my career.</p>
-  </section>
-  <div class="checker" aria-hidden="true"></div>
-
   <main>
     <section aria-label="Kart race" style="margin-top: 1.25rem;">
       <div class="frame" id="frame">
-        <canvas id="c" tabindex="0" aria-label="A kart race around a looping track with four gates. Use the arrow keys or the on-screen pad to drive. Finish two laps to unlock this world's stop in Justin's career."></canvas>
+        <canvas id="c" tabindex="0" aria-label="A kart race around a looping track with four gates. Use the arrow keys or the on-screen pad to drive. Finish two laps to clear the world."></canvas>
         <div class="hud" id="hud">
           <div class="hud-tl">
             <div class="pos" id="pos">1<small>ST</small></div>
@@ -295,8 +283,8 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
         <div class="overlay" id="start">
           <div class="panel">
             <p class="eyebrow mono">World 4 · 2 laps · 3 rivals</p>
-            <p class="panel-title">Bleich Grand Prix</p>
-            <p class="panel-desc">Two laps, four gates. Cross the finish line to unlock this world’s stop in my career. Hold drift through corners to charge a boost. Your rivals are the heroes of Worlds 1, 2 and 3.</p>
+            <p class="panel-title">Grand Prix</p>
+            <p class="panel-desc">Two laps, four gates. Hold drift through corners to charge a boost. Your rivals are the heroes of Worlds 1, 2 and 3.</p>
             <div class="panel-actions"><button class="btn go" id="start-btn" type="button">Start race</button></div>
           </div>
         </div>
@@ -312,7 +300,7 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
             </div>
           </div>
         </div>
-        <div class="fail" id="fail" hidden><p>This world needs WebGL, which this browser has turned off. Every role is listed below.</p></div>
+        <div class="fail" id="fail" hidden><p>This world needs WebGL, which this browser has turned off.</p></div>
       </div>
 
       <div class="below">
@@ -329,34 +317,8 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
       </div>
     </section>
 
-    <section class="exp" aria-labelledby="exp-label">
-      <h2 class="label mono" id="exp-label">Experience</h2>
-      <ol class="list">
-        <li class="row" data-id="onepay"><span class="gate" style="background: var(--k-onepay)">G4</span><div class="row-main"><p class="row-title">Current → OnePay</p><p class="row-desc">Leading OnePay Crypto design</p></div><span class="state mono">Gate ahead</span></li>
-        <li class="row" data-id="okx"><span class="gate" style="background: var(--k-okx); color: var(--fg)">G3</span><div class="row-main"><p class="row-title">2024–2026 → <a href="https://www.okx.com" target="_blank" rel="noopener">OKX</a></p><p class="row-desc">Built global payments experiences to bridge consumers and web3</p></div><span class="state mono">Gate ahead</span></li>
-        <li class="row" data-id="nftx"><span class="gate" style="background: var(--k-nftx)">G2</span><div class="row-main"><p class="row-title">2021–2024 → <a href="https://v2.nftx.io" target="_blank" rel="noopener">NFTX</a></p><p class="row-desc">The first NFT liquidity protocol in web3, creating tradable pools for collections</p></div><span class="state mono">Gate ahead</span></li>
-        <li class="row" data-id="sprinklr"><span class="gate" style="background: var(--k-sprinklr)">G1</span><div class="row-main"><p class="row-title">Previously → <a href="https://www.sprinklr.com" target="_blank" rel="noopener">Sprinklr</a></p><p class="row-desc">Designed universal search and a new self-serve dashboard experience</p></div><span class="state mono">Gate ahead</span></li>
-      </ol>
-      <p class="also">Also → <a href="https://app.frax.finance" target="_blank" rel="noopener">FRAX</a>, <a href="https://paste.so" target="_blank" rel="noopener">Paste</a></p>
-    </section>
-
-    <section class="contact" aria-labelledby="contact-label">
-      <h2 class="mono" id="contact-label">Contact</h2>
-      <div class="email">
-        <span class="email-text" id="email-text">justin.bleich@gmail.com</span>
-        <button class="btn" id="copy-btn" type="button">Copy</button>
-      </div>
-      <ul class="links">
-        <li><a href="https://linkedin.com/in/justinbleich" target="_blank" rel="noopener">LinkedIn</a></li>
-        <li><a href="https://farcaster.xyz/jtb" target="_blank" rel="noopener">Farcaster</a></li>
-      </ul>
-    </section>
   </main>
 
-  <footer class="foot mono">
-    <span>© 2026 Justin Bleich</span>
-    <span>San Francisco, CA</span>
-  </footer>
 </div>
 
 <script src="/worlds/shell.js"></script>
@@ -364,18 +326,6 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
 <script>
 (function () {
   'use strict';
-
-  /* ---------- copy email ---------- */
-  (function () {
-    var btn = document.getElementById('copy-btn'), txt = document.getElementById('email-text'), tm;
-    function flash(m) { btn.textContent = m; clearTimeout(tm); tm = setTimeout(function () { btn.textContent = 'Copy'; }, 1600); }
-    function sel() { try { var r = document.createRange(); r.selectNodeContents(txt); var s = getSelection(); s.removeAllRanges(); s.addRange(r); } catch (e) {} }
-    btn.addEventListener('click', function () {
-      var v = txt.textContent.trim();
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(function () { flash('Copied'); }, function () { sel(); flash('Selected'); });
-      else { sel(); flash('Selected'); }
-    });
-  })();
 
   var frame = document.getElementById('frame'), canvas = document.getElementById('c');
   function fail() { document.getElementById('fail').hidden = false; document.getElementById('start').hidden = true; document.getElementById('hud').hidden = true; }
@@ -391,17 +341,12 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
   var css = getComputedStyle(document.documentElement);
   function tok(n) { return css.getPropertyValue(n).trim(); }
   var C = {};
-  ['sky-bot', 'grass', 'grass-dark', 'road', 'line', 'curb-red', 'tree', 'trunk', 'hill', 'you', 'bit', '64', 'iso', 'skin', 'tire', 'sprinklr', 'nftx', 'okx', 'onepay', 'spark-1'].forEach(function (n) { C[n] = tok('--k-' + n); });
+  ['sky-bot', 'grass', 'grass-dark', 'road', 'line', 'curb-red', 'tree', 'trunk', 'hill', 'you', 'bit', '64', 'iso', 'skin', 'tire', 'one', 'two', 'three', 'four', 'spark-1'].forEach(function (n) { C[n] = tok('--k-' + n); });
   C.orange = tok('--orange'); C.yellow = tok('--yellow'); C.fg = tok('--fg'); C.bg = tok('--bg');
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
   function wrapAng(a) { return ((a + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI; }
 
-  var ROLES = {
-    sprinklr: { gate: 1, name: 'Sprinklr', period: 'Previously', desc: 'Designed universal search and a new self-serve dashboard experience.', url: 'https://www.sprinklr.com' },
-    nftx: { gate: 2, name: 'NFTX', period: '2021–2024', desc: 'The first NFT liquidity protocol in web3, creating tradable pools for collections.', url: 'https://v2.nftx.io' },
-    okx: { gate: 3, name: 'OKX', period: '2024–2026', desc: 'Built global payments experiences to bridge consumers and web3.', url: 'https://www.okx.com' },
-    onepay: { gate: 4, name: 'OnePay', period: 'Current', desc: 'Leading OnePay Crypto design. The present day, one gate before the finish.' }
-  };
+  var ROLES = { one: { gate: 1 }, two: { gate: 2 }, three: { gate: 3 }, four: { gate: 4 } };
 
   /* ---------- scene ---------- */
   var scene = new THREE.Scene();
@@ -525,7 +470,7 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
 
   /* ---------- gates, start line, boost pads ---------- */
   function heading(i) { return Math.atan2(TX[i], TZ[i]); }
-  var GATES = [{ id: 'sprinklr', f: 0.14 }, { id: 'nftx', f: 0.38 }, { id: 'okx', f: 0.62 }, { id: 'onepay', f: 0.84 }];
+  var GATES = [{ id: 'one', f: 0.14 }, { id: 'two', f: 0.38 }, { id: 'three', f: 0.62 }, { id: 'four', f: 0.84 }];
   var bannerTexs = [];
   function arch(idx, color, text1, text2, dark) {
     var g = new THREE.Group();
@@ -550,13 +495,13 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
   GATES.forEach(function (gt) {
     gt.idx = Math.round(gt.f * N);
     var r = ROLES[gt.id];
-    arch(gt.idx, C[gt.id], 'GATE ' + r.gate, 'CHECKPOINT ' + r.gate + ' / 4', gt.id === 'okx');
+    arch(gt.idx, C[gt.id], 'GATE ' + r.gate, 'CHECKPOINT ' + r.gate + ' / 4', gt.id === 'three');
   });
   var startTex = canvasTex(64, 16, function (c, w, h) { for (var yy = 0; yy < 2; yy++) for (var xx = 0; xx < 8; xx++) { c.fillStyle = (xx + yy) % 2 ? '#131419' : '#f5f3ee'; c.fillRect(xx * 8, yy * 8, 8, 8); } });
   var startLine = new THREE.Mesh(new THREE.PlaneGeometry(W, 2.2), new THREE.MeshLambertMaterial({ map: startTex }));
   startLine.rotation.x = -Math.PI / 2;
   var sl = new THREE.Group(); sl.position.set(PX[0], 0.06, PZ[0]); sl.rotation.y = heading(0); sl.add(startLine); scene.add(sl);
-  arch(0, '#131419', 'BLEICH GRAND PRIX', 'START · FINISH', true);
+  arch(0, '#131419', 'GRAND PRIX', 'START · FINISH', true);
 
   var padTex = canvasTex(64, 96, function (c, w, h) {
     c.fillStyle = C.orange; c.fillRect(0, 0, w, h);
@@ -585,7 +530,7 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
       step.position.set(s2 * 2.2, 0.5 + s2, 0); /* local +x points away from the track on this side */
       g.add(step);
       for (var f = 0; f < 10; f++) {
-        var fan = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.9, 0.6), lam([C.orange, C.yellow, C.nftx, C.onepay, C.fg][(f + s2) % 5]));
+        var fan = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.9, 0.6), lam([C.orange, C.yellow, C.two, C.four, C.fg][(f + s2) % 5]));
         fan.position.set(step.position.x, 1.45 + s2, -11 + f * 2.4);
         g.add(fan);
       }
@@ -792,7 +737,7 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
     if (revealed[id]) return;
     revealed[id] = true;
     var r = ROLES[id];
-    toastEl.style.borderLeftColor = C[id] === C.okx ? C.fg : C[id];
+    toastEl.style.borderLeftColor = C[id] === C.three ? C.fg : C[id];
     toastE.textContent = 'Checkpoint';
     toastTi.textContent = 'Gate ' + r.gate + ' of 4';
     toastD.textContent = '';
@@ -809,10 +754,10 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
     if (resultsShown) return; resultsShown = true;
     var st = standings(), place = st.indexOf(you) + 1;
     var best = 0;
-    try { best = parseFloat(localStorage.getItem('bleich-gp-best')) || 0; } catch (e) {}
+    try { best = parseFloat(localStorage.getItem('worlds-gp-best')) || 0; } catch (e) {}
     var isBest = !best || you.finishT < best;
-    if (isBest) { try { localStorage.setItem('bleich-gp-best', String(you.finishT)); } catch (e) {} }
-    /* the shell reveals the role; the standings stay up behind it for "Race again" */
+    if (isBest) { try { localStorage.setItem('worlds-gp-best', String(you.finishT)); } catch (e) {} }
+    /* the shell shows the clear screen; the standings stay up behind it for "Race again" */
     window.BW.complete({
       note: place + ord(place).toLowerCase() + ' place · ' + fmt(you.finishT) + (isBest ? ' · New best' : ' · Best ' + fmt(best)),
       stayLabel: 'See standings'

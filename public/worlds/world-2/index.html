@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>html, body { margin: 0; } img { max-width: 100%; } [hidden] { display: none !important; }</style>
-<title>Bleich 64</title>
+<title>The Gallery</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Figtree:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: a low-poly gallery hall fills the hero. Paintings are the roles; the plain list and contact sit below. Single dark night palette by choice. */
+/* Layout: a low-poly gallery hall fills the screen. Single dark night palette by choice. */
 :root {
   --bg: #120f24;
   --surface: #1c1838;
@@ -285,21 +285,10 @@ kbd {
 </head>
 <body data-world="2">
 <div class="page">
-  <header class="bar mono">
-    <span><a href="/">Justin Bleich</a> / <a href="/worlds">Worlds</a></span>
-    <span>World 2 of 5</span>
-  </header>
-
-  <section class="top" aria-label="Introduction">
-    <p class="eyebrow mono">World 2 · The Gallery</p>
-    <h1>Justin Bleich</h1>
-    <p class="sub">Senior Product Designer. <span>Jump into each painting to see where I've worked.</span></p>
-  </section>
-
   <main>
     <section aria-label="Gallery game">
       <div class="frame" id="frame">
-        <canvas id="c" tabindex="0" aria-label="A low-poly gallery hall. Jump into three paintings to collect stars, then open the door to the last painting to unlock this world's stop in Justin's career."></canvas>
+        <canvas id="c" tabindex="0" aria-label="A low-poly gallery hall. Jump into three paintings to collect stars, then open the door to the last painting to clear the world."></canvas>
         <div class="hud">
           <span class="stars" id="stars">★ 0/3</span>
           <span class="area mono" id="area">Gallery hall</span>
@@ -321,7 +310,7 @@ kbd {
           <div class="stick" id="stick" aria-label="Move"><div class="knob" id="knob"></div></div>
           <button class="abtn" id="abtn" type="button" aria-label="Jump">A</button>
         </div>
-        <div class="fail" id="fail" hidden><p>This world needs WebGL, which this browser has turned off. Every role is listed below.</p></div>
+        <div class="fail" id="fail" hidden><p>This world needs WebGL, which this browser has turned off.</p></div>
       </div>
       <div class="controls">
         <p class="keys mono">
@@ -333,46 +322,8 @@ kbd {
       </div>
     </section>
 
-    <section class="exp" aria-labelledby="exp-label">
-      <h2 class="label mono" id="exp-label">Experience</h2>
-      <ol class="list">
-        <li class="row" data-id="onepay">
-          <div class="row-main"><p class="row-title">Current → OnePay</p><p class="row-desc">Leading OnePay Crypto design</p></div>
-          <div class="row-side"><span class="state mono">No star</span><button class="btn go" type="button" data-id="onepay" disabled>Needs 3 ★</button></div>
-        </li>
-        <li class="row" data-id="okx">
-          <div class="row-main"><p class="row-title">2024–2026 → <a href="https://www.okx.com" target="_blank" rel="noopener">OKX</a></p><p class="row-desc">Built global payments experiences to bridge consumers and web3</p></div>
-          <div class="row-side"><span class="state mono">No star</span><button class="btn go" type="button" data-id="okx">Go to painting</button></div>
-        </li>
-        <li class="row" data-id="nftx">
-          <div class="row-main"><p class="row-title">2021–2024 → <a href="https://v2.nftx.io" target="_blank" rel="noopener">NFTX</a></p><p class="row-desc">The first NFT liquidity protocol in web3, creating tradable pools for collections</p></div>
-          <div class="row-side"><span class="state mono">No star</span><button class="btn go" type="button" data-id="nftx">Go to painting</button></div>
-        </li>
-        <li class="row" data-id="sprinklr">
-          <div class="row-main"><p class="row-title">Previously → <a href="https://www.sprinklr.com" target="_blank" rel="noopener">Sprinklr</a></p><p class="row-desc">Designed universal search and a new self-serve dashboard experience</p></div>
-          <div class="row-side"><span class="state mono">No star</span><button class="btn go" type="button" data-id="sprinklr">Go to painting</button></div>
-        </li>
-      </ol>
-      <p class="also">Also → <a href="https://app.frax.finance" target="_blank" rel="noopener">FRAX</a>, <a href="https://paste.so" target="_blank" rel="noopener">Paste</a></p>
-    </section>
-
-    <section class="contact" aria-labelledby="contact-label">
-      <h2 class="mono" id="contact-label">Contact</h2>
-      <div class="email">
-        <span class="email-text" id="email-text">justin.bleich@gmail.com</span>
-        <button class="btn" id="copy-btn" type="button">Copy</button>
-      </div>
-      <ul class="links">
-        <li><a href="https://linkedin.com/in/justinbleich" target="_blank" rel="noopener">LinkedIn</a></li>
-        <li><a href="https://farcaster.xyz/jtb" target="_blank" rel="noopener">Farcaster</a></li>
-      </ul>
-    </section>
   </main>
 
-  <footer class="foot mono">
-    <span>© 2026 Justin Bleich</span>
-    <span>San Francisco, CA</span>
-  </footer>
 </div>
 
 <script src="/worlds/shell.js"></script>
@@ -382,18 +333,6 @@ kbd {
   'use strict';
   var WORLD1 = '/worlds/world-1';
   var WORLD3 = '/worlds/world-3';
-
-  /* ---------- copy email (works even without WebGL) ---------- */
-  (function () {
-    var btn = document.getElementById('copy-btn'), txt = document.getElementById('email-text'), tm;
-    function flash(m) { btn.textContent = m; clearTimeout(tm); tm = setTimeout(function () { btn.textContent = 'Copy'; }, 1600); }
-    function sel() { try { var r = document.createRange(); r.selectNodeContents(txt); var s = getSelection(); s.removeAllRanges(); s.addRange(r); } catch (e) {} }
-    btn.addEventListener('click', function () {
-      var v = txt.textContent.trim();
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(function () { flash('Copied'); }, function () { sel(); flash('Selected'); });
-      else { sel(); flash('Selected'); }
-    });
-  })();
 
   var frame = document.getElementById('frame');
   var canvas = document.getElementById('c');
@@ -495,7 +434,7 @@ kbd {
 
   /* painting art: 256 x 192 */
   var ART = {
-    sprinklr: function (g, w, h) {
+    one: function (g, w, h) {
       g.fillStyle = '#1f3a5f'; g.fillRect(0, 0, w, h);
       g.fillStyle = 'rgba(255,255,255,0.12)';
       for (var y = 14; y < h - 10; y += 34) for (var x = 14; x < w - 10; x += 46) g.fillRect(x, y, 38, 26);
@@ -506,7 +445,7 @@ kbd {
       g.lineWidth = 18; g.beginPath(); g.moveTo(154, 118); g.lineTo(196, 160); g.stroke();
       g.fillStyle = 'rgba(242,200,75,0.25)'; g.beginPath(); g.arc(120, 84, 39, 0, Math.PI * 2); g.fill();
     },
-    nftx: function (g, w, h) {
+    two: function (g, w, h) {
       g.fillStyle = '#34265f'; g.fillRect(0, 0, w, h);
       var cols = ['#ff9bd0', '#8d9bff', '#3ddc9e', '#f0d84a', '#ff6a4d'];
       for (var r = 0; r < 4; r++) for (var c = 0; c < 7; c++) {
@@ -521,7 +460,7 @@ kbd {
         g.lineTo(w, h); g.lineTo(0, h); g.closePath(); g.fill();
       }
     },
-    okx: function (g, w, h) {
+    three: function (g, w, h) {
       g.fillStyle = '#111114'; g.fillRect(0, 0, w, h);
       g.strokeStyle = '#f4efe2'; g.lineWidth = 3;
       g.beginPath(); g.arc(128, 96, 66, 0, Math.PI * 2); g.stroke();
@@ -534,7 +473,7 @@ kbd {
         g.fillStyle = '#ff6a2f'; g.fillRect(a[0] - 4, a[1] - 4, 8, 8); g.fillRect(a[2] - 4, a[3] - 4, 8, 8);
       });
     },
-    onepay: function (g, w, h) {
+    four: function (g, w, h) {
       var gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#0f4d3a'); gr.addColorStop(1, '#f6c445');
       g.fillStyle = gr; g.fillRect(0, 0, w, h);
       g.fillStyle = 'rgba(255,255,255,0.12)';
@@ -565,10 +504,10 @@ kbd {
   };
 
   var ROLES = {
-    sprinklr: { star: true, eyebrow: 'Star painting', title: 'A star was hiding in here.', desc: 'Three stars open the door at the end of the hall.' },
-    nftx: { star: true, eyebrow: 'Star painting', title: 'A star was hiding in here.', desc: 'Three stars open the door at the end of the hall.' },
-    okx: { star: true, eyebrow: 'Star painting', title: 'A star was hiding in here.', desc: 'Three stars open the door at the end of the hall.' },
-    onepay: { star: false, eyebrow: 'The last painting', title: 'The last painting', desc: '' },
+    one: { star: true, eyebrow: 'Star painting', title: 'A star was hiding in here.', desc: 'Three stars open the door at the end of the hall.' },
+    two: { star: true, eyebrow: 'Star painting', title: 'A star was hiding in here.', desc: 'Three stars open the door at the end of the hall.' },
+    three: { star: true, eyebrow: 'Star painting', title: 'A star was hiding in here.', desc: 'Three stars open the door at the end of the hall.' },
+    four: { star: false, eyebrow: 'The last painting', title: 'The last painting', desc: '' },
     world3: { star: false, eyebrow: 'Warp painting', title: 'Onward to World 3', desc: 'This painting leads to an isometric puzzle diorama. Turn a bridge, ride a lift, and climb to the present.', url: WORLD3, urlLabel: 'Enter World 3' }
   };
 
@@ -669,22 +608,22 @@ kbd {
     g.fillStyle = C.red; g.fillRect(0, 0, w, h);
     g.fillStyle = C.gold; g.fillRect(0, 0, w, 4); g.fillRect(0, h - 4, w, 4);
     g.font = '20px Bungee, Impact, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillText('BLEICH GALLERY', w / 2, h / 2 + 1);
+    g.fillText('THE GALLERY', w / 2, h / 2 + 1);
   });
   plane(5.5, 1.03, new THREE.MeshBasicMaterial({ map: entryBannerT }), 0, 5.8, -0.02, Math.PI);
 
   /* ---------- paintings ---------- */
   var PAINTINGS = [
-    { id: 'sprinklr', wall: 'left', at: -9, cy: 2.6 },
-    { id: 'nftx', wall: 'right', at: -9, cy: 2.6 },
-    { id: 'okx', wall: 'left', at: -20, cy: 2.6 },
+    { id: 'one', wall: 'left', at: -9, cy: 2.6 },
+    { id: 'two', wall: 'right', at: -9, cy: 2.6 },
+    { id: 'three', wall: 'left', at: -20, cy: 2.6 },
     { id: 'world3', wall: 'right', at: -20, cy: 2.6 },
-    { id: 'onepay', wall: 'far', at: 0, cy: 3.2 }
+    { id: 'four', wall: 'far', at: 0, cy: 3.2 }
   ];
   var PW = 3.2, PH = 2.4;
-  var PLATES = { sprinklr: ['STAR I', 'JUMP IN'], nftx: ['STAR II', 'JUMP IN'], okx: ['STAR III', 'JUMP IN'], world3: ['WORLD 3', 'WARP'], onepay: ['? ? ?', 'JUMP IN'] };
+  var PLATES = { one: ['STAR I', 'JUMP IN'], two: ['STAR II', 'JUMP IN'], three: ['STAR III', 'JUMP IN'], world3: ['WORLD 3', 'WARP'], four: ['? ? ?', 'JUMP IN'] };
   /* the last painting carries this world's art; its old slot in the hall takes the spare */
-  var ART_FOR = { nftx: 'onepay', onepay: 'nftx' };
+  var ART_FOR = { two: 'four', four: 'two' };
   PAINTINGS.forEach(function (p) {
     var g = new THREE.Group();
     if (p.wall === 'left') { g.position.set(-8 + 0.06, p.cy, p.at); g.rotation.y = Math.PI / 2; p.n = [1, 0]; }
@@ -697,7 +636,7 @@ kbd {
     p.geo = geo;
     p.mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: artT, side: THREE.DoubleSide }));
     g.add(p.mesh);
-    var fm = lam({ color: p.id === 'onepay' ? C.gold : C.goldDeep });
+    var fm = lam({ color: p.id === 'four' ? C.gold : C.goldDeep });
     var t = 0.2, d = 0.16;
     [[0, PH / 2 + t / 2, PW + 2 * t, t], [0, -PH / 2 - t / 2, PW + 2 * t, t], [-PW / 2 - t / 2, 0, t, PH], [PW / 2 + t / 2, 0, t, PH]].forEach(function (f) {
       var m = new THREE.Mesh(new THREE.BoxGeometry(f[2], f[3], d), fm);
@@ -878,9 +817,9 @@ kbd {
   var toastEl = document.getElementById('toast'), fadeEl = document.getElementById('fade'), insideEl = document.getElementById('inside');
   var toastTimer = 0;
   function toast(msg, secs) { toastEl.textContent = msg; toastEl.hidden = false; toastTimer = secs || 2.4; }
-  var got = { sprinklr: false, nftx: false, okx: false, onepay: false };
+  var got = { one: false, two: false, three: false, four: false };
   function starCount() { var n = 0; for (var k in got) if (got[k]) n++; return n; }
-  function hallStars() { return (got.sprinklr ? 1 : 0) + (got.nftx ? 1 : 0) + (got.okx ? 1 : 0); }
+  function hallStars() { return (got.one ? 1 : 0) + (got.two ? 1 : 0) + (got.three ? 1 : 0); }
   function syncUI() {
     starsEl.textContent = '★ ' + hallStars() + '/3';
     Object.keys(got).forEach(function (id) {
@@ -889,8 +828,8 @@ kbd {
       row.setAttribute('data-star', got[id] ? 'true' : 'false');
       row.querySelector('.state').textContent = got[id] ? 'Star' : 'No star';
     });
-    var onepayBtn = document.querySelector('.go[data-id="onepay"]');
-    if (doorState.open) { onepayBtn.disabled = false; onepayBtn.textContent = 'Go to painting'; }
+    var lastBtn = document.querySelector('.go[data-id="four"]');
+    if (lastBtn && doorState.open) { lastBtn.disabled = false; lastBtn.textContent = 'Go to painting'; }
   }
 
   var cardImg = document.getElementById('card-img'), cardE = document.getElementById('card-eyebrow'), cardT = document.getElementById('card-title'), cardD = document.getElementById('card-desc'), cardA = document.getElementById('card-actions');
@@ -978,19 +917,19 @@ kbd {
   Array.prototype.forEach.call(document.querySelectorAll('.go'), function (btn) {
     btn.addEventListener('click', function () {
       var id = btn.getAttribute('data-id');
-      if (id === 'onepay' && !doorState.open) return;
+      if (id === 'four' && !doorState.open) return;
       var p = PAINTINGS.filter(function (q) { return q.id === id; })[0];
       var wx = p.wall === 'left' ? -8 : p.wall === 'right' ? 8 : p.at;
       var wz = p.wall === 'far' ? -42 : p.at;
       insideEl.hidden = true; mode = 'play'; fadeEl.style.opacity = 0; P.scale = 1;
       P.x = wx + p.n[0] * 3.4; P.z = wz + p.n[1] * 3.4;
-      if (id === 'onepay') P.z = -36.5;
+      if (id === 'four') P.z = -36.5;
       P.y = floorAt(P.x, P.z, 3); P.vx = P.vy = P.vz = 0; P.on = true;
       P.face = Math.atan2(p.n[0], p.n[1]);
       cam.yaw = Math.atan2(p.n[0], p.n[1]);
       cam.manual = 1.5;
       snapCam();
-      toast(id === 'onepay' ? 'Hop on the dais, then jump in' : 'Jump into the painting', 2.2);
+      toast(id === 'four' ? 'Hop on the dais, then jump in' : 'Jump into the painting', 2.2);
       try { frame.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' }); } catch (e) { frame.scrollIntoView(); }
       try { canvas.focus({ preventScroll: true }); } catch (e) {}
     });
@@ -1061,8 +1000,8 @@ kbd {
       fadeEl.style.opacity = clamp((modeT - 0.3) / 0.5, 0, 1);
       if (modeT >= 0.85) {
         mode = 'inside'; fadeEl.style.opacity = 1;
-        /* the last painting is the finish line: the shell reveals the role */
-        if (cur.id === 'onepay') window.BW.complete({ note: '★ ' + hallStars() + '/3 stars', stayLabel: 'Back to the gallery', onClose: leavePainting });
+        /* the last painting is the finish line */
+        if (cur.id === 'four') window.BW.complete({ note: '★ ' + hallStars() + '/3 stars', stayLabel: 'Back to the gallery', onClose: leavePainting });
         else showCard(cur);
       }
     } else if (mode === 'leaving') {

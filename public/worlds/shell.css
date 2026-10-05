@@ -1,6 +1,6 @@
-/* Shared shell for every world: the game fills the viewport, the page chrome
-   is replaced by one persistent exit pill, and clearing a world shows one
-   reveal card. Loaded after each world's own styles so these rules win. */
+/* Shared shell for every world: the game fills the viewport, one persistent
+   exit pill sits on top, and clearing a world shows a screen in the portfolio's
+   style. Loaded after each world's own styles so these rules win. */
 
 :root {
   --bw-bg: rgba(12, 12, 14, 0.78);
@@ -97,88 +97,103 @@ body[data-world] .keys kbd { background: transparent; color: var(--bw-fg); borde
 .bw-chrome a:hover { color: var(--bw-hi); }
 .bw-chrome a:focus-visible { outline: 2px solid var(--bw-hi); outline-offset: 2px; border-radius: 999px; }
 
-/* ---------- reveal card ---------- */
-.bw-reveal {
+/* ---------- clear screen ----------
+   The portfolio home's own type, colours and rhythm (src/styles.css): a name with
+   one line under it, then "label → link" rows, each with a summary. */
+.bw-clear {
+  --bw-page: #0e1112;
+  --bw-text: #fff7f7;
+  --bw-soft: #848b91;
+  --bw-focus: #d94560;
+  --bw-hover: #11bf5e;
+  --bw-ease: cubic-bezier(0.2, 0, 0, 1);
   position: fixed;
   inset: 0;
   z-index: 50;
-  display: grid;
-  place-items: center;
-  padding: 1rem;
-  background: rgba(6, 6, 8, 0.62);
   overflow: auto;
-  -webkit-backdrop-filter: blur(3px);
-  backdrop-filter: blur(3px);
-}
-.bw-reveal[hidden] { display: none; }
-.bw-card {
-  width: min(100%, 30rem);
-  display: grid;
-  gap: 0.55rem;
-  padding: 1.4rem 1.5rem 1.5rem;
-  border: 1px solid var(--bw-rule);
-  border-top: 3px solid var(--bw-hi);
-  border-radius: 10px;
-  background: var(--bw-solid);
-  color: var(--bw-fg);
-  font-family: var(--bw-body);
-  line-height: 1.5;
+  background: var(--bw-page);
+  color: var(--bw-text);
+  font-family: "Instrument Sans", Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
   text-align: left;
-  animation: bw-rise 0.35s cubic-bezier(0.2, 0, 0, 1);
+  animation: bw-fade 500ms ease both;
 }
-.bw-card p { margin: 0; }
-.bw-eyebrow,
-.bw-note,
-.bw-pips {
-  font-family: var(--bw-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.bw-clear[hidden] { display: none; }
+.bw-shell {
+  display: flex;
+  min-height: 100%;
+  width: 100%;
+  max-width: calc(30rem + (clamp(28px, 6.8vw, 88px) * 2));
+  margin: 0 auto;
+  padding: clamp(40px, 7vh, 72px) clamp(28px, 6.8vw, 88px) clamp(32px, 5vh, 56px);
+  flex-direction: column;
+  justify-content: center;
+  gap: 40px;
 }
-.bw-eyebrow { color: var(--bw-hi); }
-.bw-note { color: var(--bw-muted); }
-.bw-title {
-  font-size: clamp(1.5rem, 5vw, 2rem);
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-  text-wrap: balance;
+/* each world styles its own h1, p, a and button; none of that should leak in here */
+.bw-clear h1, .bw-clear p, .bw-clear a, .bw-clear button {
+  margin: 0;
+  padding: 0;
+  font-family: inherit;
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  text-shadow: none;
+  text-align: left;
+  max-width: none;
 }
-.bw-desc { color: var(--bw-muted); font-size: 1.0625rem; text-wrap: pretty; }
-.bw-desc a { color: var(--bw-fg); text-underline-offset: 0.2em; }
-.bw-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
-.bw-btn {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.65rem 1rem;
-  border: 1px solid var(--bw-rule);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--bw-fg);
-  cursor: pointer;
-  font-family: var(--bw-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.06em;
+.bw-clear h1 { color: var(--bw-text); }
+.bw-identity { animation: bw-rise 900ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.bw-identity h1, .bw-identity p { font-size: 28px; line-height: 32px; font-weight: 400; letter-spacing: 0; text-wrap: balance; }
+.bw-identity p, .bw-summary { color: var(--bw-soft); }
+.bw-list { display: flex; flex-direction: column; gap: 32px; animation: bw-rise 900ms 90ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.bw-heading { display: flex; align-items: center; font-size: 16px; line-height: 24px; white-space: pre; }
+.bw-summary { font-size: 16px; line-height: 24px; text-wrap: pretty; }
+.bw-heading a, .bw-heading button, .bw-all {
+  position: relative;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
   text-decoration: none;
-  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 140ms var(--bw-ease);
 }
-.bw-btn:hover { border-color: var(--bw-fg); }
-.bw-btn.bw-go { border-color: var(--bw-fg); background: var(--bw-fg); color: var(--bw-solid); }
-.bw-btn.bw-go:hover { border-color: var(--bw-hi); background: var(--bw-hi); }
-.bw-btn:focus-visible { outline: 2px solid var(--bw-hi); outline-offset: 3px; }
-.bw-pips { display: flex; gap: 0.35rem; margin-top: 0.7rem; color: var(--bw-muted); }
-.bw-pips i {
-  width: 1.4rem;
-  height: 0.25rem;
-  border-radius: 2px;
-  background: var(--bw-rule);
+.bw-heading a::after, .bw-heading button::after, .bw-all::after {
+  position: absolute;
+  right: 0;
+  bottom: 0.02em;
+  left: 0;
+  height: 1px;
+  background: currentColor;
+  content: "";
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 160ms var(--bw-ease);
 }
-.bw-pips i[data-on="true"] { background: var(--bw-hi); }
+.bw-heading a:hover, .bw-heading button:hover, .bw-all:hover { color: var(--bw-hover); }
+.bw-heading a:hover::after, .bw-heading button:hover::after, .bw-all:hover::after { transform: scaleX(1); transform-origin: left; }
+.bw-clear a:focus-visible, .bw-clear button:focus-visible { outline: 2px solid var(--bw-focus); outline-offset: 4px; }
+.bw-band { display: flex; width: 72px; height: 6px; margin-left: auto; border-radius: 2px; overflow: hidden; }
+.bw-band i { flex: 1; }
+.bw-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; animation: bw-rise 900ms 160ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.bw-progress { display: flex; gap: 6px; min-width: 0; }
+.bw-band-wide { width: 36px; margin-left: 0; opacity: 0.22; filter: saturate(0.3); transition: opacity 400ms ease; }
+.bw-band-wide[data-on="true"] { opacity: 1; filter: none; }
+.bw-all { color: var(--bw-soft); white-space: nowrap; }
 
+@keyframes bw-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes bw-rise {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: none; }
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 560px) {
+  .bw-shell { padding: 36px 24px 32px; }
+  .bw-band-wide { width: 28px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .bw-card { animation: none; }
+  .bw-clear, .bw-identity, .bw-list, .bw-footer { animation: none; }
 }
