@@ -1,0 +1,1159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>html, body { margin: 0; } [hidden] { display: none !important; }</style>
+<title>Ashgrove · The Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+/* Layout: full-bleed WebGL room, with the same interface as the reading room:
+   place name and keys top left, brass tool buttons top right, a row of place
+   chips along the bottom with a caption above it, and paper for anything you read. */
+:root {
+  --bg: #120b07; --fg: #eadfc6; --text: #eadfc6; --muted: #b9a883; --brass: #d1a850; --brass-deep: #8a6d2f;
+  --ember: #e8873a; --veil: rgba(10, 6, 3, 0.80); --panel: #1d130c; --paper: #e8dbbd; --paper-ink: #2b1d11;
+  --silver: #c3c9d1; --iron: #7d858e; --ink: #2b1d11; --rule: rgba(234, 223, 198, 0.16);
+
+  /* room palette */
+  --w-wall: #24352f; --w-wall-line: #1d2b26; --w-wood: #4a3222; --w-wood-dark: #2e1f15; --w-wood-light: #6b4a31;
+  --w-floor: #3a281b; --w-rug: #6b2a2a; --w-ceil: #17110d; --w-stone: #3b3d42; --w-train: #7a2f2a; --w-cream: #e7dcc0; --w-lamp: #ffd88a;
+
+  --display: 'IM Fell English', Georgia, 'Times New Roman', serif;
+  --sc: 'IM Fell English SC', Georgia, 'Times New Roman', serif;
+  --body: 'Spectral', Georgia, 'Times New Roman', serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: var(--body); -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+
+.frame { position: relative; overflow: hidden; background: var(--bg); }
+canvas { display: block; width: 100%; height: 520px; outline: none; touch-action: manipulation; }
+.fade { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }
+.vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 46%, rgba(0,0,0,0) 48%, rgba(8,4,2,.5) 100%); }
+.arrive { position: absolute; inset: 0; z-index: 30; display: grid; place-items: end center; padding: 2rem; background: #ffe8b0; color: #5a3d1c; font-family: var(--sc); letter-spacing: .12em; transition: opacity 1.6s ease; }
+.arrive.gone { opacity: 0; pointer-events: none; }
+.fail { position: absolute; inset: 0; display: grid; place-items: center; padding: 1.5rem; text-align: center; color: var(--muted); }
+
+/* top bar: place and keys, tools */
+.bar-top { position: absolute; left: 0; right: 0; top: 0; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+  padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 30px; background: linear-gradient(to bottom, rgba(10,6,3,.72), rgba(10,6,3,0)); pointer-events: none; }
+.bar-top > * { pointer-events: auto; }
+.where { display: grid; gap: 8px; min-width: 0; }
+.place { font-family: var(--sc); font-size: 16px; letter-spacing: .12em; color: var(--brass); padding-top: 8px; text-shadow: 0 1px 6px #000; }
+.inv { display: flex; gap: 6px; }
+.slot { width: 34px; height: 34px; display: grid; place-items: center; border: 1px dashed var(--brass-deep); border-radius: 2px; background: rgba(18,11,7,.5); color: transparent; }
+.slot svg { width: 22px; height: 22px; }
+.slot[data-on="true"] { border-style: solid; border-color: currentColor; }
+.slot[data-on="true"][data-k="brass"] { color: var(--brass); }
+.slot[data-on="true"][data-k="silver"] { color: var(--silver); }
+.slot[data-on="true"][data-k="iron"] { color: var(--iron); }
+.tools { display: flex; gap: 8px; flex-shrink: 0; }
+.ghost { font-family: var(--sc); font-size: 13px; letter-spacing: .1em; min-height: 40px; padding: 0 12px; color: var(--text);
+  background: rgba(18,11,7,.62); border: 1px solid var(--brass-deep); border-radius: 2px; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.ghost[aria-pressed="false"] { color: var(--muted); text-decoration: line-through; }
+.credit { position: absolute; left: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 14px); margin: 0; font-family: var(--sc); font-size: 12px; letter-spacing: .1em; color: var(--muted); text-shadow: 0 1px 6px #000; display: none; }
+.frame[data-mode="ride"] .credit { display: block; }
+.frame[data-mode="ride"] .bar-top, .frame[data-mode="ride"] .nav { display: none; }
+
+/* caption + place chips */
+.caption { position: absolute; left: 16px; right: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 78px); margin: 0 auto; max-width: 36ch; text-align: center;
+  font-style: italic; font-size: 17px; line-height: 1.4; text-wrap: balance; color: var(--text); text-shadow: 0 1px 8px #000, 0 0 18px #000;
+  opacity: 0; transition: opacity .6s; pointer-events: none; }
+.caption.show { opacity: 1; }
+.nav { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; flex-wrap: wrap; gap: 6px;
+  padding: 30px 12px calc(env(safe-area-inset-bottom, 0px) + 14px); background: linear-gradient(to top, rgba(10,6,3,.8), rgba(10,6,3,0)); pointer-events: none; }
+.nav button { pointer-events: auto; font-family: var(--sc); font-size: 14px; letter-spacing: .06em; min-height: 44px; min-width: 44px; padding: 0 10px; color: var(--brass);
+  background: rgba(18,11,7,.7); border: 1px solid var(--brass-deep); border-radius: 2px; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.nav button[aria-current="true"] { background: var(--brass); color: var(--bg); border-color: var(--brass); }
+.nav button.step { color: var(--text); }
+
+/* veils and panels */
+.veil { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; overflow: auto;
+  padding: calc(env(safe-area-inset-top, 0px) + 16px) 16px calc(env(safe-area-inset-bottom, 0px) + 16px);
+  background: var(--veil); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+.panel { width: min(100%, 440px); min-width: 0; }
+.eyebrow { font-family: var(--sc); font-size: 13px; letter-spacing: .16em; color: var(--brass); margin: 0 0 10px; }
+h1 { font-family: var(--display); font-weight: 400; margin: 0; line-height: 1.05; text-wrap: balance; font-size: clamp(34px, 10vw, 46px); }
+.panel p { font-size: 17px; line-height: 1.55; color: var(--muted); margin: 14px 0 0; }
+.panel p.small { font-size: 14px; font-style: italic; }
+.btn { font-family: var(--sc); font-size: 15px; letter-spacing: .1em; min-height: 46px; padding: 0 22px; background: var(--brass); color: var(--bg); border: 0; border-radius: 2px; margin-top: 22px; }
+.btn[disabled] { opacity: .6; cursor: default; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* anything you read is a sheet of paper, as in the reading room */
+.paper { background: linear-gradient(160deg, #eee2c6, #dccba5); color: var(--paper-ink); padding: 30px 26px 24px; box-shadow: 0 24px 70px rgba(0,0,0,.65); }
+.paper p { font-family: var(--display); font-size: 19px; line-height: 1.55; color: var(--paper-ink); margin: 0 0 .9em; }
+.paper .title { font-family: var(--sc); font-size: 14px; letter-spacing: .14em; color: #6b5433; margin: 0 0 1.2em; padding-bottom: .7em; border-bottom: 1px solid rgba(43,29,17,.25); }
+.paper .head { font-style: italic; }
+.paper .folio { display: none; }
+.paper .pages { font-family: var(--sc); font-size: 13px; letter-spacing: .12em; color: #6b5433; text-align: center; margin: 1em 0 0; }
+.paper .btn { background: var(--paper-ink); color: var(--paper); margin-top: 12px; }
+.paper .btn.alt { background: transparent; color: var(--paper-ink); border: 1px solid rgba(43,29,17,.45); }
+.paper .btn[disabled] { opacity: .3; }
+.hollow { display: grid; place-items: center; gap: 12px; margin: .4em 0 1em; padding: 22px 16px; background: #cdbd97; box-shadow: inset 0 3px 12px rgba(0,0,0,.5); text-align: center; }
+.hollow svg { width: 72px; height: 72px; }
+.hollow p { margin: 0; }
+.hollow .btn { margin-top: 0; }
+
+@media (max-width: 40rem) { .bar-top { padding-top: calc(env(safe-area-inset-top, 0px) + 56px); } }
+@media (prefers-reduced-motion: reduce) { .fade, .caption { transition: none; } }
+</style>
+<link rel="stylesheet" href="/worlds/shell.css">
+</head>
+<body data-world="6">
+<div class="page">
+  <main>
+    <section aria-label="Library">
+      <div class="frame" id="frame">
+        <canvas id="c" tabindex="0" aria-label="A library. Click shelves, the cabinet and the desk to look closer; arrow keys turn, step forward and step back. Find each volume, read a couple of pages to find the key inside, and use the last key to open the way down to the train."></canvas>
+        <div class="vignette"></div>
+        <header class="bar-top">
+          <div class="where">
+            <div class="place" id="place">Entrance</div>
+            <div class="inv" aria-label="Keys">
+              <span class="slot" data-k="brass" title="Brass key"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M11 12h10M17 12v4M20.5 12v3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span>
+              <span class="slot" data-k="silver" title="Silver key"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M11 12h10M17 12v4M20.5 12v3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span>
+              <span class="slot" data-k="iron" title="Iron key"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M11 12h10M17 12v4M20.5 12v3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span>
+            </div>
+          </div>
+          <div class="tools">
+            <button class="ghost" id="hint-btn" type="button">Hint</button>
+            <button class="ghost" id="sound-btn" type="button" aria-pressed="true">Sound</button>
+          </div>
+        </header>
+        <p class="caption" id="caption" aria-live="polite"></p>
+        <nav class="nav" id="nav" aria-label="Places in the room"></nav>
+        <p class="credit" id="credit">Tunnel: “Underground Subway” by emsiardy · CC BY 3.0</p>
+        <div class="fade" id="fade"></div>
+        <div class="arrive" id="arrive" hidden><span id="arrive-text">Climbing the stair…</span></div>
+        <section class="veil" id="reader" hidden role="dialog" aria-modal="true" aria-labelledby="book-title">
+          <div class="panel paper" id="book">
+            <p class="title" id="book-title"></p>
+            <div id="leaf-l"></div>
+            <div id="leaf-r"></div>
+            <p class="pages" id="book-pages"></p>
+            <div class="row">
+              <button class="btn alt" id="pg-prev" type="button">Back a page</button>
+              <button class="btn" id="pg-next" type="button">Turn the page</button>
+              <button class="btn alt" id="book-close" type="button">Close</button>
+            </div>
+          </div>
+        </section>
+        <section class="veil" id="start">
+          <div class="panel">
+            <p class="eyebrow">World 6 · Chapter two</p>
+            <h1>The Archive</h1>
+            <p>Every world has a volume here. Find one, read a couple of pages, and take what is hidden inside.</p>
+            <p class="small">Click anything to look closer. Arrow keys turn and step.</p>
+            <button class="btn" id="start-btn" type="button">Step inside</button>
+          </div>
+        </section>
+        <div class="fail" id="fail" hidden><p>This world needs WebGL, which this browser has turned off.</p></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="/worlds/shell.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+/* World 6, chapter two: the Library. Current three.js with scanned CC0 models
+   and textures from Poly Haven, real light units, soft shadows, ambient
+   occlusion and bloom. The interface, keys and sounds match the reading room. */
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+
+(async function () {
+  'use strict';
+
+  var frame = document.getElementById('frame'), canvas = document.getElementById('c');
+  var renderer;
+  try { renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true }); }
+  catch (e) { document.getElementById('fail').hidden = false; return; }
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.0;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  /* nothing moves most of the time, so shadows are only redrawn when asked */
+  renderer.shadowMap.autoUpdate = false;
+  var shadowDirty = 4;
+
+  var reduce = false;
+  try { reduce = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+  var css = getComputedStyle(document.documentElement);
+  function tok(n) { return css.getPropertyValue(n).trim(); }
+  var C = {
+    bg: tok('--bg'), wall: tok('--w-wall'), wallLine: tok('--w-wall-line'), wood: tok('--w-wood'), woodDark: tok('--w-wood-dark'), woodLight: tok('--w-wood-light'),
+    floor: tok('--w-floor'), rug: tok('--w-rug'), ceil: tok('--w-ceil'), stone: tok('--w-stone'), train: tok('--w-train'), cream: tok('--w-cream'),
+    lamp: tok('--w-lamp'), brass: tok('--brass'), silver: tok('--silver'), iron: tok('--iron'), paper: tok('--paper'), ink: tok('--ink')
+  };
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function ease(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+  var seed = 11;
+  function rnd() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }
+
+  /* ---------- the three volumes ---------- */
+  /* Each book is two spreads of reading, then a hollow with a key in it.
+     The last page before the hollow says where the next volume is. */
+  var BOOKS = {
+    note: {
+      sheet: true, title: 'A note, left on the desk', cover: '#5a4a36',
+      pages: [[
+        'To whoever keeps the archive after me.',
+        'Every world gets a volume. I have shelved them badly on purpose.',
+        'Begin with Volume I. It is gray and thin, and it is misfiled on the west wall between two red spines.',
+        'Read past the first couple of pages. I never hide anything on page one.'
+      ]]
+    },
+    v1: {
+      title: 'Volume I · Of Flags and Stars', spine: 'OF FLAGS AND STARS', color: '#77777c', key: 'brass',
+      pages: [
+        ['The first world was gray, and it only went one direction.', 'I ran right because there was nothing to the left. There were blocks to strike and small squares to collect, and neither mattered as much as the flag at the far end.'],
+        ['The second world had depth. A hall, a carpet, paintings you could fall into.', 'Three of them held stars. The fourth was behind a door that counted.'],
+        ['I learned something in that hall. The thing you want is usually behind a door, and the door is usually locked.'],
+        ['Volume II is kept that way.', 'East wall, in the cabinet. The lock is brass.']
+      ]
+    },
+    v2: {
+      title: 'Volume II · Of Bridges and Laps', spine: 'OF BRIDGES AND LAPS', color: '#2f3d73', key: 'silver',
+      pages: [
+        ['The third world floated.', 'A bridge that turned, a lift that rose, and four plinths that wanted visiting in order. Nothing in it could be rushed.'],
+        ['The fourth world was the opposite. Two laps, four gates, and three rivals who had each been the hero of an earlier book.', 'I did not always win.'],
+        ['Somewhere between the puzzle and the race I stopped trusting shelves. A shelf is where you put a thing you have finished with.'],
+        ['Volume III is not finished.', 'I keep it in the desk drawer, under a small silver lock.']
+      ]
+    },
+    v3: {
+      title: 'Volume III · Of Portals', spine: 'OF PORTALS', color: '#27503f', key: 'iron',
+      pages: [
+        ['The fifth world was a laboratory.', 'Two openings, linked: step into one and you leave by the other. It taught me that a wall is only a wall until you put a door in it.'],
+        ['This library has a wall like that. North side.', 'I have walked through it more times than I have used the front door.'],
+        ['Look for the book with no title. Its spine is not a spine. It takes iron.'],
+        ['What is behind it runs on rails, and it only goes one way.', 'Take it when you are done reading.']
+      ]
+    }
+  };
+  var DECOYS_WEST = [
+    ['A FIELD GUIDE TO EDGE CASES', '#27503f'], ['KERNING FOR SAILORS', '#2f3d73'], ['THE UNABRIDGED CHANGELOG', '#6b4a31'], ['MARGINS AND GUTTERS', '#b08a3a'],
+    ['ON ROUNDED CORNERS', '#8f2f2a'], null, ['A HISTORY OF THE HAMBURGER MENU', '#8f2f2a'], ['GRIDS, VOL. 12', '#3d6b6b'], ['THE PIXEL ALMANAC', '#4b3a66']
+  ];
+  var KEY_NAME = { brass: 'brass', silver: 'silver', iron: 'iron' };
+
+  /* ---------- state ---------- */
+  var S = { started: false, noteRead: false, keys: { brass: false, silver: false, iron: false }, cabOpen: 0, drawerOpen: 0, shelfOpen: 0, mode: 'play', rideT: 0 };
+
+  /* ---------- assets (Poly Haven, CC0) ---------- */
+  var ASSETS = '/worlds/world-6/assets/';
+  var startBtn = document.getElementById('start-btn');
+  startBtn.disabled = true;
+  /* arriving from the reading room: skip the intro and fade in from the stair's light */
+  var arrived = false, arriveEl = document.getElementById('arrive'), arriveText = document.getElementById('arrive-text');
+  try { arrived = sessionStorage.getItem('worlds-library-arrive') === '1'; sessionStorage.removeItem('worlds-library-arrive'); } catch (e) {}
+  if (arrived) { arriveEl.hidden = false; document.getElementById('start').hidden = true; }
+  var manager = new THREE.LoadingManager();
+  manager.onProgress = function (url, n, total) { var pc = Math.round(n / total * 100) + '%'; startBtn.textContent = 'Lighting the room… ' + pc; arriveText.textContent = 'Climbing the stair… ' + pc; };
+  var gltfLoader = new GLTFLoader(manager), texLoader = new THREE.TextureLoader(manager);
+  gltfLoader.setDRACOLoader(new DRACOLoader(manager).setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/libs/draco/gltf/'));
+  var MODEL_IDS = ['book_encyclopedia_set_01', 'GothicCabinet_01', 'ArmChair_01', 'Chandelier_03', 'vintage_oil_lamp', 'wooden_ladder', 'vintage_grandfather_clock_01', 'fancy_picture_frame_01', 'mantel_clock_01'];
+  var TEX_IDS = ['herringbone_parquet', 'dark_wood', 'plastered_wall_04'];
+  var MODELS = {}, TEX = {}, envHDR;
+  try {
+    await Promise.all(MODEL_IDS.map(function (id) {
+      return gltfLoader.loadAsync(ASSETS + 'models/' + id + '/' + id + '.glb').then(function (g) { MODELS[id] = g.scene; });
+    }).concat(TEX_IDS.map(function (id) {
+      return Promise.all(['diff', 'nor', 'rough'].map(function (k) {
+        return texLoader.loadAsync(ASSETS + 'textures/' + id + '_' + k + '.webp').then(function (t) {
+          if (k === 'diff') t.colorSpace = THREE.SRGBColorSpace;
+          t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8;
+          (TEX[id] = TEX[id] || {})[k] = t;
+        });
+      }));
+    })).concat([
+      gltfLoader.loadAsync(ASSETS + 'models/subway/subway.glb').then(function (g) { MODELS.subway = g.scene; }),
+      fetch(ASSETS + 'models/subway/path.json').then(function (r) { return r.json(); }).then(function (pts) { MODELS.subwayPath = pts; })
+    ]).concat(['concrete_wall', 'concrete_floor', 'leaks', 'rust'].map(function (id) {
+      return texLoader.loadAsync(ASSETS + 'models/subway/' + id + '.webp').then(function (t) {
+        t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; t.flipY = false; TEX[id] = t;
+      });
+    })).concat([new HDRLoader(manager).loadAsync(ASSETS + 'hdri/fireplace_1k.hdr').then(function (t) { envHDR = t; })]));
+  } catch (e) { document.getElementById('fail').hidden = false; return; }
+  startBtn.disabled = false; startBtn.textContent = 'Step inside';
+  /* a scanned surface: colour, bumps and roughness, tiled rx by ry and tinted */
+  function pbr(id, tint, rx, ry, extra) {
+    var o = extra || {};
+    ['diff', 'nor', 'rough'].forEach(function (k) {
+      var t = TEX[id][k].clone(); t.repeat.set(rx || 1, ry || 1);
+      o[k === 'diff' ? 'map' : k === 'nor' ? 'normalMap' : 'roughnessMap'] = t;
+    });
+    o.color = tint || 0xffffff;
+    return new THREE.MeshStandardMaterial(o);
+  }
+  function place(id, parent, x, y, z, ry, sc, noShadow) {
+    var m = MODELS[id].clone(true);
+    m.position.set(x, y, z); if (ry) m.rotation.y = ry;
+    if (sc) { if (Array.isArray(sc)) m.scale.fromArray(sc); else m.scale.setScalar(sc); }
+    if (noShadow) m.traverse(function (o) { o.userData.noShadow = true; });
+    parent.add(m); return m;
+  }
+
+  /* ---------- scene ---------- */
+  var scene = new THREE.Scene();
+  scene.background = new THREE.Color(C.bg);
+  scene.fog = new THREE.Fog(C.bg, 12, 36);
+  var camera = new THREE.PerspectiveCamera(62, 16 / 9, 0.1, 140);
+  var gtao = null;
+  var hemi = new THREE.HemisphereLight(0xffe7c2, 0x1a120c, 0.75);
+  scene.add(hemi);
+  envHDR.mapping = THREE.EquirectangularReflectionMapping;
+  scene.environment = new THREE.PMREMGenerator(renderer).fromEquirectangular(envHDR).texture;
+  scene.environmentIntensity = 0.45;
+  /* real light units: a shadow-casting spot for the pool of light, a soft point for the spill */
+  var ROOM_LIGHTS = [];
+  function spot(x, y, z, cd, angle, size) {
+    var l = new THREE.SpotLight(0xffc878, cd, 0, angle, 0.85, 2);
+    l.position.set(x, y, z); l.target.position.set(x, y - 4, z);
+    l.castShadow = true; l.shadow.mapSize.set(size, size); l.shadow.bias = -0.0004; l.shadow.normalBias = 0.02;
+    l.shadow.camera.near = 0.2; l.shadow.camera.far = 12;
+    scene.add(l); scene.add(l.target); ROOM_LIGHTS.push(l); return l;
+  }
+  function lamp(x, y, z, cd, d) { var l = new THREE.PointLight(0xffc878, cd, d, 2); l.position.set(x, y, z); scene.add(l); ROOM_LIGHTS.push(l); return l; }
+  spot(0, 4.35, -3.5, 120, 1.25, 2048); spot(0, 4.35, 3.5, 80, 1.25, 2048);
+  lamp(0, 3.9, -3.5, 22, 18); lamp(0, 3.9, 3.5, 18, 18);
+  spot(-0.5, 2.6, 0.9, 14, 0.7, 1024);      /* a pool of light on the desk */
+  lamp(-0.8, 1.2, 0.65, 3, 6);              /* the oil lamp's flame */
+  lamp(1.2, 3.4, -11, 14, 12);              /* stairs */
+  lamp(1.2, 0.2, -16.5, 30, 18);            /* platform */
+
+  function lam(c, extra) { var o = extra || {}; o.color = c; if (o.roughness === undefined) o.roughness = 0.82; return new THREE.MeshStandardMaterial(o); }
+  function metal(c) { return new THREE.MeshStandardMaterial({ color: c, roughness: 0.32, metalness: 1 }); }
+  /* emissive surfaces are pushed past white so the bloom pass picks them up */
+  function glow(c) { return new THREE.MeshBasicMaterial({ color: new THREE.Color(c).multiplyScalar(c === C.lamp ? 2.4 : 1) }); }
+  function box(parent, w, h, d, mat, x, y, z) { var m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); parent.add(m); return m; }
+  function plane(w, h, mat, x, y, z, ry, rx) { var m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat); m.position.set(x, y, z); if (ry) m.rotation.y = ry; if (rx) m.rotation.x = rx; scene.add(m); return m; }
+  function tex(w, h, draw, rep) {
+    var c = document.createElement('canvas'); c.width = w; c.height = h;
+    draw(c.getContext('2d'), w, h);
+    var t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+    if (rep) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep[0], rep[1]); }
+    t.userData = { canvas: c, draw: draw };
+    return t;
+  }
+  var fontTexs = [];
+  /* shared wood: one scanned board, three tints */
+  var WOOD = pbr('dark_wood', '#e6cfb8', 1, 1), WOOD_D = pbr('dark_wood', '#8f7a68', 1, 1), WOOD_L = pbr('dark_wood', '#ffeacc', 1, 1);
+
+  /* ---------- room shell ---------- */
+  function wallMat(w, h) { return pbr('plastered_wall_04', '#4f7a66', w / 2.4, h / 2.4); }
+  function wallTex(rx, ry) {
+    return tex(64, 64, function (g) {
+      g.fillStyle = C.wall; g.fillRect(0, 0, 64, 64);
+      g.fillStyle = C.wallLine; for (var x = 0; x < 64; x += 16) g.fillRect(x, 0, 3, 64);
+      g.fillStyle = 'rgba(201,162,74,0.16)'; for (x = 8; x < 64; x += 16) for (var y = 8; y < 64; y += 16) g.fillRect(x, y, 2, 2);
+    }, [rx, ry]);
+  }
+  var floorT = tex(64, 64, function (g) {
+    g.fillStyle = C.floor; g.fillRect(0, 0, 64, 64);
+    g.fillStyle = 'rgba(0,0,0,0.28)'; for (var x = 0; x < 64; x += 16) g.fillRect(x, 0, 1, 64);
+    g.fillRect(0, 20, 16, 1); g.fillRect(16, 44, 16, 1); g.fillRect(32, 8, 16, 1); g.fillRect(48, 34, 16, 1);
+  }, [6, 8]);
+  /* a woven rug: border, field, medallion, and a speckle of pile */
+  var rugT = tex(512, 768, function (g, w, h) {
+    g.fillStyle = '#5a1f1f'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#1f2a44'; g.fillRect(18, 18, w - 36, h - 36);
+    g.fillStyle = '#6b2626'; g.fillRect(62, 62, w - 124, h - 124);
+    g.strokeStyle = '#c9a24a'; g.lineWidth = 3;
+    [10, 24, 56, 68].forEach(function (i) { g.strokeRect(i, i, w - i * 2, h - i * 2); });
+    function diamond(cx, cy, rx, ry, fill) { g.fillStyle = fill; g.beginPath(); g.moveTo(cx, cy - ry); g.lineTo(cx + rx, cy); g.lineTo(cx, cy + ry); g.lineTo(cx - rx, cy); g.closePath(); g.fill(); }
+    for (var x = 40; x < w; x += 36) { diamond(x, 40, 9, 13, '#c9a24a'); diamond(x, h - 40, 9, 13, '#c9a24a'); }
+    for (var y = 76; y < h - 60; y += 36) { diamond(40, y, 13, 9, '#c9a24a'); diamond(w - 40, y, 13, 9, '#c9a24a'); }
+    for (y = 110; y < h - 90; y += 46) for (x = 104 + ((y / 46) % 2) * 23; x < w - 90; x += 46) diamond(x, y, 7, 10, 'rgba(201,162,74,0.35)');
+    diamond(w / 2, h / 2, 150, 210, '#1f2a44'); diamond(w / 2, h / 2, 132, 190, '#c9a24a'); diamond(w / 2, h / 2, 122, 178, '#7a2c2c');
+    diamond(w / 2, h / 2, 60, 90, '#1f2a44'); diamond(w / 2, h / 2, 34, 52, '#c9a24a');
+    for (var i = 0; i < 26000; i++) { g.fillStyle = rnd() < 0.5 ? 'rgba(0,0,0,0.10)' : 'rgba(255,240,210,0.05)'; g.fillRect(rnd() * w, rnd() * h, 1.5, 1.5); }
+  });
+  plane(12, 16, pbr('herringbone_parquet', '#b58f70', 5, 6.6), 0, 0, 0, 0, -Math.PI / 2);
+  plane(4.4, 6.6, lam(0xffffff, { map: rugT, roughness: 1 }), 0, 0.012, 1.4, 0, -Math.PI / 2);
+  plane(12, 16, lam(C.ceil), 0, 5, 0, 0, Math.PI / 2);
+  plane(12, 5, wallMat(12, 5), 0, 2.5, 8, Math.PI);
+  plane(16, 5, wallMat(16, 5), -6, 2.5, 0, Math.PI / 2);
+  plane(16, 5, wallMat(16, 5), 6, 2.5, 0, -Math.PI / 2);
+  /* north wall, with the doorway the secret shelf covers (x 0..2.4, up to 4.2) */
+  plane(6, 5, wallMat(6, 5), -3, 2.5, -8);
+  plane(3.6, 5, wallMat(3.6, 5), 4.2, 2.5, -8);
+  plane(2.4, 0.8, wallMat(2.4, 0.8), 1.2, 4.6, -8);
+  box(scene, 1.5, 2.6, 0.1, WOOD_D, 0, 1.3, 7.96);   /* front door */
+  for (var bz = -6; bz <= 6; bz += 4) box(scene, 12, 0.3, 0.3, WOOD_D, 0, 4.85, bz);
+
+  [-3.5, 3.5].forEach(function (z) {
+    place('Chandelier_03', scene, 0, 4.98, z, 0, 1.25, true);
+    var bulb = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), glow(C.lamp)); bulb.position.set(0, 4.05, z); scene.add(bulb);
+  });
+  place('vintage_grandfather_clock_01', scene, 5.62, 0, -0.52, -Math.PI / 2, 1.05);
+  place('fancy_picture_frame_01', scene, -2.9, 2.3, 7.94, Math.PI, 2.4);
+  place('fancy_picture_frame_01', scene, 2.9, 2.3, 7.94, Math.PI, 2.4);
+
+  /* ---------- clickable registry ---------- */
+  var clickables = [];
+  var ghost = new THREE.MeshBasicMaterial({ visible: false });
+  function hot(mesh, node, label, act) { if (mesh.material === ghost) mesh.layers.set(1); mesh.userData = { node: node, label: label, act: act || null }; clickables.push(mesh); return mesh; }
+
+  /* ---------- bookcases ---------- */
+  var BOOK_COLORS = ['#6b2a2a', '#27503f', '#2f3d73', '#6b4a31', '#b08a3a', '#3d6b6b', '#4b3a66', '#8a7a5c', '#3a3a40', '#7a4a2a'];
+  var unit = new THREE.BoxGeometry(1, 1, 1);
+  var BAY_W = 2.4, BAY_H = 4.2, BAY_D = 0.42;
+  function rowY(i) { return i === 0 ? 0.15 : 0.15 + i * 0.8 + 0.025; }
+  /* the scanned encyclopedia set, split into its individual books */
+  var BOOK_PARTS = MODELS.book_encyclopedia_set_01.children.map(function (node) {
+    var parts = [];
+    node.traverse(function (o) { if (o.isMesh) parts.push({ geo: o.geometry, mat: o.material }); });
+    parts[0].geo.computeBoundingBox();
+    var bb = parts[0].geo.boundingBox;
+    return { parts: parts, w: bb.max.x - bb.min.x };
+  });
+  var BOOK_TINTS = ['#ffffff', '#f2dcc6', '#cfe0c6', '#c6d0ea', '#eac6c6', '#e6d79c', '#b9b9b9', '#d9b38c'];
+  function bay(parent, x, y, z, ry, featureRow, real) {
+    var g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry; parent.add(g);
+    var dark = WOOD_D, wood = WOOD;
+    box(g, BAY_W, BAY_H, 0.04, dark, 0, BAY_H / 2, 0.02);
+    box(g, 0.07, BAY_H, BAY_D, wood, -BAY_W / 2 + 0.035, BAY_H / 2, BAY_D / 2);
+    box(g, 0.07, BAY_H, BAY_D, wood, BAY_W / 2 - 0.035, BAY_H / 2, BAY_D / 2);
+    box(g, BAY_W, 0.09, BAY_D + 0.04, wood, 0, BAY_H - 0.045, BAY_D / 2);
+    box(g, BAY_W, 0.15, BAY_D, wood, 0, 0.075, BAY_D / 2);
+    for (var i = 1; i <= 4; i++) box(g, BAY_W - 0.14, 0.05, BAY_D - 0.04, wood, 0, 0.15 + i * 0.8, BAY_D / 2);
+    var mats = [], cols = [];
+    var realRuns = BOOK_PARTS.map(function () { return []; });
+    function fillReal(row, x0, x1) {
+      var xx = x0, ys = rowY(row);
+      while (xx < x1 - 0.04) {
+        var i = Math.floor(rnd() * BOOK_PARTS.length), sx = 2 * (1 + rnd() * 0.5), sy = 2 * (0.88 + rnd() * 0.3);
+        var w = BOOK_PARTS[i].w * sx;
+        if (xx + w > x1) break;
+        if (rnd() < 0.05) { xx += 0.05 + rnd() * 0.08; continue; }
+        var m = new THREE.Matrix4();
+        m.compose(new THREE.Vector3(xx + w / 2, ys, 0.36 - rnd() * 0.03), new THREE.Quaternion(), new THREE.Vector3(sx, sy, 2));
+        realRuns[i].push({ m: m, c: BOOK_TINTS[Math.floor(rnd() * BOOK_TINTS.length)] });
+        xx += w + 0.003;
+      }
+    }
+    function fill(row, x0, x1) {
+      if (real) { fillReal(row, x0, x1); return; }
+      var xx = x0, ys = rowY(row);
+      while (xx < x1 - 0.05) {
+        var w = 0.045 + rnd() * 0.06, h = 0.42 + rnd() * 0.22;
+        if (xx + w > x1) break;
+        if (rnd() < 0.07) { xx += 0.06 + rnd() * 0.1; continue; }
+        var m = new THREE.Matrix4();
+        m.compose(new THREE.Vector3(xx + w / 2, ys + h / 2, 0.19 + rnd() * 0.03), new THREE.Quaternion(), new THREE.Vector3(w, h, 0.26));
+        mats.push(m); cols.push(BOOK_COLORS[Math.floor(rnd() * BOOK_COLORS.length)]);
+        xx += w + 0.004;
+      }
+    }
+    var lim = BAY_W / 2 - 0.09;
+    for (i = 0; i <= 4; i++) {
+      if (i === 1 && featureRow) { fill(1, -lim, featureRow[0]); fill(1, featureRow[1], lim); }
+      else fill(i, -lim, lim);
+    }
+    var inst = new THREE.InstancedMesh(unit, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7 }), mats.length);
+    var col = new THREE.Color();
+    for (i = 0; i < mats.length; i++) { inst.setMatrixAt(i, mats[i]); col.set(cols[i]).multiplyScalar(0.75 + rnd() * 0.4); inst.setColorAt(i, col); }
+    g.add(inst);
+    realRuns.forEach(function (run, bi) {
+      if (!run.length) return;
+      BOOK_PARTS[bi].parts.forEach(function (part, pi) {
+        var im = new THREE.InstancedMesh(part.geo, part.mat, run.length);
+        run.forEach(function (r, k) { im.setMatrixAt(k, r.m); if (pi === 0) im.setColorAt(k, col.set(r.c).multiplyScalar(0.7 + rnd() * 0.3)); });
+        g.add(im);
+      });
+    });
+    return g;
+  }
+  /* a book with a lettered spine, standing on a shelf */
+  function spineTex(title, color, keyhole) {
+    var t = tex(64, 256, function (g, w, h) {
+      g.fillStyle = color; g.fillRect(0, 0, w, h);
+      g.fillStyle = 'rgba(0,0,0,0.22)'; g.fillRect(0, 0, 5, h); g.fillRect(w - 5, 0, 5, h);
+      g.fillStyle = C.brass; g.fillRect(8, 22, w - 16, 3); g.fillRect(8, h - 25, w - 16, 3);
+      if (keyhole) {
+        g.beginPath(); g.arc(w / 2, h / 2 - 8, 12, 0, Math.PI * 2); g.fill();
+        g.fillStyle = '#0b0806'; g.beginPath(); g.arc(w / 2, h / 2 - 10, 5, 0, Math.PI * 2); g.fill(); g.fillRect(w / 2 - 2.5, h / 2 - 8, 5, 12);
+        return;
+      }
+      g.save(); g.translate(w / 2, h / 2); g.rotate(Math.PI / 2);
+      g.fillStyle = '#f1e7cf'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      var size = 22; g.font = '600 ' + size + 'px "IM Fell English", Georgia, serif';
+      while (g.measureText(title).width > h - 70 && size > 9) { size--; g.font = '600 ' + size + 'px "IM Fell English", Georgia, serif'; }
+      g.fillText(title, 0, 1);
+      g.restore();
+    });
+    fontTexs.push(t);
+    return t;
+  }
+  function spineBook(parent, x, ys, w, h, title, color, keyhole) {
+    var side = lam(color), top = lam(C.paper), spine = lam(0xffffff, { map: spineTex(title, color, keyhole) });
+    var m = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.27), [side, side, top, side, spine, side]);
+    m.position.set(x, ys + h / 2, 0.215);
+    parent.add(m);
+    return m;
+  }
+
+  /* west wall: Volume I is misfiled here */
+  var westBay = bay(scene, -6, 0, -2, Math.PI / 2, [-0.62, 0.62], true);
+  bay(scene, -6, 0, -5.2, Math.PI / 2); bay(scene, -6, 0, 1.2, Math.PI / 2); bay(scene, -6, 0, 4.4, Math.PI / 2);
+  (function () {
+    var x = -0.6;
+    DECOYS_WEST.forEach(function (d) {
+      if (!d) {
+        var v = spineBook(westBay, x + 0.04, rowY(1), 0.08, 0.5, BOOKS.v1.spine, BOOKS.v1.color);
+        hot(v, 'west', 'A thin gray volume', function () { openBook('v1'); });
+        x += 0.085; return;
+      }
+      var w = 0.12 + rnd() * 0.03, m = spineBook(westBay, x + w / 2, rowY(1), w, 0.5 + rnd() * 0.1, d[0], d[1]);
+      var title = d[0].charAt(0) + d[0].slice(1).toLowerCase();
+      hot(m, 'west', '“' + title + '”', function () { say('“' + title + '”. Nothing is tucked inside.'); });
+      x += w + 0.005;
+    });
+  })();
+  hot(box(scene, 0.2, 3, 2.6, ghost, -5.5, 1.6, -2), 'west', 'The west shelves');
+
+  /* east wall: shelves either side of the glass cabinet */
+  bay(scene, 6, 0, -5.2, -Math.PI / 2); bay(scene, 6, 0, 1.2, -Math.PI / 2); bay(scene, 6, 0, 4.4, -Math.PI / 2);
+  var cab = new THREE.Group(); cab.position.set(6, 0, -2); cab.rotation.y = -Math.PI / 2; scene.add(cab);
+  var doorL = new THREE.Group(), doorR = new THREE.Group(), v2Mesh;
+  (function () {
+    cab.position.x = 5.54;
+    var model = place('GothicCabinet_01', cab, 0, 0, 0);
+    ['door1', 'door2', 'door3', 'door4'].forEach(function (n) { model.getObjectByName('GothicCabinet_01_' + n).rotation.set(0, 0, 0); });
+    doorL = model.getObjectByName('GothicCabinet_01_door1'); doorR = model.getObjectByName('GothicCabinet_01_door2');
+    var ys = 1.32;
+    var a = spineBook(cab, -0.3, ys, 0.13, 0.56, 'THE COLLECTED RELEASE NOTES', '#6b4a31');
+    v2Mesh = spineBook(cab, -0.14, ys, 0.15, 0.6, BOOKS.v2.spine, BOOKS.v2.color);
+    var b = spineBook(cab, 0.03, ys, 0.14, 0.52, 'DARK MODE, A MEMOIR', '#3a3a40');
+    [a, v2Mesh, b].forEach(function (m) { m.position.z = 0.12; });
+    hot(a, 'cabinet', '“The collected release notes”', function () { if (cabGate()) say('“The collected release notes”. Nothing is tucked inside.'); });
+    hot(b, 'cabinet', '“Dark mode, a memoir”', function () { if (cabGate()) say('“Dark mode, a memoir”. Nothing is tucked inside.'); });
+    hot(v2Mesh, 'cabinet', 'A navy volume', function () { if (cabGate()) openBook('v2'); });
+    /* the upper doors are the lock */
+    hot(box(doorL, 0.7, 0.9, 0.06, ghost, 0.35, 0, 0), 'cabinet', 'The cabinet', function () { cabGate(); });
+    hot(box(doorR, 0.7, 0.9, 0.06, ghost, -0.35, 0, 0), 'cabinet', 'The cabinet', function () { cabGate(); });
+    var inner = new THREE.PointLight(0xffc878, 1.4, 3, 2); inner.position.set(0, 2.0, 0.25); cab.add(inner); ROOM_LIGHTS.push(inner);
+  })();
+  function cabGate() {
+    if (S.cabOpen) return true;
+    if (!S.keys.brass) { snd.click(); say('The cabinet is locked. The lock is brass.'); return false; }
+    S.cabOpen = 0.0001; snd.chime(); say('The brass key turns. The doors swing open.');
+    return false;
+  }
+  hot(box(scene, 0.2, 2.8, 2.2, ghost, 5.3, 1.5, -2), 'cabinet', 'The glass cabinet');
+
+  /* north wall: the third bay from the left is the door */
+  bay(scene, -3.6, 0, -8, 0); bay(scene, -1.2, 0, -8, 0); bay(scene, 3.6, 0, -8, 0);
+  var hinge = new THREE.Group(); hinge.position.set(0, 0, -8); scene.add(hinge);
+  var secret = bay(hinge, 1.2, 0, 0, 0, [-0.12, 0.12], true);
+  var keyBook = spineBook(secret, 0, rowY(1), 0.16, 0.58, '', '#17120e', true);
+  hot(keyBook, 'north', 'A book with no title', function () {
+    if (S.shelfOpen) return;
+    if (!S.keys.iron) { snd.click(); say('This spine has a keyhole in it. Iron, by the look of it.'); return; }
+    S.shelfOpen = 0.0001; snd.chime(); snd.rumble(3.2); say('The iron key turns. The whole shelf swings out.');
+  });
+  hot(box(scene, 2.6, 3, 0.2, ghost, 1.2, 1.6, -7.5), 'north', 'The north shelves');
+  var doorway = hot(plane(2.4, 4.2, ghost, 1.2, 2.1, -8.05), 'north', 'A stairway down', function () { if (S.shelfOpen >= 1) goTo('platform', 2.2); });
+  doorway.visible = false;
+  /* library ladder */
+  place('wooden_ladder', scene, -2.6, 0, -7.0, 0, [1.1, 2.7, 1.4]).rotation.x = -0.14;
+
+  /* ---------- desk ---------- */
+  var desk = new THREE.Group(); desk.position.set(0, 0, 0.6); scene.add(desk);
+  var drawer = new THREE.Group(), v3Mesh;
+  (function () {
+    var wood = WOOD_L, dark = WOOD_D;
+    box(desk, 2.3, 0.07, 1.15, wood, 0, 0.8, 0);
+    box(desk, 2.1, 0.22, 1.0, dark, -0, 0.655, -0.03);
+    [[-1.05, -0.48], [1.05, -0.48], [-1.05, 0.48], [1.05, 0.48]].forEach(function (p) { box(desk, 0.09, 0.77, 0.09, wood, p[0], 0.385, p[1]); });
+    /* drawer */
+    drawer.position.set(0.5, 0.655, 0.5); desk.add(drawer);
+    var front = box(drawer, 0.74, 0.18, 0.03, wood, 0, 0, 0);
+    box(drawer, 0.7, 0.02, 0.5, dark, 0, -0.07, -0.26);
+    box(drawer, 0.02, 0.14, 0.5, dark, -0.34, -0.01, -0.26); box(drawer, 0.02, 0.14, 0.5, dark, 0.34, -0.01, -0.26);
+    box(drawer, 0.07, 0.07, 0.03, metal(C.silver), 0, 0, 0.025);
+    hot(front, 'desk', 'The desk drawer', drawerGate);
+    var coverT = tex(128, 180, function (g, w, h) {
+      g.fillStyle = BOOKS.v3.color; g.fillRect(0, 0, w, h);
+      g.strokeStyle = C.brass; g.lineWidth = 3; g.strokeRect(9, 9, w - 18, h - 18);
+      g.fillStyle = '#f1e7cf'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.font = '600 20px "IM Fell English", Georgia, serif'; g.fillText('OF', w / 2, h / 2 - 14); g.fillText('PORTALS', w / 2, h / 2 + 12);
+    });
+    fontTexs.push(coverT);
+    var side = lam(BOOKS.v3.color);
+    v3Mesh = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.06, 0.42), [side, side, lam(0xffffff, { map: coverT }), side, side, side]);
+    v3Mesh.position.set(0, -0.03, -0.26); v3Mesh.visible = false; drawer.add(v3Mesh);
+    hot(v3Mesh, 'desk', 'A green volume', function () { if (S.drawerOpen >= 1) openBook('v3'); else drawerGate(); });
+    /* note */
+    var noteT = tex(96, 128, function (g, w, h) {
+      g.fillStyle = C.paper; g.fillRect(0, 0, w, h);
+      g.fillStyle = 'rgba(42,33,24,0.55)'; for (var y = 18; y < h - 12; y += 11) g.fillRect(10, y, w - 20 - ((y * 7) % 30), 2);
+    });
+    var note = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.45), lam(0xffffff, { map: noteT }));
+    note.rotation.x = -Math.PI / 2; note.rotation.z = 0.18; note.position.set(-0.05, 0.842, 0.2); desk.add(note);
+    hot(note, 'desk', 'A handwritten note', function () { openBook('note'); });
+    /* lamp + a stack of books */
+    var oil = place('vintage_oil_lamp', desk, -0.8, 0.835, 0.05, 0, 0.6, true);
+    oil.getObjectByName('vintage_oil_lamp_flame').traverse(function (o) { if (o.isMesh) o.material = glow(C.lamp); });
+    place('mantel_clock_01', desk, 0.78, 0.9, -0.25, -0.25, 1.25);
+    place('ArmChair_01', desk, 0.1, 0, -1.0, 0.15, 1.05);
+  })();
+  function drawerGate() {
+    if (S.drawerOpen) return;
+    if (!S.keys.silver) { snd.click(); say('The drawer is locked. The lock is small, and silver.'); return; }
+    S.drawerOpen = 0.0001; v3Mesh.visible = true; snd.chime(); say('The silver key fits. The drawer slides out.');
+  }
+  hot(box(scene, 2.4, 1.2, 1.3, ghost, 0, 0.7, 0.6), 'desk', 'The reading desk');
+
+  /* ---------- the way down ---------- */
+  var stone = lam(C.stone), stoneDark = lam('#26282c');
+  plane(6, 7.2, stone, 0, 0.6, -11, Math.PI / 2);
+  plane(6, 7.2, stone, 2.4, 0.6, -11, -Math.PI / 2);
+  plane(2.4, 6, stoneDark, 1.2, 4.2, -11, 0, Math.PI / 2);
+  plane(2.4, 3.4, stone, 1.2, 2.5, -14);
+  for (var k = 0; k < 15; k++) { var topY = -k * 0.2; box(scene, 2.4, topY + 3.2, 0.4, stoneDark, 1.2, (topY - 3.2) / 2, -8.2 - k * 0.4); }
+  /* platform hall */
+  plane(18, 4.5, stone, 1, -3, -16.25, 0, -Math.PI / 2);
+  plane(18, 2.5, stoneDark, 1, -3.8, -19.75, 0, -Math.PI / 2);
+  plane(18, 0.8, stoneDark, 1, -3.4, -18.5);
+  plane(18, 0.18, glow(C.brass), 1, -2.995, -18.3, 0, -Math.PI / 2);
+  plane(18, 7, stoneDark, 1, 0.8, -17.5, 0, Math.PI / 2);
+  plane(8, 3.8, stone, -4, -1.1, -14, Math.PI); plane(7.6, 3.8, stone, 6.2, -1.1, -14, Math.PI);
+  plane(18, 4.6, stone, 1, -1.5, -21);
+  plane(7, 4.6, stone, -8, -1.5, -17.5, Math.PI / 2); plane(7, 4.6, stone, 10, -1.5, -17.5, -Math.PI / 2);
+  plane(2.4, 3.4, glow('#050403'), -7.98, -2.1, -19.75, Math.PI / 2); plane(2.4, 3.4, glow('#050403'), 9.98, -2.1, -19.75, -Math.PI / 2);
+  box(scene, 18, 0.08, 0.1, metal('#8a8f96'), 1, -3.75, -19.2); box(scene, 18, 0.08, 0.1, metal('#8a8f96'), 1, -3.75, -20.3);
+  /* the train */
+  var train = new THREE.Group(); train.position.set(2, -3.8, -19.75); scene.add(train);
+  (function () {
+    var body = lam(C.train);
+    box(train, 7, 2.2, 2.1, body, 0, 1.6, 0);
+    box(train, 7.1, 0.2, 2.2, lam('#3a1614'), 0, 2.78, 0);
+    box(train, 6.6, 0.3, 1.9, lam('#1b1b1e'), 0, 0.3, 0);
+    var bandT = tex(512, 48, function (g, w, h) {
+      g.fillStyle = C.cream; g.fillRect(0, 0, w, h);
+      g.fillStyle = '#3a1614'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.font = '600 30px "IM Fell English", Georgia, serif'; g.fillText('TO THE FINISH  →', w / 2, h / 2 + 2);
+    });
+    fontTexs.push(bandT);
+    var band = new THREE.Mesh(new THREE.PlaneGeometry(7, 0.42), new THREE.MeshBasicMaterial({ map: bandT })); band.position.set(0, 2.42, 1.056); train.add(band);
+    [-2.7, -1.9, 0.3, 1.1, 1.9, 2.7].forEach(function (x) { var w = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.8), glow(C.lamp)); w.position.set(x, 1.75, 1.056); train.add(w); });
+    var door = box(train, 1.1, 1.66, 0.06, lam('#4a1c19'), -0.8, 1.36, 1.07);
+    var dw = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.7), glow(C.lamp)); dw.position.set(-0.8, 1.75, 1.105); train.add(dw);
+    hot(door, 'platform', 'Board the train', board); hot(dw, 'platform', 'Board the train', board);
+    hot(box(train, 7, 2.6, 0.2, ghost, 0, 1.6, 1.2), 'platform', 'Board the train', board);
+    var hl = new THREE.Mesh(new THREE.CircleGeometry(0.22, 16), glow('#fff3cf')); hl.rotation.y = Math.PI / 2; hl.position.set(3.51, 1.2, 0); train.add(hl);
+  })();
+
+  /* the ride: emsiardy's "Underground Subway" (CC-BY 3.0), parked far below the library.
+     Everything here is rebuilt from the Blender file's own settings, read out of its old
+     Blender Internal data: which image each surface used and how often it repeats, the
+     base colours, what emits light, the mist, and the wall lamps, which the file
+     duplicates along the rail path (one pair every 4th of 100 path frames). The model is
+     about half real size, so it is scaled up to fit a train. */
+  /* everything built so far is the room; it is switched off while the train is moving */
+  var ROOM_OBJS = scene.children.filter(function (o) { return !o.isLight; });
+  var RIDE_Y = -60, RIDE_SCALE = 2.3, RIDE_EYE = 0.6, LAMP_STEP = 0.04;
+  var ridePath, rideRaw, rideGlass, rideLight, ridePool = [], rideTunnel;
+  var RIDE_GLASS = new THREE.Color().setRGB(1.0, 0.7, 0.76).multiplyScalar(2.6);   /* white glass, with the preview's pink glare */
+  var RIDE_MIST = new THREE.Color().setRGB(0.051, 0.051, 0.051), ROOM_BG = scene.background, ROOM_FOG = scene.fog;
+  var RIDE_FOG = new THREE.Fog(RIDE_MIST, 5 * RIDE_SCALE, 30 * RIDE_SCALE);
+  (function () {
+    var tunnel = rideTunnel = MODELS.subway;
+    tunnel.position.set(0, RIDE_Y, 0); tunnel.scale.setScalar(RIDE_SCALE);
+    function lin(r, g, b) { return new THREE.Color().setRGB(r, g, b); }
+    function img(id, rx, ry) { var t = TEX[id].clone(); t.repeat.set(rx, ry); return t; }
+    /* the floor's leak image drove its mirror: bright leaks are wet and shiny */
+    var wet = tex(256, 256, function (g, w, h) {
+      g.drawImage(TEX.leaks.image, 0, 0, w, h);
+      var im = g.getImageData(0, 0, w, h), a = im.data;
+      for (var i = 0; i < a.length; i += 4) { var v = 255 - (a[i] + a[i + 1] + a[i + 2]) / 3 * 0.8; a[i] = a[i + 1] = a[i + 2] = v; }
+      g.putImageData(im, 0, 0);
+    }, [1, 25]);
+    wet.colorSpace = THREE.NoColorSpace; wet.flipY = false;
+    var wallT = img('concrete_wall', 2, 25), floorT = img('concrete_floor', 1, 25), rustT = img('rust', 1, 60);
+    var wall = new THREE.MeshStandardMaterial({ map: wallT, bumpMap: wallT, bumpScale: 0.6, color: lin(0.8, 0.8, 0.8), roughness: 0.6, side: THREE.DoubleSide });
+    var floorM = new THREE.MeshStandardMaterial({ map: floorT, bumpMap: floorT, bumpScale: 2, roughnessMap: wet, color: lin(0.8, 0.8, 0.8), roughness: 1, side: THREE.DoubleSide });
+    var pipes = new THREE.MeshStandardMaterial({ map: rustT, bumpMap: rustT, bumpScale: 0.8, color: lin(0.8, 0.8, 0.8), roughness: 0.6, metalness: 0.2, side: THREE.DoubleSide });
+    function flat(c, rough, metal) { return new THREE.MeshStandardMaterial({ color: c, roughness: rough, metalness: metal || 0 }); }
+    rideGlass = new THREE.MeshBasicMaterial({ color: RIDE_GLASS.clone(), fog: false });
+    var BY_NAME = {
+      'Material.005': wall, 'Material.006': floorM, 'Material.009': pipes,
+      'Material.001': rideGlass,                                                             /* lamp glass, emit 1.0 */
+      'Material.003': new THREE.MeshBasicMaterial({ color: lin(0.279, 0.254, 0.288) }),      /* ceiling tray, emit 0.75 */
+      'Material.002': flat(lin(0.047, 0.047, 0.047), 0.6), 'Material.004': flat(lin(0.035, 0.035, 0.035), 0.4, 0.3),
+      'Material.007': flat(lin(0.157, 0.157, 0.157), 0.35, 0.5), 'Material.010': flat(lin(1, 0, 0.002), 0.4),
+      'Nuts': flat(lin(0.037, 0.037, 0.037), 0.7, 0.6), 'Rail Top': flat(lin(0.8, 0.8, 0.8), 0.3, 1),
+      'Rusty Rail': flat(lin(0.15, 0.05, 0.03), 0.7, 0.5)   /* the file's rust, darkened as its cloud texture did */
+    };
+    tunnel.traverse(function (o) {
+      if (!o.isMesh) return;
+      o.userData.noShadow = true;
+      o.material = BY_NAME[o.material.name] || BY_NAME['Material.004'];
+    });
+    tunnel.visible = false;
+    scene.add(tunnel);
+    /* Blender is z-up. rideRaw is the rail path in the model's own space; ridePath is the
+       same line at world scale, lifted to the driver's eye. */
+    var raw = MODELS.subwayPath.map(function (q) { return new THREE.Vector3(q[0], q[2], -q[1]); });
+    rideRaw = new THREE.CatmullRomCurve3(raw);
+    ridePath = new THREE.CatmullRomCurve3(raw.map(function (v) { return new THREE.Vector3(v.x * RIDE_SCALE, (v.y + RIDE_EYE) * RIDE_SCALE + RIDE_Y, v.z * RIDE_SCALE); }));
+    /* the wall lamps: the file holds one pair and repeats it down the path */
+    var lamp = tunnel.getObjectByName('Cube'), up = new THREE.Vector3(0, 1, 0), P = new THREE.Vector3(), T = new THREE.Vector3();
+    function frameAt(u) {
+      rideRaw.getPointAt(u, P); rideRaw.getTangentAt(u, T);
+      var m = new THREE.Matrix4().lookAt(P, P.clone().add(T), up); m.setPosition(P); return m;
+    }
+    if (lamp) {
+      lamp.updateMatrix();
+      var inv0 = frameAt(0).invert(), base = lamp.matrix.clone();
+      var mats = [];
+      for (var k = 0; k * LAMP_STEP < 0.995; k++) mats.push(frameAt(k * LAMP_STEP).multiply(inv0).multiply(base));
+      /* one instanced draw per lamp part instead of a mesh per lamp */
+      var parts = [];
+      lamp.traverse(function (o) { if (o.isMesh) parts.push(o); });
+      parts.forEach(function (part) {
+        part.updateMatrix();
+        var local = part === lamp ? new THREE.Matrix4() : part.matrix.clone();
+        var im = new THREE.InstancedMesh(part.geometry, part.material, mats.length);
+        mats.forEach(function (m, i) { im.setMatrixAt(i, m.clone().multiply(local)); });
+        im.frustumCulled = false; im.userData.noShadow = true;
+        tunnel.add(im);
+      });
+      lamp.visible = false;
+    }
+    /* the file hangs point lights at every lamp; a few of them follow the train instead */
+    for (var i = 0; i < 4; i++) { var pl = new THREE.PointLight(0xffd9e0, 0, 9 * RIDE_SCALE, 2); scene.add(pl); ridePool.push(pl); }
+    rideLight = new THREE.SpotLight(0xfff4ee, 0, 40, 0.7, 0.8, 1.8);
+    scene.add(rideLight); scene.add(rideLight.target);
+    /* off until the ride: a light that is switched on costs every surface, even at zero strength */
+    ridePool.forEach(function (l) { l.visible = false; }); rideLight.visible = false;
+  })();
+  function rideMood(on) {
+    /* on the ride the room, its lights, its shadows and the ambient occlusion pass are all off */
+    ROOM_LIGHTS.forEach(function (l) { l.visible = !on; });
+    ROOM_OBJS.forEach(function (o) { if (o.material !== ghost) o.visible = !on; });
+    rideTunnel.visible = on;
+    if (gtao) gtao.enabled = !on && !aoOff;
+    if (!on) shadowDirty = 4;
+    wake = 6;
+    ridePool.forEach(function (l) { l.visible = on; }); rideLight.visible = on;
+    hemi.intensity = on ? 0.05 : 0.75;
+    scene.environmentIntensity = on ? 0.04 : 0.45;
+    scene.fog = on ? RIDE_FOG : ROOM_FOG; scene.background = on ? RIDE_MIST : ROOM_BG;
+    if (!on) { rideLight.intensity = 0; ridePool.forEach(function (l) { l.intensity = 0; }); bloom.strength = 0.38; }
+  }
+
+  /* ---------- viewpoints ---------- */
+  var HUB = [0, 1.6, 6.4];
+  /* the entrance has three facings (left and right turn); closeups are a step forward */
+  var NODES = {
+    hubN: { label: 'Entrance', pos: HUB, look: [0, 1.5, -8], left: 'hubW', right: 'hubE', fwd: 'desk' },
+    hubW: { home: 'hubN', pos: HUB, look: [-6, 1.5, -1.5], right: 'hubN', fwd: 'west' },
+    hubE: { home: 'hubN', pos: HUB, look: [6, 1.5, -1.5], left: 'hubN', fwd: 'cabinet' },
+    desk: { label: 'Reading Desk', pos: [0, 1.75, 2.75], look: [0.1, 0.75, 0.75], back: 'hubN', line: 'A lamp, a clock, and a drawer with a small lock.' },
+    west: { label: 'West Shelves', pos: [-3.5, 1.45, -2], look: [-6, 1.25, -2], back: 'hubW', line: 'Every spine here has a title.' },
+    cabinet: { label: 'The Cabinet', pos: [2.5, 1.55, -2], look: [6, 1.35, -2], back: 'hubE', line: 'Carved oak, and a brass lock.' },
+    north: { label: 'North Shelves', pos: [1.2, 1.45, -5.4], look: [1.2, 1.25, -8], back: 'hubN', fwd: 'platform', line: 'One book here has no title at all.' },
+    platform: { label: 'The Platform', pos: [1.2, -1.4, -14.7], look: [1.2, -2.0, -19.6], back: 'north', locked: true, line: 'The train only goes one way.' }
+  };
+  var CHIPS = [['hubN', 'Entrance'], ['desk', 'Desk'], ['west', 'Shelves'], ['cabinet', 'Cabinet'], ['north', 'North wall'], ['platform', 'Platform']];
+  var cur = 'hubN', move = null;
+  var tmpCam = new THREE.PerspectiveCamera();
+  function poseOf(id) {
+    var n = NODES[id];
+    tmpCam.position.set(n.pos[0], n.pos[1], n.pos[2]); tmpCam.lookAt(n.look[0], n.look[1], n.look[2]);
+    return { p: tmpCam.position.clone(), q: tmpCam.quaternion.clone() };
+  }
+  function travel(a, b) { return a === 'platform' || b === 'platform' ? 2.2 : (NODES[a].pos === NODES[b].pos ? 0.7 : 0.9); }
+  function snap(id) { var t = poseOf(id); camera.position.copy(t.p); camera.quaternion.copy(t.q); cur = id; buildNav(); }
+  function goTo(id, dur) {
+    var n = NODES[id];
+    if (move || id === cur || !n || (n.locked && !n.unlocked)) return;
+    var t = poseOf(id);
+    move = { fp: camera.position.clone(), fq: camera.quaternion.clone(), tp: t.p, tq: t.q, t: 0, dur: reduce ? 0.01 : (dur || travel(cur, id)), line: n.line };
+    cur = id; buildNav();
+  }
+
+  /* ---------- UI ---------- */
+  var placeEl = document.getElementById('place'), capEl = document.getElementById('caption'), navEl = document.getElementById('nav'), capTimer = 0;
+  function objective() {
+    if (!S.noteRead && !S.keys.brass) return 'A note has been left on the reading desk.';
+    if (!S.keys.brass) return 'Volume I: gray and thin, west wall, between two red spines.';
+    if (!S.cabOpen) return 'Brass opens the cabinet. East wall.';
+    if (!S.keys.silver) return 'Volume II is in the cabinet.';
+    if (!S.drawerOpen) return 'Silver is for the small lock on the desk drawer.';
+    if (!S.keys.iron) return 'Volume III is in the drawer.';
+    if (!S.shelfOpen) return 'North wall. The book with no title takes iron.';
+    if (cur !== 'platform') return 'A stairway leads down behind the shelf.';
+    return 'The train only goes one way. Board it.';
+  }
+  /* captions fade in above the chips and clear themselves, as in the reading room */
+  function say(msg, secs) {
+    capEl.textContent = msg; capEl.classList.add('show');
+    clearTimeout(capTimer); capTimer = setTimeout(function () { capEl.classList.remove('show'); }, (secs || 4.5) * 1000);
+  }
+  function navBtn(label, aria, cls, fn) {
+    var b = document.createElement('button'); b.type = 'button'; if (cls) b.className = cls; b.textContent = label;
+    if (aria) b.setAttribute('aria-label', aria);
+    b.addEventListener('click', function () { if (!blocked()) fn(); });
+    navEl.appendChild(b); return b;
+  }
+  function chipList() { return CHIPS.filter(function (c) { var n = NODES[c[0]]; return !n.locked || n.unlocked; }); }
+  function buildNav() {
+    var n = NODES[cur], home = n.home || cur;
+    placeEl.textContent = n.label || NODES[home].label;
+    navEl.innerHTML = '';
+    if (n.left) navBtn('◀', 'Turn left', 'step', function () { goTo(n.left); });
+    chipList().forEach(function (c) { navBtn(c[1], null, '', function () { goTo(c[0]); }).setAttribute('aria-current', c[0] === home ? 'true' : 'false'); });
+    if (n.right) navBtn('▶', 'Turn right', 'step', function () { goTo(n.right); });
+    if (n.back) navBtn('Step back', null, 'step', function () { goTo(n.back); });
+  }
+  function syncNav() { buildNav(); }
+  function syncKeys() {
+    Object.keys(S.keys).forEach(function (k) { document.querySelector('.slot[data-k="' + k + '"]').setAttribute('data-on', S.keys[k] ? 'true' : 'false'); });
+  }
+  document.getElementById('hint-btn').addEventListener('click', function () { if (S.started && S.mode === 'play' && !open) say(objective(), 6); });
+
+  /* ---------- sound: the reading room's synthesized set, same mute setting ---------- */
+  var actx = null, master = null, burst = null, muted = false, soundBtn = document.getElementById('sound-btn');
+  try { muted = localStorage.getItem('worlds-sound') === '0'; } catch (e) {}
+  soundBtn.setAttribute('aria-pressed', String(!muted));
+  function startAudio() {
+    if (actx) { if (actx.state === 'suspended') actx.resume(); return; }
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+      actx = new AC(); master = actx.createGain(); master.gain.value = muted ? 0 : 1; master.connect(actx.destination);
+      /* a quiet room tone under everything */
+      var bed = actx.createBuffer(1, actx.sampleRate * 3, actx.sampleRate), d = bed.getChannelData(0), last = 0;
+      for (var i = 0; i < d.length; i++) { last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02; d[i] = last * 3.5; }
+      var src = actx.createBufferSource(), lp = actx.createBiquadFilter(), g = actx.createGain();
+      src.buffer = bed; src.loop = true; lp.type = 'lowpass'; lp.frequency.value = 360; g.gain.value = 0.1; src.connect(lp); lp.connect(g); g.connect(master); src.start();
+      burst = actx.createBuffer(1, Math.floor(actx.sampleRate * 0.7), actx.sampleRate); d = burst.getChannelData(0);
+      for (i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    } catch (e) { actx = null; }
+  }
+  function tone(f0, f1, dur, vol, type) {
+    if (!actx || muted) return; var o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime;
+    o.type = type || 'sine'; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.02);
+  }
+  function noise(freq, type, peak, attack, dur) {
+    if (!actx || muted) return; var s = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain(), t = actx.currentTime;
+    s.buffer = burst; s.loop = true; f.type = type; f.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + attack); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(f); f.connect(g); g.connect(master); s.start(t); s.stop(t + dur + 0.1);
+  }
+  var snd = {
+    click: function () { tone(190, 80, 0.14, 0.22, 'triangle'); tone(2400, 1800, 0.03, 0.04, 'square'); },
+    page: function () { noise(2600, 'bandpass', 0.08, 0.05, 0.3); },
+    chime: function () { [523, 659, 784, 1047].forEach(function (f, i) { setTimeout(function () { tone(f, f * 0.998, 1.6, 0.12, 'sine'); }, i * 170); }); },
+    rumble: function (secs) { noise(130, 'lowpass', 0.7, 1, secs || 3.6); }
+  };
+  soundBtn.addEventListener('click', function () {
+    muted = !muted; soundBtn.setAttribute('aria-pressed', String(!muted)); startAudio(); if (master) master.gain.value = muted ? 0 : 1;
+    try { localStorage.setItem('worlds-sound', muted ? '0' : '1'); } catch (e) {}
+  });
+
+  /* ---------- reading ---------- */
+  var readerEl = document.getElementById('reader'), bookEl = document.getElementById('book');
+  var leafL = document.getElementById('leaf-l'), leafR = document.getElementById('leaf-r');
+  var pgPrev = document.getElementById('pg-prev'), pgNext = document.getElementById('pg-next');
+  var open = null, spread = 0;
+  var KEY_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M11 12h10M17 12v4M20.5 12v3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
+  function leafHTML(paras, folio) {
+    return paras.map(function (p) { return '<p>' + p + '</p>'; }).join('') + (folio ? '<span class="folio">' + folio + '</span>' : '');
+  }
+  function spreads(b) { return b.sheet ? 1 : Math.ceil(b.pages.length / 2) + 1; }
+  function renderBook() {
+    var b = BOOKS[open], total = spreads(b);
+    bookEl.style.setProperty('--cover', b.cover || b.color);
+    bookEl.classList.toggle('sheet', !!b.sheet);
+    document.getElementById('book-title').textContent = b.title;
+    document.getElementById('book-pages').textContent = b.sheet ? '' : 'pp. ' + (spread * 2 + 1) + '–' + (spread * 2 + 2);
+    leafR.hidden = !!b.sheet;
+    if (b.sheet) leafL.innerHTML = leafHTML(b.pages[0]);
+    else if (spread < total - 1) {
+      leafL.innerHTML = leafHTML(b.pages[spread * 2], spread * 2 + 1);
+      leafR.innerHTML = leafHTML(b.pages[spread * 2 + 1] || [], spread * 2 + 2);
+    } else {
+      /* the hollow: the key is here once a couple of pages have been turned */
+      var has = S.keys[b.key];
+      leafL.innerHTML = leafHTML(['<span class="head">The rest of the pages have been cut away to make a hollow.</span>'], spread * 2 + 1);
+      leafR.innerHTML = '<div class="hollow" style="color:' + C[b.key] + '">' + (has
+        ? '<p style="color:' + C.ink + '">The hollow is empty. You have the ' + KEY_NAME[b.key] + ' key.</p>'
+        : KEY_SVG + '<button class="btn" id="take" type="button">Take the ' + KEY_NAME[b.key] + ' key</button>') + '</div><span class="folio">' + (spread * 2 + 2) + '</span>';
+      var take = document.getElementById('take');
+      if (take) take.addEventListener('click', function () {
+        S.keys[b.key] = true; syncKeys(); renderBook(); snd.click();
+        say('You take the ' + KEY_NAME[b.key] + ' key.');
+        try { document.getElementById('book-close').focus({ preventScroll: true }); } catch (e) {}
+      });
+    }
+    pgPrev.disabled = spread === 0; pgNext.disabled = spread >= total - 1;
+    pgPrev.hidden = pgNext.hidden = !!b.sheet;
+  }
+  function openBook(id) {
+    open = id; spread = 0; renderBook(); snd.page();
+    readerEl.hidden = false;
+    setTimeout(function () { try { (BOOKS[id].sheet ? document.getElementById('book-close') : pgNext).focus({ preventScroll: true }); } catch (e) {} }, 30);
+  }
+  function closeBook() {
+    if (!open) return;
+    if (open === 'note') S.noteRead = true;
+    open = null; readerEl.hidden = true;
+    try { canvas.focus({ preventScroll: true }); } catch (e) {}
+  }
+  function turn(d) { if (!open) return; var was = spread; spread = clamp(spread + d, 0, spreads(BOOKS[open]) - 1); if (spread !== was) snd.page(); renderBook(); }
+  pgPrev.addEventListener('click', function () { turn(-1); });
+  pgNext.addEventListener('click', function () { turn(1); });
+  document.getElementById('book-close').addEventListener('click', closeBook);
+
+  /* ---------- the train ---------- */
+  var fadeEl = document.getElementById('fade');
+  function board() {
+    if (S.mode !== 'play') return;
+    S.mode = 'boarding'; say('The doors close behind you.', 5); snd.rumble(9);
+    frame.setAttribute('data-mode', 'ride');
+    fadeEl.style.opacity = 1;
+    setTimeout(function () {
+      placeOnRide(0);
+      S.mode = 'ride'; S.rideT = 0; fadeEl.style.opacity = 0; rideMood(true);
+    }, reduce ? 50 : 650);
+  }
+  var rideAhead = new THREE.Vector3();
+  function placeOnRide(u) {
+    ridePath.getPointAt(u, camera.position);
+    ridePath.getPointAt(Math.min(1, u + 0.03), rideAhead);
+    camera.lookAt(rideAhead);
+    rideLight.position.copy(camera.position); rideLight.target.position.copy(rideAhead);
+    /* park the pooled lights at the lamp stations around the train */
+    var k0 = Math.floor(u / LAMP_STEP) - 1;
+    ridePool.forEach(function (l, i) {
+      var uk = Math.min(0.999, Math.max(0, (k0 + i) * LAMP_STEP));
+      ridePath.getPointAt(uk, l.position); l.position.y += 0.25 * RIDE_SCALE;
+    });
+  }
+  function arrive() {
+    S.mode = 'done'; fadeEl.style.opacity = 1;
+    window.BW.complete({
+      note: 'Three volumes · three keys · one train',
+      stayLabel: 'Back to the library',
+      onClose: function () { S.mode = 'play'; frame.removeAttribute('data-mode'); rideMood(false); snap('platform'); fadeEl.style.opacity = 0; setTimeout(function () { fadeEl.style.background = ''; }, 600); try { canvas.focus({ preventScroll: true }); } catch (e) {} }
+    });
+  }
+
+  /* ---------- input ---------- */
+  var ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  ray.layers.enable(1);
+  function pick(e) {
+    var r = canvas.getBoundingClientRect();
+    ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    return ray.intersectObjects(clickables, false).filter(function (h) { return h.object.visible; });
+  }
+  function here(node) { return node === cur; }
+  function blocked() { return !S.started || move || open || S.mode !== 'play' || (window.BW && window.BW.isOpen()); }
+  var down = null;
+  canvas.addEventListener('pointerdown', function (e) { down = { x: e.clientX, y: e.clientY }; startAudio(); });
+  canvas.addEventListener('pointerup', function (e) {
+    if (!down || Math.abs(e.clientX - down.x) + Math.abs(e.clientY - down.y) > 10) { down = null; return; }
+    down = null;
+    if (blocked()) return;
+    var hits = pick(e);
+    for (var i = 0; i < hits.length; i++) {
+      var u = hits[i].object.userData;
+      if (!here(u.node)) { goTo(u.node); return; }
+      if (u.act) { u.act(); return; }
+    }
+  });
+  var hoverRaf = 0;
+  canvas.addEventListener('pointermove', function (e) {
+    if (hoverRaf || e.pointerType === 'touch') return;
+    hoverRaf = requestAnimationFrame(function () {
+      hoverRaf = 0;
+      if (blocked()) { canvas.style.cursor = 'default'; return; }
+      var hits = pick(e), label = '';
+      for (var i = 0; i < hits.length; i++) {
+        var u = hits[i].object.userData;
+        if (!here(u.node) || u.act) { label = u.label; break; }
+      }
+      canvas.style.cursor = label ? 'pointer' : 'default';
+      canvas.title = label;
+    });
+  });
+  window.addEventListener('keydown', function (e) {
+    var t = e.target;
+    if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
+    if (window.BW && window.BW.isOpen()) return;
+    if (open) {
+      if (e.code === 'ArrowRight') { e.preventDefault(); turn(1); }
+      else if (e.code === 'ArrowLeft') { e.preventDefault(); turn(-1); }
+      else if (e.code === 'Escape') { e.preventDefault(); closeBook(); }
+      return;
+    }
+    if (blocked()) return;
+    startAudio();
+    /* the same keys as the reading room: left and right turn, up steps toward what you
+       face, down or Escape steps back, 1-6 jump to a place, H asks for a hint */
+    var n = NODES[cur];
+    if (e.code === 'ArrowLeft' && n.left) { e.preventDefault(); goTo(n.left); }
+    else if (e.code === 'ArrowRight' && n.right) { e.preventDefault(); goTo(n.right); }
+    else if (e.code === 'ArrowUp' && cur === 'platform') { e.preventDefault(); board(); }
+    else if (e.code === 'ArrowUp' && n.fwd) { e.preventDefault(); goTo(n.fwd); }
+    else if ((e.code === 'ArrowDown' || e.code === 'Escape' || e.code === 'Backspace') && n.back) { e.preventDefault(); goTo(n.back); }
+    else if (/^Digit[1-9]$/.test(e.code)) { var c = chipList()[+e.code.slice(5) - 1]; if (c) { e.preventDefault(); goTo(c[0]); } }
+    else if (e.code === 'KeyH') { e.preventDefault(); say(objective(), 6); }
+  });
+  document.getElementById('start-btn').addEventListener('click', function () {
+    document.getElementById('start').hidden = true; S.started = true; startAudio();
+    try { canvas.focus({ preventScroll: true }); } catch (e) {}
+  });
+
+  /* ---------- update ---------- */
+  var time = 0;
+  function update(dt) {
+    time += dt;
+    if (move) {
+      move.t += dt / move.dur;
+      var k = ease(Math.min(1, move.t));
+      camera.position.lerpVectors(move.fp, move.tp, k);
+      camera.quaternion.slerpQuaternions(move.fq, move.tq, k);
+      if (move.t >= 1) { var ln = move.line; move = null; buildNav(); if (ln && S.mode === 'play') say(ln); }
+    }
+    if (S.cabOpen > 0 && S.cabOpen < 1) {
+      S.cabOpen = Math.min(1, S.cabOpen + dt / 0.9);
+      var c = ease(S.cabOpen); doorL.rotation.y = -1.85 * c; doorR.rotation.y = 1.85 * c; shadowDirty = 2;
+    }
+    if (S.drawerOpen > 0 && S.drawerOpen < 1) {
+      S.drawerOpen = Math.min(1, S.drawerOpen + dt / 0.8);
+      drawer.position.z = 0.5 + 0.46 * ease(S.drawerOpen); shadowDirty = 2;
+    }
+    if (S.shelfOpen > 0 && S.shelfOpen < 1) {
+      S.shelfOpen = Math.min(1, S.shelfOpen + dt / 2.2);
+      hinge.rotation.y = -1.9 * ease(S.shelfOpen); shadowDirty = 2;
+      if (S.shelfOpen >= 1) { doorway.visible = true; NODES.platform.unlocked = true; buildNav(); say('A stairway leads down behind the shelf.', 6); }
+    }
+    if (S.mode === 'ride') {
+      S.rideT += dt;
+      var total = reduce ? 2.5 : 8;
+      /* slow out of the station, then faster and brighter all the way to the light */
+      var rp = Math.min(1, S.rideT / total);
+      placeOnRide(0.02 + Math.pow(rp, 1.7) * 0.8);
+      if (!reduce) { camera.position.x += Math.sin(time * 23) * 0.012 * rp; camera.position.y += Math.sin(time * 31) * 0.01 * rp; }
+      /* the glow builds with speed: lamp glass, the light they throw, and the bloom */
+      var glowUp = 1 + rp * rp * 3;
+      rideGlass.color.copy(RIDE_GLASS).multiplyScalar(glowUp);
+      ridePool.forEach(function (l) { l.intensity = 3.2 * glowUp; });
+      rideLight.intensity = 1.2 + rp * 10;
+      bloom.strength = 0.75 + rp * rp * 1.4;
+      if (rp > 0.72) { fadeEl.style.background = '#ffe9e2'; fadeEl.style.opacity = String((rp - 0.72) / 0.28); }
+      if (S.rideT >= total) arrive();
+    }
+  }
+
+  /* ---------- shadows + post ---------- */
+  scene.traverse(function (o) {
+    if (!o.isMesh || o.material === ghost) return;
+    var m = Array.isArray(o.material) ? o.material[0] : o.material;
+    if (m.isMeshBasicMaterial || m.transparent || o.userData.noShadow) return;
+    o.castShadow = true; o.receiveShadow = true;
+  });
+  var composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(2, 2, { type: THREE.HalfFloatType, samples: 4 }));
+  composer.addPass(new RenderPass(scene, camera));
+  gtao = new GTAOPass(scene, camera, 2, 2);
+  gtao.updateGtaoMaterial({ radius: 0.35, distanceExponent: 1.2, thickness: 1, scale: 1.1, samples: 12 });
+  gtao.blendIntensity = 0.9;
+  composer.addPass(gtao);
+  var bloom = new UnrealBloomPass(new THREE.Vector2(2, 2), 0.38, 0.7, 1.0);
+  composer.addPass(bloom);
+  composer.addPass(new OutputPass());
+
+  /* ---------- sizing + loop ---------- */
+  var maxRatio = Math.min(window.devicePixelRatio || 1, 1.5), ratio = maxRatio, wake = 8;
+  function resize() {
+    var w = frame.clientWidth || 360, h = frame.clientHeight || 520;
+    renderer.setPixelRatio(ratio);
+    renderer.setSize(w, h, false);
+    composer.setPixelRatio(ratio);
+    composer.setSize(w, h);
+    camera.aspect = w / h;
+    /* keep roughly the same width of room in view on tall screens */
+    camera.fov = clamp(2 * Math.atan(Math.tan(0.54) * Math.max(1, 1.25 / camera.aspect)) * 180 / Math.PI, 62, 92);
+    camera.updateProjectionMatrix();
+    wake = 4;
+  }
+  function draw() {
+    if (shadowDirty > 0 && S.mode !== 'ride') { renderer.shadowMap.needsUpdate = true; shadowDirty--; }
+    composer.render();
+  }
+  /* The room is still unless you are moving, something is opening, or the train is
+     running, so those are the only times a frame is drawn. */
+  function busy() {
+    return move || S.mode === 'ride' || shadowDirty > 0 || wake > 0 ||
+      (S.cabOpen > 0 && S.cabOpen < 1) || (S.drawerOpen > 0 && S.drawerOpen < 1) || (S.shelfOpen > 0 && S.shelfOpen < 1);
+  }
+  /* If frames run long while something is moving, step the resolution down once or twice. */
+  var slowT = 0, slowN = 0, aoOff = false;
+  function adapt(raw) {
+    slowT += raw; slowN++;
+    if (slowN < 45) return;
+    var avg = slowT / slowN; slowT = 0; slowN = 0;
+    if (avg > 1 / 40 && ratio > 0.8) { ratio = Math.max(0.8, ratio - 0.25); if (ratio <= 1 && gtao) { aoOff = true; if (S.mode !== 'ride') gtao.enabled = false; } resize(); }
+  }
+  var last = performance.now();
+  function loop(now) {
+    var raw = (now - last) / 1000, dt = Math.min(raw, 0.05); last = now;
+    update(dt);
+    if (busy()) { draw(); if (wake > 0) wake--; if (raw < 0.25) adapt(raw); }
+    requestAnimationFrame(loop);
+  }
+  resize();
+  snap('hubN');
+  syncKeys();
+  draw();
+  if (window.ResizeObserver) new ResizeObserver(function () { resize(); draw(); }).observe(frame); else addEventListener('resize', resize);
+  if (document.fonts && document.fonts.load) {
+    document.fonts.load('600 22px "IM Fell English"').then(function () {
+      fontTexs.forEach(function (t) { var c = t.userData.canvas; t.userData.draw(c.getContext('2d'), c.width, c.height); t.needsUpdate = true; });
+      wake = 4;
+    }, function () {});
+  }
+  /* prototype shortcut: add ?ride to the address to jump straight to the train */
+  if (/[?&]ride\b/.test(location.search)) { startBtn.click(); NODES.platform.unlocked = true; snap('platform'); board(); }
+  if (arrived) {
+    startBtn.click();
+    arriveText.textContent = '';
+    arriveEl.classList.add('gone');
+    say('The stair comes out in an archive.', 6);
+  } else {
+    arriveEl.hidden = true;
+  }
+  requestAnimationFrame(function (t) { last = t; requestAnimationFrame(loop); });
+})();
+</script>
+</body>
+</html>

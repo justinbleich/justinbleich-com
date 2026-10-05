@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>html, body { margin: 0; } img { max-width: 100%; } [hidden] { display: none !important; }</style>
-<title>Bleich Run</title>
+<title>The Run</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: a monochrome side-scroller as the hero. The career runs left to right (past to present); a dialogue box under the screen, then the plain experience list and contact. */
+/* Layout: a monochrome side-scroller that fills the screen, with a dialogue box over it. */
 :root {
   --bg: #0c0c0d;
   --surface: #141416;
@@ -280,24 +280,14 @@ kbd {
 </head>
 <body data-world="1">
 <div class="page">
-  <header class="bar mono">
-    <span><a href="/">Justin Bleich</a> / <a href="/worlds">Worlds</a></span>
-    <span>San Francisco, CA</span>
-  </header>
-
-  <section class="top" aria-label="Introduction">
-    <h1>Justin Bleich</h1>
-    <p class="sub">Senior Product Designer. <span>Currently leading OnePay Crypto design.</span></p>
-  </section>
-
   <main>
-    <section aria-label="Career platformer">
+    <section aria-label="Platformer">
       <div class="frame" id="frame">
-        <canvas id="game" tabindex="0" aria-label="A side-scrolling game. Run right, hit the question blocks from below, and reach the flag to unlock the first stop in Justin's career."></canvas>
+        <canvas id="game" tabindex="0" aria-label="A side-scrolling game. Run right, hit the question blocks from below, and reach the flag to clear the world."></canvas>
         <div class="portal-card" id="portal-card" hidden role="dialog" aria-labelledby="portal-title">
           <p class="portal-eyebrow mono">World 1 clear</p>
           <p class="portal-title" id="portal-title">The portal leads to World 2.</p>
-          <p class="portal-desc">Same career, new dimension. A low-poly gallery where you jump into paintings.</p>
+          <p class="portal-desc">A low-poly gallery where you jump into paintings.</p>
           <div class="portal-actions">
             <a class="portal-go" id="portal-go" href="/worlds/world-2">Enter World 2 →</a>
             <button class="btn" id="portal-stay" type="button">Stay here</button>
@@ -307,7 +297,7 @@ kbd {
       <div class="log" id="log" aria-live="polite">
         <p class="log-eyebrow mono" id="log-eyebrow">World 1 · The Run</p>
         <p class="log-title" id="log-title">Run to the flag.</p>
-        <p class="log-desc" id="log-desc">Hit the ? blocks from below on the way. Pixels are optional. The flag unlocks the first stop in my career.</p>
+        <p class="log-desc" id="log-desc">Hit the ? blocks from below on the way. Pixels are optional. The flag is the finish.</p>
       </div>
       <div class="controls">
         <p class="keys mono">
@@ -326,58 +316,8 @@ kbd {
       </div>
     </section>
 
-    <section class="exp" aria-labelledby="exp-label">
-      <h2 class="label mono" id="exp-label">Experience</h2>
-      <ol class="list" id="list">
-        <li class="row" data-id="onepay">
-          <div class="row-main">
-            <p class="row-title">Current → OnePay</p>
-            <p class="row-desc">Leading OnePay Crypto design</p>
-          </div>
-          <div class="row-side"><span class="state mono">Locked</span><button class="btn warp" type="button" data-id="onepay">Warp</button></div>
-        </li>
-        <li class="row" data-id="okx">
-          <div class="row-main">
-            <p class="row-title">2024–2026 → <a href="https://www.okx.com" target="_blank" rel="noopener">OKX</a></p>
-            <p class="row-desc">Built global payments experiences to bridge consumers and web3</p>
-          </div>
-          <div class="row-side"><span class="state mono">Locked</span><button class="btn warp" type="button" data-id="okx">Warp</button></div>
-        </li>
-        <li class="row" data-id="nftx">
-          <div class="row-main">
-            <p class="row-title">2021–2024 → <a href="https://v2.nftx.io" target="_blank" rel="noopener">NFTX</a></p>
-            <p class="row-desc">The first NFT liquidity protocol in web3, creating tradable pools for collections</p>
-          </div>
-          <div class="row-side"><span class="state mono">Locked</span><button class="btn warp" type="button" data-id="nftx">Warp</button></div>
-        </li>
-        <li class="row" data-id="sprinklr">
-          <div class="row-main">
-            <p class="row-title">Previously → <a href="https://www.sprinklr.com" target="_blank" rel="noopener">Sprinklr</a></p>
-            <p class="row-desc">Designed universal search and a new self-serve dashboard experience</p>
-          </div>
-          <div class="row-side"><span class="state mono">Locked</span><button class="btn warp" type="button" data-id="sprinklr">Warp</button></div>
-        </li>
-      </ol>
-      <p class="also">Also → <a href="https://app.frax.finance" target="_blank" rel="noopener">FRAX</a>, <a href="https://paste.so" target="_blank" rel="noopener">Paste</a></p>
-    </section>
-
-    <section class="contact" aria-labelledby="contact-label">
-      <h2 class="mono" id="contact-label">Contact</h2>
-      <div class="email">
-        <span class="email-text" id="email-text">justin.bleich@gmail.com</span>
-        <button class="btn" id="copy-btn" type="button">Copy</button>
-      </div>
-      <ul class="links">
-        <li><a href="https://linkedin.com/in/justinbleich" target="_blank" rel="noopener">LinkedIn</a></li>
-        <li><a href="https://farcaster.xyz/jtb" target="_blank" rel="noopener">Farcaster</a></li>
-      </ul>
-    </section>
   </main>
 
-  <footer class="foot mono">
-    <span>© 2026 Justin Bleich</span>
-    <span>San Francisco, CA</span>
-  </footer>
 </div>
 
 <script src="/worlds/shell.js"></script>
@@ -394,13 +334,7 @@ kbd {
   var reduce = false;
   try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
 
-  var ROLES = {
-    sprinklr: { name: 'Sprinklr', period: 'Previously', initial: 'S', desc: 'Designed universal search and a new self-serve dashboard experience.' },
-    nftx:     { name: 'NFTX', period: '2021–2024', initial: 'N', desc: 'The first NFT liquidity protocol in web3, creating tradable pools for collections.' },
-    okx:      { name: 'OKX', period: '2024–2026', initial: 'O', desc: 'Built global payments experiences to bridge consumers and web3.' },
-    onepay:   { name: 'OnePay', period: 'Current', initial: 'P', desc: 'Leading OnePay Crypto design.' }
-  };
-  var TICK_LABELS = { sprinklr: '1', nftx: '2', okx: '3', onepay: '4' };
+  var TICK_LABELS = { one: '1', two: '2', three: '3', four: '4' };
 
   /* ---------- level ---------- */
   var map = [];
@@ -411,20 +345,20 @@ kbd {
   function ground(c0, c1, top) { fill(c0, c1, top, ROWS - 1, 1); }
   function plat(c0, c1, r) { fill(c0, c1, r, r, 2); }
 
-  ground(0, 22, 12);                       /* start + Sprinklr */
+  ground(0, 22, 12);                       /* start + block 1 */
   ground(26, 33, 12); plat(28, 31, 9);     /* pit 23–25 */
-  ground(34, 52, 11);                      /* NFTX plateau */
+  ground(34, 52, 11);                      /* block 2 plateau */
   ground(57, 71, 12); plat(60, 63, 9); plat(66, 69, 6); /* pit 53–56 */
-  ground(75, 87, 12);                      /* OKX, pit 72–74 */
+  ground(75, 87, 12);                      /* block 3, pit 72–74 */
   ground(88, 88, 11); ground(89, 89, 10); ground(90, 92, 9); /* stairs */
-  ground(96, 117, 9);                      /* OnePay plateau, pit 93–95 */
+  ground(96, 117, 9);                      /* block 4 plateau, pit 93–95 */
   ground(118, 149, 12);                    /* run-out to the flag */
 
   var BLOCKS = [
-    { c: 15, r: 8, id: 'sprinklr' },
-    { c: 45, r: 7, id: 'nftx' },
-    { c: 81, r: 8, id: 'okx' },
-    { c: 104, r: 5, id: 'onepay' }
+    { c: 15, r: 8, id: 'one' },
+    { c: 45, r: 7, id: 'two' },
+    { c: 81, r: 8, id: 'three' },
+    { c: 104, r: 5, id: 'four' }
   ];
   BLOCKS.forEach(function (b) { b.used = false; b.bump = 0; map[b.r][b.c] = 3; });
 
@@ -557,7 +491,7 @@ kbd {
   var logT = document.getElementById('log-title');
   var logD = document.getElementById('log-desc');
   function setLog(e, t, d) { logE.textContent = e; logT.textContent = t; logD.innerHTML = d; }
-  var INTRO = ['World 1 · The Run', 'Run to the flag.', 'Hit the ? blocks from below on the way. Pixels are optional. The flag unlocks the first stop in my career.'];
+  var INTRO = ['World 1 · The Run', 'Run to the flag.', 'Hit the ? blocks from below on the way. Pixels are optional. The flag is the finish.'];
 
   function markList() {
     BLOCKS.forEach(function (b) {
@@ -571,7 +505,7 @@ kbd {
   function showRole(id) {
     var e = 'Blocks ' + found + '/4';
     if (finished) { setLog(e, 'Block ' + found + ' of 4.', 'The portal past the flag leads to World 2.'); return; }
-    setLog(e, found === 4 ? 'All four blocks. Flag ahead.' : 'Block ' + found + ' of 4.', 'Reach the flag to unlock this world’s stop in my career.');
+    setLog(e, found === 4 ? 'All four blocks. Flag ahead.' : 'Block ' + found + ' of 4.', 'The flag is further right.');
   }
 
   function hitBlockAt(c, r) {
@@ -637,7 +571,7 @@ kbd {
     checkpoint = Math.max(checkpoint, b.c - 2);
     flicker = 0.5;
     started = true;
-    setLog('Warped · ' + ROLES[id].name, 'The ? block is right above you.', 'Jump into it from below to unlock this role.');
+    setLog('Warped', 'The ? block is right above you.', 'Jump into it from below.');
     if (b.used) showRole(b.id);
     try { frame.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' }); } catch (e) { frame.scrollIntoView(); }
     try { canvas.focus({ preventScroll: true }); } catch (e) {}
@@ -1022,30 +956,6 @@ kbd {
   document.getElementById('portal-stay').addEventListener('click', function () {
     portalCard.hidden = true;
     try { canvas.focus({ preventScroll: true }); } catch (e) {}
-  });
-
-  /* ---------- copy email ---------- */
-  var copyBtn = document.getElementById('copy-btn');
-  var emailText = document.getElementById('email-text');
-  var copyTimer;
-  function flash(msg) {
-    copyBtn.textContent = msg;
-    clearTimeout(copyTimer);
-    copyTimer = setTimeout(function () { copyBtn.textContent = 'Copy'; }, 1600);
-  }
-  function selectEmail() {
-    try {
-      var range = document.createRange();
-      range.selectNodeContents(emailText);
-      var sel = window.getSelection();
-      sel.removeAllRanges(); sel.addRange(range);
-    } catch (e) {}
-  }
-  copyBtn.addEventListener('click', function () {
-    var v = emailText.textContent.trim();
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(v).then(function () { flash('Copied'); }, function () { selectEmail(); flash('Selected'); });
-    } else { selectEmail(); flash('Selected'); }
   });
 
   /* ---------- loop ---------- */

@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>html, body { margin: 0; } img { max-width: 100%; } [hidden] { display: none !important; }</style>
-<title>Bleich Diorama</title>
+<title>The Diorama</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400;600&family=Manrope:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: a floating isometric diorama is the hero. Paths rise from the past (back left) to the present (summit). Hint bar under the scene, then the plain list and contact. Single light dusk palette by choice. */
+/* Layout: a floating isometric diorama fills the screen, with a hint bar docked under it. Single light dusk palette. */
 :root {
   --bg: #f3ebe3;
   --surface: #fbf6f0;
@@ -30,10 +30,10 @@
   --w-lift-top: #86c9c1;
   --w-stair: #cdb9de;
   --w-stair-top: #ebe1f4;
-  --w-sprinklr: #f2c84b;
-  --w-nftx: #8d9bff;
-  --w-okx: #2b2a33;
-  --w-onepay: #3dbf8e;
+  --w-one: #f2c84b;
+  --w-two: #8d9bff;
+  --w-three: #2b2a33;
+  --w-four: #3dbf8e;
   --w-hero: #ffffff;
   --w-cap: #3c3c44;
   --w-cloud: #ffffff;
@@ -217,23 +217,12 @@ body[data-world] .keys { display: none; }
 </head>
 <body data-world="3">
 <div class="page">
-  <header class="bar mono">
-    <span><a href="/">Justin Bleich</a> / <a href="/worlds">Worlds</a></span>
-    <span>World 3 of 5</span>
-  </header>
-
-  <section class="top" aria-label="Introduction">
-    <p class="eyebrow mono">World 3 · The Diorama</p>
-    <h1>Justin Bleich</h1>
-    <p class="sub">Senior Product Designer. Turn the bridge, ride the lift, and climb to the present.</p>
-  </section>
-
   <main>
     <section aria-label="Diorama puzzle">
       <div class="frame" id="frame">
-        <canvas id="c" tabindex="0" aria-label="An isometric diorama. Tap a tile to walk there. Turn the coral crank to rotate the bridge and pull the teal lever to move the lift. Light each colored plinth and climb to the top to unlock this world's stop in Justin's career."></canvas>
+        <canvas id="c" tabindex="0" aria-label="An isometric diorama. Tap a tile to walk there. Turn the coral crank to rotate the bridge and pull the teal lever to move the lift. Light each colored plinth and climb to the top to clear the world."></canvas>
         <div class="progress" aria-hidden="true">
-          <span class="dot" data-id="sprinklr"></span><span class="dot" data-id="nftx"></span><span class="dot" data-id="okx"></span><span class="dot" data-id="onepay"></span>
+          <span class="dot" data-id="one"></span><span class="dot" data-id="two"></span><span class="dot" data-id="three"></span><span class="dot" data-id="four"></span>
         </div>
         <div class="card" id="card" hidden role="status">
           <button class="close" id="card-close" type="button" aria-label="Close">×</button>
@@ -242,7 +231,7 @@ body[data-world] .keys { display: none; }
           <p class="card-desc" id="card-desc"></p>
           <div class="card-actions" id="card-actions"></div>
         </div>
-        <div class="fail" id="fail" hidden><p>This world needs WebGL, which this browser has turned off. Every role is listed below.</p></div>
+        <div class="fail" id="fail" hidden><p>This world needs WebGL, which this browser has turned off.</p></div>
       </div>
 
       <div class="hintbar">
@@ -260,34 +249,8 @@ body[data-world] .keys { display: none; }
       </nav>
     </section>
 
-    <section class="exp" aria-labelledby="exp-label">
-      <h2 class="label mono" id="exp-label">Experience</h2>
-      <ol class="list">
-        <li class="row" data-id="onepay"><span class="swatch" style="background: var(--w-onepay)"></span><div class="row-main"><p class="row-title">Current → OnePay</p><p class="row-desc">Leading OnePay Crypto design</p></div><span class="state mono">Not visited</span></li>
-        <li class="row" data-id="okx"><span class="swatch" style="background: var(--w-okx)"></span><div class="row-main"><p class="row-title">2024–2026 → <a href="https://www.okx.com" target="_blank" rel="noopener">OKX</a></p><p class="row-desc">Built global payments experiences to bridge consumers and web3</p></div><span class="state mono">Not visited</span></li>
-        <li class="row" data-id="nftx"><span class="swatch" style="background: var(--w-nftx)"></span><div class="row-main"><p class="row-title">2021–2024 → <a href="https://v2.nftx.io" target="_blank" rel="noopener">NFTX</a></p><p class="row-desc">The first NFT liquidity protocol in web3, creating tradable pools for collections</p></div><span class="state mono">Not visited</span></li>
-        <li class="row" data-id="sprinklr"><span class="swatch" style="background: var(--w-sprinklr)"></span><div class="row-main"><p class="row-title">Previously → <a href="https://www.sprinklr.com" target="_blank" rel="noopener">Sprinklr</a></p><p class="row-desc">Designed universal search and a new self-serve dashboard experience</p></div><span class="state mono">Not visited</span></li>
-      </ol>
-      <p class="also">Also → <a href="https://app.frax.finance" target="_blank" rel="noopener">FRAX</a>, <a href="https://paste.so" target="_blank" rel="noopener">Paste</a></p>
-    </section>
-
-    <section class="contact" aria-labelledby="contact-label">
-      <h2 class="mono" id="contact-label">Contact</h2>
-      <div class="email">
-        <span class="email-text" id="email-text">justin.bleich@gmail.com</span>
-        <button class="pill" id="copy-btn" type="button">Copy</button>
-      </div>
-      <ul class="links">
-        <li><a href="https://linkedin.com/in/justinbleich" target="_blank" rel="noopener">LinkedIn</a></li>
-        <li><a href="https://farcaster.xyz/jtb" target="_blank" rel="noopener">Farcaster</a></li>
-      </ul>
-    </section>
   </main>
 
-  <footer class="foot mono">
-    <span>© 2026 Justin Bleich</span>
-    <span>San Francisco, CA</span>
-  </footer>
 </div>
 
 <script src="/worlds/shell.js"></script>
@@ -298,18 +261,6 @@ body[data-world] .keys { display: none; }
   var WORLD1 = '/worlds/world-1';
   var WORLD2 = '/worlds/world-2';
   var WORLD4 = '/worlds/world-4';
-
-  /* ---------- copy email ---------- */
-  (function () {
-    var btn = document.getElementById('copy-btn'), txt = document.getElementById('email-text'), tm;
-    function flash(m) { btn.textContent = m; clearTimeout(tm); tm = setTimeout(function () { btn.textContent = 'Copy'; }, 1600); }
-    function sel() { try { var r = document.createRange(); r.selectNodeContents(txt); var s = getSelection(); s.removeAllRanges(); s.addRange(r); } catch (e) {} }
-    btn.addEventListener('click', function () {
-      var v = txt.textContent.trim();
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(function () { flash('Copied'); }, function () { sel(); flash('Selected'); });
-      else { sel(); flash('Selected'); }
-    });
-  })();
 
   var frame = document.getElementById('frame'), canvas = document.getElementById('c');
   if (!window.THREE) { document.getElementById('fail').hidden = false; return; }
@@ -325,20 +276,14 @@ body[data-world] .keys { display: none; }
   var C = {
     col: tok('--w-col'), top: tok('--w-top'), rot: tok('--w-rot'), rotTop: tok('--w-rot-top'), lift: tok('--w-lift'), liftTop: tok('--w-lift-top'),
     stair: tok('--w-stair'), stairTop: tok('--w-stair-top'), hero: tok('--w-hero'), cap: tok('--w-cap'), cloud: tok('--w-cloud'), fg: tok('--fg'),
-    sprinklr: tok('--w-sprinklr'), nftx: tok('--w-nftx'), okx: tok('--w-okx'), onepay: tok('--w-onepay')
+    one: tok('--w-one'), two: tok('--w-two'), three: tok('--w-three'), four: tok('--w-four')
   };
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
   function ease(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
 
-  var ROLES = {
-    sprinklr: { name: 'Sprinklr', eyebrow: 'Previously', title: 'Previously → Sprinklr', desc: 'Designed universal search and a new self-serve dashboard experience.', url: 'https://www.sprinklr.com' },
-    nftx: { name: 'NFTX', eyebrow: '2021–2024', title: '2021–2024 → NFTX', desc: 'The first NFT liquidity protocol in web3, creating tradable pools for collections.', url: 'https://v2.nftx.io' },
-    okx: { name: 'OKX', eyebrow: '2024–2026', title: '2024–2026 → OKX', desc: 'Built global payments experiences to bridge consumers and web3. A staircase is rising toward the present.', url: 'https://www.okx.com' },
-    onepay: { name: 'OnePay', eyebrow: 'Current', title: 'Current → OnePay', desc: 'Leading OnePay Crypto design. You reached the present, and a race is waiting in World 4. Say hi at <a href="mailto:justin.bleich@gmail.com">justin.bleich@gmail.com</a>.' }
-  };
-  var ORDER = ['sprinklr', 'nftx', 'okx', 'onepay'];
-  /* plinths are waypoints; only the last one, at the top, reveals the role */
-  var PLINTH = { sprinklr: 'I', nftx: 'II', okx: 'III', onepay: 'TOP' };
+  var ORDER = ['one', 'two', 'three', 'four'];
+  /* plinths are waypoints; the last one, at the top, is the finish */
+  var PLINTH = { one: 'I', two: 'II', three: 'III', four: 'TOP' };
 
   /* ---------- scene ---------- */
   var scene = new THREE.Scene();
@@ -384,11 +329,11 @@ body[data-world] .keys { display: none; }
   }
   tile(0, 4, 0); tile(1, 4, 0);                               /* start */
   var hub = tile(3, 4, 0, { side: C.rot, top: C.rotTop });     /* bridge hub */
-  tile(3, 6, 0); tile(3, 7, 0, { role: 'sprinklr' });         /* sprinklr island */
-  tile(5, 4, 0); tile(6, 4, 0); tile(6, 5, 0, { role: 'nftx' }); /* nftx island */
-  tile(6, 2, 2); tile(6, 1, 2, { role: 'okx' });              /* okx tower */
+  tile(3, 6, 0); tile(3, 7, 0, { role: 'one' });         /* first island */
+  tile(5, 4, 0); tile(6, 4, 0); tile(6, 5, 0, { role: 'two' }); /* second island */
+  tile(6, 2, 2); tile(6, 1, 2, { role: 'three' });              /* tower */
   var STAIRS = [tile(5, 1, 2.5, { hidden: true, side: C.stair, top: C.stairTop }), tile(4, 1, 3, { hidden: true, side: C.stair, top: C.stairTop }), tile(3, 1, 3.5, { hidden: true, side: C.stair, top: C.stairTop })];
-  tile(2, 1, 4); tile(1, 1, 4, { role: 'onepay' });           /* summit */
+  tile(2, 1, 4); tile(1, 1, 4, { role: 'four' });           /* summit */
   STAIRS.forEach(function (s, i) { s.mesh.position.y = BASE - 7; s.mesh.visible = false; s.rise = 0; s.delay = i * 0.25; });
 
   /* decorative under-island tapers (floating feel) */
@@ -566,34 +511,15 @@ body[data-world] .keys { display: none; }
   /* ---------- UI ---------- */
   var cardEl = document.getElementById('card'), cardE = document.getElementById('card-eyebrow'), cardT = document.getElementById('card-title'), cardD = document.getElementById('card-desc'), cardA = document.getElementById('card-actions');
   var hintEl = document.getElementById('hint');
-  var visited = { sprinklr: false, nftx: false, okx: false, onepay: false };
+  var visited = { one: false, two: false, three: false, four: false };
   document.getElementById('card-close').addEventListener('click', function () { cardEl.hidden = true; try { canvas.focus({ preventScroll: true }); } catch (e) {} });
 
-  function showRole(id) {
-    var r = ROLES[id];
-    var n = ORDER.indexOf(id) + 1;
-    cardE.innerHTML = '<span class="swatch" style="background:' + C[id] + '"></span>Plinth ' + n + ' of 4 · ' + r.eyebrow;
-    cardT.textContent = r.title;
-    cardD.innerHTML = r.desc;
-    cardA.innerHTML = '';
-    if (r.url) {
-      var a = document.createElement('a'); a.className = 'pill'; a.href = r.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Visit ' + r.name + ' ↗';
-      cardA.appendChild(a);
-    }
-    if (id === 'onepay') {
-      var w1 = document.createElement('a'); w1.className = 'pill solid'; w1.href = WORLD4;  w1.textContent = 'Enter World 4 →';
-      var li = document.createElement('a'); li.className = 'pill'; li.href = 'https://linkedin.com/in/justinbleich'; li.target = '_blank'; li.rel = 'noopener'; li.textContent = 'LinkedIn ↗';
-      cardA.appendChild(w1); cardA.appendChild(li);
-    }
-    cardEl.hidden = false;
-    cardEl.style.animation = 'none'; void cardEl.offsetWidth; cardEl.style.animation = '';
-  }
   function visit(id) {
     var first = !visited[id];
     visited[id] = true;
     BEACONS[id].visible = true;
-    if (id === 'onepay') window.BW.complete({ note: 'All four plinths lit', onClose: function () { try { canvas.focus({ preventScroll: true }); } catch (e) {} } });
-    if (first && id === 'okx') raiseStairs();
+    if (id === 'four') window.BW.complete({ note: 'All four plinths lit', onClose: function () { try { canvas.focus({ preventScroll: true }); } catch (e) {} } });
+    if (first && id === 'three') raiseStairs();
     syncUI();
   }
   function raiseStairs() { STAIRS.forEach(function (s) { s.mesh.visible = true; s.rising = true; }); }
@@ -608,13 +534,13 @@ body[data-world] .keys { display: none; }
   function onLift() { return H.x === liftTile.x && H.z === liftTile.z; }
   function onArm() { var a = ARM_BASE.map(function (d) { var r = rotDir(d, rot.k); return [3 + r[0], 4 + r[1]]; }); return a.some(function (t) { return t[0] === H.x && t[1] === H.z; }); }
   function hint() {
-    if (!visited.sprinklr) return rot.k !== 0 ? 'Tap the coral crank to swing the bridge toward you.' : 'Walk across the bridge to the yellow plinth.';
-    if (!visited.nftx) return rot.k !== 1 ? 'Turn the bridge again to reach the blue plinth.' : 'Cross over to the blue plinth.';
-    if (!visited.okx) {
+    if (!visited.one) return rot.k !== 0 ? 'Tap the coral crank to swing the bridge toward you.' : 'Walk across the bridge to the yellow plinth.';
+    if (!visited.two) return rot.k !== 1 ? 'Turn the bridge again to reach the blue plinth.' : 'Cross over to the blue plinth.';
+    if (!visited.three) {
       if (onLift()) return lift.h === 0 ? 'Pull the teal lever to ride up.' : 'Step onto the dark plinth.';
       return lift.h === 2 ? 'Pull the teal lever to bring the lift down.' : 'Step onto the teal lift, then pull the lever.';
     }
-    if (!visited.onepay) return 'The stairs have risen. Climb to the green plinth at the top.';
+    if (!visited.four) return 'The stairs have risen. Climb to the green plinth at the top.';
     return 'You reached the top. Every plinth is lit, and World 4 is next.';
   }
 

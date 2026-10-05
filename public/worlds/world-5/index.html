@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>html, body { margin: 0; } img { max-width: 100%; } [hidden] { display: none !important; }</style>
-<title>Bleich Lab</title>
+<title>The Lab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -201,28 +201,10 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
 </head>
 <body data-world="5">
 <div class="page">
-  <header class="bar mono">
-    <span><a href="/">Justin Bleich</a> / <a href="/worlds">Worlds</a></span>
-    <span>World 5 of 5</span>
-  </header>
-
-  <section class="top" aria-label="Introduction">
-    <div>
-      <p class="eyebrow mono">World 5 · Test facility</p>
-      <h1>Justin Bleich</h1>
-      <p class="sub">Senior Product Designer. <b>Four test chambers, one role each.</b> Link two portals on the white panels to get through.</p>
-    </div>
-    <div class="legend mono" aria-hidden="true">
-      <span><i style="background: var(--portal-a)"></i>Portal A · left click</span>
-      <span><i style="background: var(--portal-b)"></i>Portal B · right click</span>
-      <span><i style="background: var(--l-panel); border: 1px solid var(--line)"></i>Portals stick to white panels</span>
-    </div>
-  </section>
-
   <main>
     <section aria-label="Portal test facility">
       <div class="frame" id="frame">
-        <canvas id="c" tabindex="0" aria-label="A first-person test facility. Place two linked portals on white panels to cross each chamber. Clear all four chambers to unlock this world's stop in Justin's career."></canvas>
+        <canvas id="c" tabindex="0" aria-label="A first-person test facility. Place two linked portals on white panels to cross each chamber. Clear all four chambers to clear the world."></canvas>
         <div class="hud" id="hud">
           <div class="chamber"><span class="mono" id="ch-label">Test chamber</span><b id="ch-num">01 / 04</b></div>
           <div class="cross" aria-hidden="true">
@@ -251,9 +233,9 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
         </div>
         <div class="overlay" id="start">
           <div class="panel">
-            <p class="eyebrow mono" style="margin:0">World 5 · Bleich Lab</p>
+            <p class="eyebrow mono" style="margin:0">World 5 · The Lab</p>
             <p class="panel-title">Enter the facility</p>
-            <p class="panel-desc">Four chambers. Clear them to unlock this world’s stop in my career. Portals only stick to white panels, and you can see and walk through them.</p>
+            <p class="panel-desc">Four chambers. Portals only stick to white panels, and you can see and walk through them.</p>
             <dl class="controls-list">
               <dt>Move</dt><dd>W A S D, Space to jump</dd>
               <dt>Look</dt><dd>Mouse (click to lock), or drag</dd>
@@ -264,19 +246,7 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
             <div class="panel-actions"><button class="btn go" id="start-btn" type="button">Start test</button></div>
           </div>
         </div>
-        <div class="overlay" id="finale" hidden>
-          <div class="panel">
-            <p class="eyebrow mono" style="margin:0" id="fin-eyebrow">All tests passed</p>
-            <p class="panel-title">You reached the present.</p>
-            <p class="panel-desc" id="fin-desc"></p>
-            <div class="panel-actions">
-              <a class="btn go" href="/worlds/world-1">Loop to World 1 ↺</a>
-              <a class="btn" href="https://linkedin.com/in/justinbleich" target="_blank" rel="noopener">LinkedIn ↗</a>
-              <button class="btn" id="fin-close" type="button">Keep exploring</button>
-            </div>
-          </div>
-        </div>
-        <div class="fail" id="fail" hidden><p>This world needs WebGL, which this browser has turned off. Every role is listed below.</p></div>
+        <div class="fail" id="fail" hidden><p>This world needs WebGL, which this browser has turned off.</p></div>
       </div>
 
       <div class="below">
@@ -294,34 +264,8 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
       </div>
     </section>
 
-    <section class="exp" aria-labelledby="exp-label">
-      <h2 class="label mono" id="exp-label">Experience</h2>
-      <ol class="list">
-        <li class="row" data-id="onepay"><span class="test">04</span><div class="row-main"><p class="row-title">Current → OnePay</p><p class="row-desc">Leading OnePay Crypto design</p></div><span class="state mono">Untested</span></li>
-        <li class="row" data-id="okx"><span class="test">03</span><div class="row-main"><p class="row-title">2024–2026 → <a href="https://www.okx.com" target="_blank" rel="noopener">OKX</a></p><p class="row-desc">Built global payments experiences to bridge consumers and web3</p></div><span class="state mono">Untested</span></li>
-        <li class="row" data-id="nftx"><span class="test">02</span><div class="row-main"><p class="row-title">2021–2024 → <a href="https://v2.nftx.io" target="_blank" rel="noopener">NFTX</a></p><p class="row-desc">The first NFT liquidity protocol in web3, creating tradable pools for collections</p></div><span class="state mono">Untested</span></li>
-        <li class="row" data-id="sprinklr"><span class="test">01</span><div class="row-main"><p class="row-title">Previously → <a href="https://www.sprinklr.com" target="_blank" rel="noopener">Sprinklr</a></p><p class="row-desc">Designed universal search and a new self-serve dashboard experience</p></div><span class="state mono">Untested</span></li>
-      </ol>
-      <p class="also">Also → <a href="https://app.frax.finance" target="_blank" rel="noopener">FRAX</a>, <a href="https://paste.so" target="_blank" rel="noopener">Paste</a></p>
-    </section>
-
-    <section class="contact" aria-labelledby="contact-label">
-      <h2 class="mono" id="contact-label">Contact</h2>
-      <div class="email">
-        <span class="email-text" id="email-text">justin.bleich@gmail.com</span>
-        <button class="btn" id="copy-btn" type="button">Copy</button>
-      </div>
-      <ul class="links">
-        <li><a href="https://linkedin.com/in/justinbleich" target="_blank" rel="noopener">LinkedIn</a></li>
-        <li><a href="https://farcaster.xyz/jtb" target="_blank" rel="noopener">Farcaster</a></li>
-      </ul>
-    </section>
   </main>
 
-  <footer class="foot mono">
-    <span>© 2026 Justin Bleich</span>
-    <span>San Francisco, CA</span>
-  </footer>
 </div>
 
 <script src="/worlds/shell.js"></script>
@@ -329,18 +273,6 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
 <script>
 (function () {
   'use strict';
-
-  /* ---------- copy email ---------- */
-  (function () {
-    var btn = document.getElementById('copy-btn'), txt = document.getElementById('email-text'), tm;
-    function flash(m) { btn.textContent = m; clearTimeout(tm); tm = setTimeout(function () { btn.textContent = 'Copy'; }, 1600); }
-    function sel() { try { var r = document.createRange(); r.selectNodeContents(txt); var s = getSelection(); s.removeAllRanges(); s.addRange(r); } catch (e) {} }
-    btn.addEventListener('click', function () {
-      var v = txt.textContent.trim();
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(function () { flash('Copied'); }, function () { sel(); flash('Selected'); });
-      else { sel(); flash('Selected'); }
-    });
-  })();
 
   var frame = document.getElementById('frame'), canvas = document.getElementById('c');
   function fail() { document.getElementById('fail').hidden = false; document.getElementById('start').hidden = true; document.getElementById('hud').hidden = true; }
@@ -365,12 +297,7 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
   C.a = tok('--portal-a'); C.b = tok('--portal-b'); C.ok = tok('--ok'); C.stop = tok('--stop'); C.fg = tok('--fg');
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
 
-  var ROLES = {
-    sprinklr: { n: '01', name: 'Sprinklr', period: 'Previously', desc: 'Designed universal search and a new self-serve dashboard experience.', url: 'https://www.sprinklr.com' },
-    nftx: { n: '02', name: 'NFTX', period: '2021–2024', desc: 'The first NFT liquidity protocol in web3, creating tradable pools for collections.', url: 'https://v2.nftx.io' },
-    okx: { n: '03', name: 'OKX', period: '2024–2026', desc: 'Built global payments experiences to bridge consumers and web3.', url: 'https://www.okx.com' },
-    onepay: { n: '04', name: 'OnePay', period: 'Current', desc: 'Leading OnePay Crypto design.' }
-  };
+  var ROLES = { one: { n: '01' }, two: { n: '02' }, three: { n: '03' }, four: { n: '04' } };
 
   /* ---------- scene ---------- */
   var scene = new THREE.Scene();
@@ -563,7 +490,7 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
       g.font = '800 250px Archivo, "Arial Black", sans-serif'; g.textBaseline = 'top'; g.fillText(num, 36, 30);
       g.fillRect(36, 300, 440, 6);
       g.font = '500 30px "IBM Plex Mono", monospace'; g.fillText('TEST ' + num + ' / 04', 36, 330);
-      g.font = '800 64px Archivo, "Arial Black", sans-serif'; g.fillText('BLEICH LAB', 36, 380);
+      g.font = '800 64px Archivo, "Arial Black", sans-serif'; g.fillText('THE LAB', 36, 380);
       g.font = '500 30px "IBM Plex Mono", monospace'; g.fillStyle = '#5d6370'; g.fillText('PORTAL TEST', 36, 460);
       /* pictograms */
       g.strokeStyle = C.a; g.lineWidth = 10; g.beginPath(); g.ellipse(80, 570, 22, 36, 0, 0, 7); g.stroke();
@@ -576,10 +503,10 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
     var m = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 2.0), new THREE.MeshStandardMaterial({ map: t, roughness: 0.6, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.18 }));
     m.position.set(x, y, z); m.rotation.y = ry; scene.add(m);
   }
-  sign(5.97, 2.6, -2.2, -Math.PI / 2, '01', 'sprinklr');
-  sign(-5.97, 2.6, -19.6, Math.PI / 2, '02', 'nftx');
-  sign(-5.97, 2.6, -48.5, Math.PI / 2, '03', 'okx');
-  sign(5.97, 2.6, -61.6, -Math.PI / 2, '04', 'onepay');
+  sign(5.97, 2.6, -2.2, -Math.PI / 2, '01', 'one');
+  sign(-5.97, 2.6, -19.6, Math.PI / 2, '02', 'two');
+  sign(-5.97, 2.6, -48.5, Math.PI / 2, '03', 'three');
+  sign(5.97, 2.6, -61.6, -Math.PI / 2, '04', 'four');
   /* final screen */
   (function () {
     var c = document.createElement('canvas'); c.width = 1024; c.height = 512;
@@ -587,9 +514,9 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
     function draw() {
       var g = c.getContext('2d');
       g.fillStyle = '#0f1d18'; g.fillRect(0, 0, 1024, 512);
-      g.fillStyle = C.ok; g.font = '500 34px "IBM Plex Mono", monospace'; g.fillText('ALL TESTS PASSED · CURRENT', 60, 90);
-      g.fillStyle = '#f4f6f8'; g.font = '800 150px Archivo, "Arial Black", sans-serif'; g.fillText('ONEPAY', 52, 270);
-      g.font = '400 40px "IBM Plex Sans", sans-serif'; g.fillStyle = '#c9e9dc'; g.fillText('Leading OnePay Crypto design.', 60, 360);
+      g.fillStyle = C.ok; g.font = '500 34px "IBM Plex Mono", monospace'; g.fillText('ALL TESTS PASSED', 60, 90);
+      g.fillStyle = '#f4f6f8'; g.font = '800 150px Archivo, "Arial Black", sans-serif'; g.fillText('THE LAB', 52, 270);
+      g.font = '400 40px "IBM Plex Sans", sans-serif'; g.fillStyle = '#c9e9dc'; g.fillText('Four chambers, cleared.', 60, 360);
       g.fillStyle = C.ok; g.fillRect(60, 410, 900, 6);
       t.needsUpdate = true;
     }
@@ -873,10 +800,10 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
 
   /* ---------- chambers ---------- */
   var CH = [
-    { role: 'sprinklr', spawn: [0, 0, -2.5, 0], hint: 'The exit is behind the glass. Portal shots pass straight through it.', done: false },
-    { role: 'nftx', spawn: [0, 0, -20, 0], hint: 'The exit is on the ledge. Look up at the wall above it.', done: false },
-    { role: 'okx', spawn: [3, 0, -41.5, 0], hint: 'The door needs weight on the button. The cube is up on the shelf.', done: false },
-    { role: 'onepay', spawn: [0, 0, -61.5, 0], hint: 'Too far to jump. Link the panels on either side of the gap.', done: false }
+    { role: 'one', spawn: [0, 0, -2.5, 0], hint: 'The exit is behind the glass. Portal shots pass straight through it.', done: false },
+    { role: 'two', spawn: [0, 0, -20, 0], hint: 'The exit is on the ledge. Look up at the wall above it.', done: false },
+    { role: 'three', spawn: [3, 0, -41.5, 0], hint: 'The door needs weight on the button. The cube is up on the shelf.', done: false },
+    { role: 'four', spawn: [0, 0, -61.5, 0], hint: 'Too far to jump. Link the panels on either side of the gap.', done: false }
   ];
   var chamber = 0, completed = 0, started = false, startTime = 0, finaleShown = false;
   function chamberOf(z) { return z > -16 ? 0 : z > -37.2 ? 1 : z > -58 ? 2 : 3; }
@@ -907,7 +834,6 @@ kbd { display: inline-block; min-width: 1.6rem; padding: 0.12rem 0.4rem; border:
       onClose: function () { try { canvas.focus({ preventScroll: true }); } catch (e) {} }
     });
   }
-  document.getElementById('fin-close').addEventListener('click', function () { document.getElementById('finale').hidden = true; try { canvas.focus({ preventScroll: true }); } catch (e) {} });
 
   var hintEl = document.getElementById('hint'), hintTimer = 0;
   function hintNow(msg) { hintEl.textContent = msg; hintTimer = 2.6; }
