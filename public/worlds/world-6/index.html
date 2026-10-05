@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Ashgrove Reading Room</title>
+<title>The Reading Room</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap">
 <style>
 /* Layout: full-bleed WebGL room; brass UI bars hug the screen edges; paper notes open as centered panels. */
@@ -87,7 +87,7 @@ h2{font-size:28px}
 <section class="veil" id="intro">
   <div class="panel">
     <p class="eyebrow">World 6 · Chapter one</p>
-    <h1>Ashgrove Reading Room</h1>
+    <h1>The Reading Room</h1>
     <p>You arrive after midnight. The fire is still lit, and the study looks as if someone left in a hurry.</p>
     <p class="small">Drag to look around, or use the arrow keys to turn and step. Tap anything that glints.</p>
     <button class="btn" id="enterBtn" type="button">Enter the room</button>
@@ -131,7 +131,7 @@ h2{font-size:28px}
 const THREE=window.THREE;
 const $=id=>document.getElementById(id);
 const canvasEl=$('c');
-function fail(msg){const p=$('intro').querySelector('.panel');p.innerHTML='<p class="eyebrow">Ashgrove Reading Room</p><h2>The room would not open</h2><p>'+msg+'</p>';}
+function fail(msg){const p=$('intro').querySelector('.panel');p.innerHTML='<p class="eyebrow">The Reading Room</p><h2>The room would not open</h2><p>'+msg+'</p>';}
 if(!THREE){fail('The 3D library could not be loaded. Check your connection and reload.');return;}
 let renderer;
 try{renderer=new THREE.WebGLRenderer({canvas:canvasEl,antialias:true,powerPreference:'high-performance'});}

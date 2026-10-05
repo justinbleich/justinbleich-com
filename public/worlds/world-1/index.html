@@ -294,11 +294,6 @@ kbd {
           </div>
         </div>
       </div>
-      <div class="log" id="log" aria-live="polite">
-        <p class="log-eyebrow mono" id="log-eyebrow">World 1 · The Run</p>
-        <p class="log-title" id="log-title">Run to the flag.</p>
-        <p class="log-desc" id="log-desc">Hit the ? blocks from below on the way. Pixels are optional. The flag is the finish.</p>
-      </div>
       <div class="controls">
         <p class="keys mono">
           <span><kbd>←</kbd><kbd>→</kbd> Run</span>
@@ -487,9 +482,8 @@ kbd {
   }
 
   /* ---------- dialogue box + list ---------- */
-  var logE = document.getElementById('log-eyebrow');
-  var logT = document.getElementById('log-title');
-  var logD = document.getElementById('log-desc');
+  /* the on-screen dialogue box is gone; the messages still go somewhere harmless */
+  var logE = document.createElement('p'), logT = document.createElement('p'), logD = document.createElement('p');
   function setLog(e, t, d) { logE.textContent = e; logT.textContent = t; logD.innerHTML = d; }
   var INTRO = ['World 1 · The Run', 'Run to the flag.', 'Hit the ? blocks from below on the way. Pixels are optional. The flag is the finish.'];
 
@@ -827,7 +821,8 @@ kbd {
 
   function drawHud() {
     var pad = Math.round(7 * S);
-    var fs = Math.max(Math.round(7 * S), Math.round(12 * dpr));
+    /* capped so the counter never grows into the exit pill on tall screens */
+    var fs = Math.min(Math.max(Math.round(7 * S), Math.round(12 * dpr)), Math.round(14 * dpr));
     ctx.font = fs + 'px Silkscreen, ui-monospace, Menlo, monospace';
     ctx.textBaseline = 'top';
     ctx.textAlign = 'left';
